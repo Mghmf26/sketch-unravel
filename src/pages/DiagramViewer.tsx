@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useCallback, useState } from 'react';
+import { useEffect, useCallback, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import {
   ReactFlow,
@@ -12,7 +12,7 @@ import {
   MarkerType,
 } from '@xyflow/react';
 import '@xyflow/react/dist/style.css';
-import { ArrowLeft, Download } from 'lucide-react';
+import { ArrowLeft, Download, Pencil } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { getDiagram } from '@/lib/store';
 import { getLayoutedElements } from '@/lib/layout';
@@ -66,9 +66,7 @@ export default function DiagramViewer() {
   }, [id, setNodes, setEdges]);
 
   const handleExport = useCallback(() => {
-    if (diagram) {
-      exportToExcel(diagram);
-    }
+    if (diagram) exportToExcel(diagram);
   }, [diagram]);
 
   if (!diagram) {
@@ -80,20 +78,25 @@ export default function DiagramViewer() {
   }
 
   return (
-    <div className="flex flex-col h-full">
-      <div className="flex items-center justify-between p-4 border-b bg-card">
+    <div className="flex flex-col h-screen">
+      <div className="flex items-center justify-between px-4 py-3 border-b bg-background/95 backdrop-blur">
         <div className="flex items-center gap-3">
-          <Button variant="ghost" size="icon" onClick={() => navigate(`/edit/${diagram.id}`)}>
+          <Button variant="ghost" size="icon" onClick={() => navigate('/')}>
             <ArrowLeft className="h-4 w-4" />
           </Button>
           <div>
             <h1 className="text-lg font-bold text-foreground">{diagram.processName}</h1>
-            <p className="text-xs text-muted-foreground font-mono">{diagram.processId}</p>
+            <p className="text-xs text-muted-foreground font-mono">{diagram.processId} · {diagram.nodes.length} nodes · {diagram.connections.length} connections</p>
           </div>
         </div>
-        <Button onClick={handleExport} variant="outline">
-          <Download className="mr-2 h-4 w-4" /> Export Excel
-        </Button>
+        <div className="flex gap-2">
+          <Button onClick={() => navigate(`/edit/${diagram.id}`)} variant="outline" size="sm">
+            <Pencil className="mr-2 h-3.5 w-3.5" /> Edit
+          </Button>
+          <Button onClick={handleExport} variant="outline" size="sm">
+            <Download className="mr-2 h-3.5 w-3.5" /> Export Excel
+          </Button>
+        </div>
       </div>
       <div className="flex-1" style={{ minHeight: 500 }}>
         <ReactFlow
@@ -108,11 +111,7 @@ export default function DiagramViewer() {
         >
           <Background />
           <Controls />
-          <MiniMap
-            nodeStrokeWidth={2}
-            pannable
-            zoomable
-          />
+          <MiniMap nodeStrokeWidth={2} pannable zoomable />
         </ReactFlow>
       </div>
     </div>
