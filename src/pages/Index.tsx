@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Plus, FileSpreadsheet, Eye, Trash2, Clock } from 'lucide-react';
+import { Plus, FileSpreadsheet, Eye, Trash2, Clock, Upload } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -30,9 +30,14 @@ export default function Index() {
           <h1 className="text-2xl font-bold text-foreground">EPC Diagram Tool</h1>
           <p className="text-sm text-muted-foreground">Create, visualize, and export EPC business process diagrams</p>
         </div>
-        <Button onClick={() => navigate('/new')}>
-          <Plus className="mr-2 h-4 w-4" /> New Diagram
-        </Button>
+        <div className="flex gap-2">
+          <Button variant="outline" onClick={() => navigate('/upload')}>
+            <Upload className="mr-2 h-4 w-4" /> Upload & Extract
+          </Button>
+          <Button onClick={() => navigate('/new')}>
+            <Plus className="mr-2 h-4 w-4" /> New Diagram
+          </Button>
+        </div>
       </div>
 
       {diagrams.length === 0 ? (

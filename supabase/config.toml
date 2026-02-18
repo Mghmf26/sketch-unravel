@@ -1,0 +1,4 @@
+project_id = "pzeeowoegyberkdibtkb"
+
+[functions.extract-diagram]
+verify_jwt = false
