@@ -58,44 +58,54 @@ Your task: Extract EVERY SINGLE node and EVERY SINGLE connection (arrow) from th
 
 ## ARROW/CONNECTION TRACING — CRITICAL
 
-This is the most important part. You MUST trace each arrow precisely:
+This is the most important part. You MUST trace each arrow VISUALLY along its full path.
 
-1. **Find the arrowhead** (the pointed triangle at one end of the line)
-2. **The node at the arrowhead end is the TARGET**
-3. **The node at the other end (no arrowhead) is the SOURCE**
-4. **source → target** (follow the arrowhead direction)
+### How to trace an arrow:
+1. Start at one end of a line/arrow
+2. Follow the line pixel by pixel — it may go straight, bend at right angles, or curve
+3. Find where the ARROWHEAD (triangle) is — that end is the TARGET
+4. The other end (where the line starts, no arrowhead) touches the SOURCE node
+5. Record: source → target
 
-COMMON PATTERNS to watch for:
-- Input interfaces (LEFT side) have arrows going FROM them TO in-scope steps: source=interface, target=in-scope
-- In-scope steps connect to output interfaces (RIGHT side): source=in-scope, target=interface  
-- XOR gateways receive input and split into Yes/No branches
-- Multiple nodes can feed INTO a single XOR (converging)
-- A single XOR can feed OUT TO multiple nodes (diverging)
-- Arrows can BEND or follow L-shaped/curved paths — follow them to their TRUE endpoints
-- An arrow going RIGHT from node A, then DOWN, then RIGHT to node B means: source=A, target=B
+### XOR GATEWAY PATTERNS — Pay extra attention:
+- An XOR gateway is a DECISION POINT. It has:
+  * ONE or MORE arrows coming IN (from upstream nodes)
+  * TWO or MORE arrows going OUT (the Yes/No decision branches)
+- Each OUTGOING arrow from an XOR is an INDEPENDENT connection
+- Example: If XOR-2 has "Yes" going to 4 different interface nodes, that's 4 separate connections:
+  * XOR-2 → Interface-A (Yes)
+  * XOR-2 → Interface-B (Yes)  
+  * XOR-2 → Interface-C (Yes)
+  * XOR-2 → Interface-D (Yes)
+- If XOR-2 has "No" going to End, that's a 5th connection:
+  * XOR-2 → End (No)
 
-IMPORTANT: Do NOT invent connections that don't exist. Only report arrows you can actually SEE in the diagram. If two nodes are near each other but no arrow connects them, do NOT create a connection.
+### CRITICAL: Connect nodes to the CORRECT XOR
+- When there are MULTIPLE XOR gateways in a diagram, each node connects to the XOR that its arrow ACTUALLY touches
+- Do NOT connect a node to a distant XOR just because they're in the same horizontal line
+- TRACE the arrow line from the node and see EXACTLY which XOR circle it enters
+- A node upstream of XOR-1 connects to XOR-1, NOT to XOR-2 (unless an arrow goes directly from that node to XOR-2)
+
+### General rules:
+- Input interfaces (LEFT side) have arrows FROM them TO in-scope steps
+- In-scope steps connect to output interfaces (RIGHT side)
+- Arrows can BEND or follow L-shaped paths — follow them to their TRUE endpoints
+- Do NOT invent connections. Only report arrows you can actually SEE
 
 ## EXAMPLE
 
-For a simple diagram with: [Interface A] → [Process B] → [XOR "Question?"] —Yes→ [Interface C], —No→ [End]
+Diagram: [A] → [B] → [XOR-1 "Q1?"] —No→ [XOR-2 "Q2?"] —No→ [End], —Yes→ [C]
+                                       —Yes→ [D]
 
-The correct output would be:
-{
-  "nodes": [
-    {"id": "A", "label": "Interface A", "type": "interface"},
-    {"id": "B", "label": "Process B", "type": "in-scope"},
-    {"id": "XOR-1", "label": "Question?", "type": "xor"},
-    {"id": "C", "label": "Interface C", "type": "interface"},
-    {"id": "END", "label": "End", "type": "event"}
-  ],
-  "connections": [
-    {"source": "A", "target": "B", "label": ""},
-    {"source": "B", "target": "XOR-1", "label": ""},
-    {"source": "XOR-1", "target": "C", "label": "Yes"},
-    {"source": "XOR-1", "target": "END", "label": "No"}
-  ]
-}
+Correct connections:
+- A → B (no label)
+- B → XOR-1 (no label)  
+- XOR-1 → XOR-2 (No)     ← Note: XOR-1's "No" goes to XOR-2
+- XOR-1 → D (Yes)         ← Note: XOR-1's "Yes" goes to D
+- XOR-2 → End (No)        ← Note: XOR-2's "No" goes to End
+- XOR-2 → C (Yes)         ← Note: XOR-2's "Yes" goes to C
+
+WRONG: B → XOR-2 (B connects to XOR-1, not XOR-2!)
 
 ## OUTPUT FORMAT
 
@@ -107,12 +117,11 @@ Return ONLY valid JSON, no markdown, no explanation:
   "connections": [{"source": "string", "target": "string", "label": "string"}]
 }
 
-## FINAL VERIFICATION — Check each connection:
-For EACH connection you output, verify:
-1. Can I see an actual arrow line between these two nodes?
-2. Is the arrowhead pointing at the target node?
-3. Is the source the node where the line originates (no arrowhead)?
-If any answer is "no", fix or remove that connection.`;
+## FINAL VERIFICATION — For each connection:
+1. Can I see an actual arrow line between these two nodes? (If not, REMOVE it)
+2. Does the arrow physically touch/enter BOTH the source and target nodes? (If not, find the correct endpoints)
+3. Is the arrowhead pointing at the target? (If not, swap source and target)
+4. For XOR connections: Is this node connected to the NEAREST XOR in the flow, or am I accidentally connecting it to a further XOR?`;
 
     // Use two-pass: first extract, then validate
     const userPrompt = `Carefully analyze this EPC business process diagram. 
