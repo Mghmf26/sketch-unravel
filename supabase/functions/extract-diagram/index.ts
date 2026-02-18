@@ -34,72 +34,96 @@ Your task: Extract EVERY SINGLE node and EVERY SINGLE connection (arrow) from th
 ## NODE TYPES — Color & Shape Guide
 
 1. **"in-scope"** (GREEN rounded rectangles)
-   - These are the main business process steps of the CURRENT business process
-   - They have a GREEN filled background with text labels inside
-   - They often have a process ID displayed ABOVE or NEAR the shape (e.g., "CP-060-020", "AL-020-010")
-   - Extract both the ID and the label text inside the shape
+   - Main business process steps of the CURRENT business process
+   - GREEN filled background with text labels inside
+   - Often have a process ID displayed ABOVE or NEAR the shape (e.g., "CP-060-020")
 
 2. **"interface"** (WHITE pentagon/chevron/arrow-shaped boxes)
-   - These represent INTERFACES to OTHER business processes (not the current one)
-   - They are WHITE or very light colored with a distinctive pointed/folded edge shape (pentagon or chevron)
-   - They have IDs like "CP-010", "CP-030", "CP-050"
-   - IMPORTANT: Their role depends on arrow direction:
-     * If arrows point FROM this node → it's an INPUT process (usually on the LEFT side)
-     * If arrows point TO this node → it's an OUTPUT process (usually on the RIGHT side)  
-     * Some appear in the MIDDLE as supporting/linked processes with arrows going both directions
-   - The SAME interface ID can appear multiple times in the diagram (e.g., "CP-050" may appear on both left and right sides). List each occurrence as a separate node with a unique ID suffix like "CP-050-input" and "CP-050-output", or use the label to differentiate.
+   - Interfaces to OTHER business processes
+   - WHITE or very light colored with a distinctive pointed/folded edge (pentagon or chevron shape)
+   - Have IDs like "CP-010", "CP-030", "CP-050"
+   - The SAME interface ID can appear multiple times. If so, give each a unique ID (e.g., "CP-050-left", "CP-050-right")
 
 3. **"event"** (PINK/MAGENTA hexagonal shapes)
-   - These represent events — typically "Start" or "End" events
-   - They have a distinctive PINK or MAGENTA color and hexagonal shape
-   - Common labels: "Start", "End"
+   - Events — typically "Start" or "End"
+   - PINK or MAGENTA color, hexagonal shape
 
 4. **"xor"** (BLUE/LIGHT BLUE circles with "XOR" text)
-   - These are EXCLUSIVE decision gateways (XOR splits/joins)
-   - They are CIRCULAR shapes filled with LIGHT BLUE / CYAN color
-   - They contain the text "XOR" inside
-   - CRITICAL: There is usually a QUESTION or DECISION LABEL positioned NEAR the XOR circle (above, below, or beside it), e.g., "Do Plans Require Updating?" or "Does The Budget Require Updating?"
-   - Use that nearby question as the node's label
-   - XOR gateways have MULTIPLE outgoing arrows, typically labeled "Yes" and "No"
-   - Generate IDs like "XOR-1", "XOR-2", etc. if no explicit ID is shown
+   - Exclusive decision gateways
+   - CIRCULAR shapes filled with LIGHT BLUE / CYAN
+   - Contain text "XOR" inside
+   - A QUESTION/DECISION LABEL is positioned NEAR the circle — use it as the node label
+   - Have MULTIPLE outgoing arrows labeled "Yes" and "No"
+   - Generate IDs like "XOR-1", "XOR-2" if no explicit ID
 
-## CONNECTION RULES
+## ARROW/CONNECTION TRACING — CRITICAL
 
-For EVERY arrow/line in the diagram:
-- **source**: The node ID where the arrow ORIGINATES (where the line starts, without arrowhead)
-- **target**: The node ID where the arrow POINTS TO (where the arrowhead is)
-- **label**: Text written ON or NEAR the arrow line (e.g., "Yes", "No"), or empty string ""
+This is the most important part. You MUST trace each arrow precisely:
 
-CRITICAL connection rules:
-- Follow the ARROWHEAD direction precisely — source is where it starts, target is where it points
-- XOR gateways typically have 2+ outgoing arrows labeled "Yes" and "No"
-- A single node can have MULTIPLE incoming and MULTIPLE outgoing connections
-- Arrows can be horizontal, vertical, or diagonal — trace ALL of them
-- Some arrows may bend/curve — follow them to their actual endpoints
+1. **Find the arrowhead** (the pointed triangle at one end of the line)
+2. **The node at the arrowhead end is the TARGET**
+3. **The node at the other end (no arrowhead) is the SOURCE**
+4. **source → target** (follow the arrowhead direction)
+
+COMMON PATTERNS to watch for:
+- Input interfaces (LEFT side) have arrows going FROM them TO in-scope steps: source=interface, target=in-scope
+- In-scope steps connect to output interfaces (RIGHT side): source=in-scope, target=interface  
+- XOR gateways receive input and split into Yes/No branches
+- Multiple nodes can feed INTO a single XOR (converging)
+- A single XOR can feed OUT TO multiple nodes (diverging)
+- Arrows can BEND or follow L-shaped/curved paths — follow them to their TRUE endpoints
+- An arrow going RIGHT from node A, then DOWN, then RIGHT to node B means: source=A, target=B
+
+IMPORTANT: Do NOT invent connections that don't exist. Only report arrows you can actually SEE in the diagram. If two nodes are near each other but no arrow connects them, do NOT create a connection.
+
+## EXAMPLE
+
+For a simple diagram with: [Interface A] → [Process B] → [XOR "Question?"] —Yes→ [Interface C], —No→ [End]
+
+The correct output would be:
+{
+  "nodes": [
+    {"id": "A", "label": "Interface A", "type": "interface"},
+    {"id": "B", "label": "Process B", "type": "in-scope"},
+    {"id": "XOR-1", "label": "Question?", "type": "xor"},
+    {"id": "C", "label": "Interface C", "type": "interface"},
+    {"id": "END", "label": "End", "type": "event"}
+  ],
+  "connections": [
+    {"source": "A", "target": "B", "label": ""},
+    {"source": "B", "target": "XOR-1", "label": ""},
+    {"source": "XOR-1", "target": "C", "label": "Yes"},
+    {"source": "XOR-1", "target": "END", "label": "No"}
+  ]
+}
 
 ## OUTPUT FORMAT
 
 Return ONLY valid JSON, no markdown, no explanation:
 {
-  "processId": "string (the main process ID, e.g. CP-060)",
-  "processName": "string (the process name if visible)",
-  "nodes": [
-    {"id": "string", "label": "string", "type": "in-scope|interface|event|xor"}
-  ],
-  "connections": [
-    {"source": "string", "target": "string", "label": "string"}
-  ]
+  "processId": "string",
+  "processName": "string",
+  "nodes": [{"id": "string", "label": "string", "type": "in-scope|interface|event|xor"}],
+  "connections": [{"source": "string", "target": "string", "label": "string"}]
 }
 
-## FINAL CHECKLIST — Verify before responding:
-✓ Did I extract ALL green rectangles (in-scope)?
-✓ Did I extract ALL white pentagon shapes (interfaces)?
-✓ Did I extract ALL pink hexagons (events)?
-✓ Did I extract ALL blue circles with XOR text (xor gateways)?
-✓ Did I extract ALL arrows and their correct direction?
-✓ Did I include Yes/No labels on XOR gateway arrows?
-✓ Are arrow directions correct (source → arrowhead = target)?
-✓ Did I capture the question/decision text near each XOR gateway?`;
+## FINAL VERIFICATION — Check each connection:
+For EACH connection you output, verify:
+1. Can I see an actual arrow line between these two nodes?
+2. Is the arrowhead pointing at the target node?
+3. Is the source the node where the line originates (no arrowhead)?
+If any answer is "no", fix or remove that connection.`;
+
+    // Use two-pass: first extract, then validate
+    const userPrompt = `Carefully analyze this EPC business process diagram. 
+
+Step 1: Identify ALL nodes — scan the entire image systematically from left to right, top to bottom. Count and list every colored shape you see.
+
+Step 2: Trace EVERY arrow — for each arrow, identify exactly which two nodes it connects and which direction the arrowhead points. Be very precise about arrow direction.
+
+Step 3: Return the complete JSON with all nodes and all connections.
+
+IMPORTANT: Pay extra attention to arrows around XOR gateways. Each XOR typically has arrows coming IN from one or more nodes, and arrows going OUT to two or more nodes (Yes/No branches). Make sure you get the direction right — arrows go INTO the XOR from upstream nodes, and OUT FROM the XOR to downstream nodes.`;
 
     const response = await fetch('https://ai.gateway.lovable.dev/v1/chat/completions', {
       method: 'POST',
@@ -114,7 +138,7 @@ Return ONLY valid JSON, no markdown, no explanation:
           {
             role: 'user',
             content: [
-              { type: 'text', text: 'Analyze this EPC business process diagram and extract all nodes and connections. Return only the JSON.' },
+              { type: 'text', text: userPrompt },
               { type: 'image_url', image_url: { url: imageBase64 } },
             ],
           },
