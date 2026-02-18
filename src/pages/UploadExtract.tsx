@@ -3,11 +3,11 @@ import { useNavigate } from 'react-router-dom';
 import { Upload, Sparkles, ScanText, Loader2, Check, AlertCircle, ArrowLeft, Image, Eye, ChevronRight } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
 import { toast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 import { extractWithOCR } from '@/lib/ocr-extract';
 import { saveDiagram } from '@/lib/store';
+import ExtractionResultsEditor from '@/components/ExtractionResultsEditor';
 import type { EPCDiagram, EPCNode, EPCConnection } from '@/types/epc';
 
 interface ExtractionData {
@@ -17,12 +17,7 @@ interface ExtractionData {
   connections: EPCConnection[];
 }
 
-const NODE_TYPE_COLORS: Record<string, string> = {
-  'in-scope': 'bg-emerald-100 text-emerald-800 border-emerald-300',
-  'interface': 'bg-slate-100 text-slate-800 border-slate-300',
-  'event': 'bg-pink-100 text-pink-800 border-pink-300',
-  'xor': 'bg-sky-100 text-sky-800 border-sky-300',
-};
+// Node type colors moved to ExtractionResultsEditor component
 
 export default function UploadExtract() {
   const navigate = useNavigate();
@@ -252,8 +247,7 @@ export default function UploadExtract() {
               <div>
                 <h2 className="text-lg font-bold text-foreground">Extraction Results</h2>
                 <p className="text-xs text-muted-foreground">
-                  {extractedData.processId && <span className="font-mono mr-2">{extractedData.processId}</span>}
-                  {extractedData.nodes.length} nodes · {extractedData.connections.length} connections
+                  Edit nodes, connections, and labels below before saving
                 </p>
               </div>
               <div className="flex gap-2">
@@ -267,69 +261,13 @@ export default function UploadExtract() {
               </div>
             </div>
 
-            {/* Nodes Table */}
-            <Card>
-              <CardHeader className="pb-2">
-                <CardTitle className="text-sm">Nodes ({extractedData.nodes.length})</CardTitle>
-              </CardHeader>
-              <CardContent className="p-0">
-                <div className="overflow-x-auto">
-                  <table className="w-full text-sm">
-                    <thead>
-                      <tr className="border-b bg-muted/50">
-                        <th className="text-left p-3 font-medium text-muted-foreground">ID</th>
-                        <th className="text-left p-3 font-medium text-muted-foreground">Label</th>
-                        <th className="text-left p-3 font-medium text-muted-foreground">Type</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {extractedData.nodes.map((node, i) => (
-                        <tr key={i} className="border-b last:border-0 hover:bg-muted/30">
-                          <td className="p-3 font-mono text-xs">{node.id}</td>
-                          <td className="p-3">{node.label}</td>
-                          <td className="p-3">
-                            <Badge variant="outline" className={`text-xs ${NODE_TYPE_COLORS[node.type] || ''}`}>
-                              {node.type}
-                            </Badge>
-                          </td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
-              </CardContent>
-            </Card>
-
-            {/* Connections Table */}
-            <Card>
-              <CardHeader className="pb-2">
-                <CardTitle className="text-sm">Connections ({extractedData.connections.length})</CardTitle>
-              </CardHeader>
-              <CardContent className="p-0">
-                <div className="overflow-x-auto">
-                  <table className="w-full text-sm">
-                    <thead>
-                      <tr className="border-b bg-muted/50">
-                        <th className="text-left p-3 font-medium text-muted-foreground">Source</th>
-                        <th className="text-left p-3 font-medium text-muted-foreground">→</th>
-                        <th className="text-left p-3 font-medium text-muted-foreground">Target</th>
-                        <th className="text-left p-3 font-medium text-muted-foreground">Label</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {extractedData.connections.map((conn, i) => (
-                        <tr key={i} className="border-b last:border-0 hover:bg-muted/30">
-                          <td className="p-3 font-mono text-xs">{conn.source}</td>
-                          <td className="p-3 text-muted-foreground">→</td>
-                          <td className="p-3 font-mono text-xs">{conn.target}</td>
-                          <td className="p-3">{conn.label || <span className="text-muted-foreground">—</span>}</td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
-              </CardContent>
-            </Card>
+            <ExtractionResultsEditor
+              nodes={extractedData.nodes}
+              connections={extractedData.connections}
+              processId={extractedData.processId}
+              processName={extractedData.processName}
+              onUpdate={(updated) => setExtractedData(updated)}
+            />
 
             {/* Bottom action */}
             <div className="flex justify-end">
