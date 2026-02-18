@@ -27,44 +27,79 @@ serve(async (req) => {
       });
     }
 
-    const systemPrompt = `You are an expert at analyzing EPC (Event-driven Process Chain) business process diagrams.
-Given an image of a diagram, extract ALL nodes and connections with COMPLETE accuracy. Do NOT miss any element.
+    const systemPrompt = `You are an expert at analyzing EPC (Event-driven Process Chain) business process diagrams from images.
 
-CRITICAL NODE TYPES - identify every single one:
-1. "in-scope" — GREEN filled rounded rectangles. These are main process steps. They have green background with text labels and often an ID above them (e.g., "CP-060-020").
-2. "interface" — WHITE or light-colored pentagon/arrow-shaped boxes. These are interface or external process steps. They typically have a folded or pointed edge (like a chevron/pentagon shape). They also have IDs (e.g., "CP-010", "CP-030", "CP-050").
-3. "event" — PINK or MAGENTA hexagonal shapes. These represent Start or End events. Look for "Start", "End", or similar labels.
-4. "xor" — BLUE/CYAN circles containing the text "XOR". These are exclusive decision gateways. They are CIRCULAR shapes with a light blue fill. There is often a question/label NEAR the XOR circle (e.g., "Do Plans Require Updating?") — capture that as the XOR node's label.
+Your task: Extract EVERY SINGLE node and EVERY SINGLE connection (arrow) from the diagram with 100% completeness and accuracy.
 
-For each node provide:
-- id: The node ID shown in the diagram (e.g., "CP-060-020"). For XOR nodes without a visible ID, generate one like "XOR-1", "XOR-2", etc.
-- label: The full text label. For XOR nodes, use the nearby question text as the label (e.g., "Do Plans Require Updating?").
-- type: One of exactly: "in-scope", "interface", "event", "xor"
+## NODE TYPES — Color & Shape Guide
 
-For each connection (arrow/line), identify:
-- source: The ID of the source node where the arrow STARTS
-- target: The ID of the target node where the arrow ENDS
-- label: Any label on the arrow itself (e.g., "Yes", "No"), or empty string if none. XOR gateways typically have "Yes"/"No" on their outgoing arrows.
+1. **"in-scope"** (GREEN rounded rectangles)
+   - These are the main business process steps of the CURRENT business process
+   - They have a GREEN filled background with text labels inside
+   - They often have a process ID displayed ABOVE or NEAR the shape (e.g., "CP-060-020", "AL-020-010")
+   - Extract both the ID and the label text inside the shape
 
-Also extract:
-- processId: The main process ID (e.g., "CP-060" or "AL-020")
-- processName: The process name if visible, or derive from context
+2. **"interface"** (WHITE pentagon/chevron/arrow-shaped boxes)
+   - These represent INTERFACES to OTHER business processes (not the current one)
+   - They are WHITE or very light colored with a distinctive pointed/folded edge shape (pentagon or chevron)
+   - They have IDs like "CP-010", "CP-030", "CP-050"
+   - IMPORTANT: Their role depends on arrow direction:
+     * If arrows point FROM this node → it's an INPUT process (usually on the LEFT side)
+     * If arrows point TO this node → it's an OUTPUT process (usually on the RIGHT side)  
+     * Some appear in the MIDDLE as supporting/linked processes with arrows going both directions
+   - The SAME interface ID can appear multiple times in the diagram (e.g., "CP-050" may appear on both left and right sides). List each occurrence as a separate node with a unique ID suffix like "CP-050-input" and "CP-050-output", or use the label to differentiate.
 
-Return ONLY valid JSON in this exact format, no other text:
+3. **"event"** (PINK/MAGENTA hexagonal shapes)
+   - These represent events — typically "Start" or "End" events
+   - They have a distinctive PINK or MAGENTA color and hexagonal shape
+   - Common labels: "Start", "End"
+
+4. **"xor"** (BLUE/LIGHT BLUE circles with "XOR" text)
+   - These are EXCLUSIVE decision gateways (XOR splits/joins)
+   - They are CIRCULAR shapes filled with LIGHT BLUE / CYAN color
+   - They contain the text "XOR" inside
+   - CRITICAL: There is usually a QUESTION or DECISION LABEL positioned NEAR the XOR circle (above, below, or beside it), e.g., "Do Plans Require Updating?" or "Does The Budget Require Updating?"
+   - Use that nearby question as the node's label
+   - XOR gateways have MULTIPLE outgoing arrows, typically labeled "Yes" and "No"
+   - Generate IDs like "XOR-1", "XOR-2", etc. if no explicit ID is shown
+
+## CONNECTION RULES
+
+For EVERY arrow/line in the diagram:
+- **source**: The node ID where the arrow ORIGINATES (where the line starts, without arrowhead)
+- **target**: The node ID where the arrow POINTS TO (where the arrowhead is)
+- **label**: Text written ON or NEAR the arrow line (e.g., "Yes", "No"), or empty string ""
+
+CRITICAL connection rules:
+- Follow the ARROWHEAD direction precisely — source is where it starts, target is where it points
+- XOR gateways typically have 2+ outgoing arrows labeled "Yes" and "No"
+- A single node can have MULTIPLE incoming and MULTIPLE outgoing connections
+- Arrows can be horizontal, vertical, or diagonal — trace ALL of them
+- Some arrows may bend/curve — follow them to their actual endpoints
+
+## OUTPUT FORMAT
+
+Return ONLY valid JSON, no markdown, no explanation:
 {
-  "processId": "string",
-  "processName": "string",
-  "nodes": [{"id": "string", "label": "string", "type": "in-scope|interface|event|xor"}],
-  "connections": [{"source": "string", "target": "string", "label": "string"}]
+  "processId": "string (the main process ID, e.g. CP-060)",
+  "processName": "string (the process name if visible)",
+  "nodes": [
+    {"id": "string", "label": "string", "type": "in-scope|interface|event|xor"}
+  ],
+  "connections": [
+    {"source": "string", "target": "string", "label": "string"}
+  ]
 }
 
-IMPORTANT RULES:
-- Extract EVERY node visible in the diagram, including ALL XOR gateway circles
-- Extract EVERY arrow/connection, including those with Yes/No labels
-- Pay careful attention to arrow DIRECTION (which end has the arrowhead)
-- A single XOR gateway can have MULTIPLE outgoing connections
-- Do NOT skip any nodes even if they appear small or are at the edges of the diagram
-- Interface nodes (white pentagons) that appear multiple times with the same ID should each be listed separately if they have different labels`;
+## FINAL CHECKLIST — Verify before responding:
+✓ Did I extract ALL green rectangles (in-scope)?
+✓ Did I extract ALL white pentagon shapes (interfaces)?
+✓ Did I extract ALL pink hexagons (events)?
+✓ Did I extract ALL blue circles with XOR text (xor gateways)?
+✓ Did I extract ALL arrows and their correct direction?
+✓ Did I include Yes/No labels on XOR gateway arrows?
+✓ Are arrow directions correct (source → arrowhead = target)?
+✓ Did I capture the question/decision text near each XOR gateway?`;
 
     const response = await fetch('https://ai.gateway.lovable.dev/v1/chat/completions', {
       method: 'POST',
@@ -73,7 +108,7 @@ IMPORTANT RULES:
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        model: 'google/gemini-2.5-flash',
+        model: 'google/gemini-2.5-pro',
         messages: [
           { role: 'system', content: systemPrompt },
           {
