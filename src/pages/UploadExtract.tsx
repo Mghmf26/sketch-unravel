@@ -1,6 +1,6 @@
 import { useState, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Upload, Sparkles, ScanText, Loader2, Check, AlertCircle, ArrowLeft, Image, Eye, ChevronRight } from 'lucide-react';
+import { Upload, Sparkles, ScanText, Loader2, Check, AlertCircle, ArrowLeft, Image, Eye, ChevronRight, Table2, LayoutGrid } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { toast } from '@/hooks/use-toast';
@@ -8,6 +8,8 @@ import { supabase } from '@/integrations/supabase/client';
 import { extractWithOCR } from '@/lib/ocr-extract';
 import { saveDiagram } from '@/lib/store';
 import ExtractionResultsEditor from '@/components/ExtractionResultsEditor';
+import DiagramCanvasEditor from '@/components/DiagramCanvasEditor';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import type { EPCDiagram, EPCNode, EPCConnection } from '@/types/epc';
 
 interface ExtractionData {
@@ -247,7 +249,7 @@ export default function UploadExtract() {
               <div>
                 <h2 className="text-lg font-bold text-foreground">Extraction Results</h2>
                 <p className="text-xs text-muted-foreground">
-                  Edit nodes, connections, and labels below before saving
+                  {extractedData.nodes.length} nodes · {extractedData.connections.length} connections — edit before saving
                 </p>
               </div>
               <div className="flex gap-2">
@@ -255,19 +257,40 @@ export default function UploadExtract() {
                   Re-extract
                 </Button>
                 <Button size="sm" onClick={handleSaveAndView}>
-                  <Eye className="mr-2 h-3.5 w-3.5" /> View Diagram
+                  <Eye className="mr-2 h-3.5 w-3.5" /> Save & View
                   <ChevronRight className="ml-1 h-3.5 w-3.5" />
                 </Button>
               </div>
             </div>
 
-            <ExtractionResultsEditor
-              nodes={extractedData.nodes}
-              connections={extractedData.connections}
-              processId={extractedData.processId}
-              processName={extractedData.processName}
-              onUpdate={(updated) => setExtractedData(updated)}
-            />
+            <Tabs defaultValue="canvas">
+              <TabsList className="mb-3">
+                <TabsTrigger value="canvas" className="gap-1.5">
+                  <LayoutGrid className="h-3.5 w-3.5" /> Canvas
+                </TabsTrigger>
+                <TabsTrigger value="table" className="gap-1.5">
+                  <Table2 className="h-3.5 w-3.5" /> Table
+                </TabsTrigger>
+              </TabsList>
+
+              <TabsContent value="canvas">
+                <DiagramCanvasEditor
+                  nodes={extractedData.nodes}
+                  connections={extractedData.connections}
+                  onChange={(nodes, connections) => setExtractedData({ ...extractedData, nodes, connections })}
+                />
+              </TabsContent>
+
+              <TabsContent value="table">
+                <ExtractionResultsEditor
+                  nodes={extractedData.nodes}
+                  connections={extractedData.connections}
+                  processId={extractedData.processId}
+                  processName={extractedData.processName}
+                  onUpdate={(updated) => setExtractedData(updated)}
+                />
+              </TabsContent>
+            </Tabs>
 
             {/* Bottom action */}
             <div className="flex justify-end">
