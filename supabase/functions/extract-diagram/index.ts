@@ -19,9 +19,9 @@ serve(async (req) => {
       });
     }
 
-    const GEMINI_API_KEY = Deno.env.get('GEMINI_API_KEY');
-    if (!GEMINI_API_KEY) {
-      return new Response(JSON.stringify({ error: 'Gemini API key not configured' }), {
+    const LOVABLE_API_KEY = Deno.env.get('LOVABLE_API_KEY');
+    if (!LOVABLE_API_KEY) {
+      return new Response(JSON.stringify({ error: 'Lovable API key not configured' }), {
         status: 500,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       });
@@ -56,6 +56,12 @@ Your task: Extract EVERY SINGLE node and EVERY SINGLE connection (arrow) from th
    - Have MULTIPLE outgoing arrows labeled "Yes" and "No"
    - Generate IDs like "XOR-1", "XOR-2" if no explicit ID
 
+5. **"start-end"** (Oval/pill shapes) - Start or End terminators
+6. **"decision"** (Diamond shapes) - Decision points
+7. **"storage"** (Triangle shapes) - Storage/inventory
+8. **"delay"** (D-shapes / half-circles) - Delay or wait steps
+9. **"document"** (Rectangle with wavy bottom) - Document outputs
+
 ## ARROW/CONNECTION TRACING — CRITICAL
 
 This is the most important part. You MUST trace each arrow VISUALLY along its full path.
@@ -72,19 +78,10 @@ This is the most important part. You MUST trace each arrow VISUALLY along its fu
   * ONE or MORE arrows coming IN (from upstream nodes)
   * TWO or MORE arrows going OUT (the Yes/No decision branches)
 - Each OUTGOING arrow from an XOR is an INDEPENDENT connection
-- Example: If XOR-2 has "Yes" going to 4 different interface nodes, that's 4 separate connections:
-  * XOR-2 → Interface-A (Yes)
-  * XOR-2 → Interface-B (Yes)  
-  * XOR-2 → Interface-C (Yes)
-  * XOR-2 → Interface-D (Yes)
-- If XOR-2 has "No" going to End, that's a 5th connection:
-  * XOR-2 → End (No)
 
 ### CRITICAL: Connect nodes to the CORRECT XOR
 - When there are MULTIPLE XOR gateways in a diagram, each node connects to the XOR that its arrow ACTUALLY touches
-- Do NOT connect a node to a distant XOR just because they're in the same horizontal line
 - TRACE the arrow line from the node and see EXACTLY which XOR circle it enters
-- A node upstream of XOR-1 connects to XOR-1, NOT to XOR-2 (unless an arrow goes directly from that node to XOR-2)
 
 ### General rules:
 - Input interfaces (LEFT side) have arrows FROM them TO in-scope steps
@@ -92,28 +89,13 @@ This is the most important part. You MUST trace each arrow VISUALLY along its fu
 - Arrows can BEND or follow L-shaped paths — follow them to their TRUE endpoints
 - Do NOT invent connections. Only report arrows you can actually SEE
 
-## EXAMPLE
-
-Diagram: [A] → [B] → [XOR-1 "Q1?"] —No→ [XOR-2 "Q2?"] —No→ [End], —Yes→ [C]
-                                       —Yes→ [D]
-
-Correct connections:
-- A → B (no label)
-- B → XOR-1 (no label)  
-- XOR-1 → XOR-2 (No)     ← Note: XOR-1's "No" goes to XOR-2
-- XOR-1 → D (Yes)         ← Note: XOR-1's "Yes" goes to D
-- XOR-2 → End (No)        ← Note: XOR-2's "No" goes to End
-- XOR-2 → C (Yes)         ← Note: XOR-2's "Yes" goes to C
-
-WRONG: B → XOR-2 (B connects to XOR-1, not XOR-2!)
-
 ## OUTPUT FORMAT
 
 Return ONLY valid JSON, no markdown, no explanation:
 {
   "processId": "string",
   "processName": "string",
-  "nodes": [{"id": "string", "label": "string", "type": "in-scope|interface|event|xor"}],
+  "nodes": [{"id": "string", "label": "string", "type": "in-scope|interface|event|xor|start-end|decision|storage|delay|document"}],
   "connections": [{"source": "string", "target": "string", "label": "string"}]
 }
 
@@ -123,31 +105,36 @@ Return ONLY valid JSON, no markdown, no explanation:
 3. Is the arrowhead pointing at the target? (If not, swap source and target)
 4. For XOR connections: Is this node connected to the NEAREST XOR in the flow, or am I accidentally connecting it to a further XOR?`;
 
-    // Use two-pass: first extract, then validate
     const userPrompt = `Carefully analyze this EPC business process diagram. 
 
-Step 1: Identify ALL nodes — scan the entire image systematically from left to right, top to bottom. Count and list every colored shape you see.
-
-Step 2: Trace EVERY arrow — for each arrow, identify exactly which two nodes it connects and which direction the arrowhead points. Be very precise about arrow direction.
-
+Step 1: Identify ALL nodes — scan the entire image systematically from left to right, top to bottom.
+Step 2: Trace EVERY arrow — for each arrow, identify exactly which two nodes it connects and which direction the arrowhead points.
 Step 3: Return the complete JSON with all nodes and all connections.
 
-IMPORTANT: Pay extra attention to arrows around XOR gateways. Each XOR typically has arrows coming IN from one or more nodes, and arrows going OUT to two or more nodes (Yes/No branches). Make sure you get the direction right — arrows go INTO the XOR from upstream nodes, and OUT FROM the XOR to downstream nodes.`;
+IMPORTANT: Pay extra attention to arrows around XOR gateways.`;
 
     // Strip the data URI prefix to get raw base64
     const base64Data = imageBase64.replace(/^data:image\/\w+;base64,/, '');
 
-    const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-pro:generateContent?key=${GEMINI_API_KEY}`, {
+    // Use Lovable AI Gateway with vision-capable model
+    const response = await fetch('https://ai.gateway.lovable.dev/v1/chat/completions', {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: {
+        'Authorization': `Bearer ${LOVABLE_API_KEY}`,
+        'Content-Type': 'application/json',
+      },
       body: JSON.stringify({
-        systemInstruction: { parts: [{ text: systemPrompt }] },
-        contents: [{
-          parts: [
-            { text: userPrompt },
-            { inlineData: { mimeType: 'image/png', data: base64Data } },
-          ],
-        }],
+        model: 'google/gemini-2.5-pro',
+        messages: [
+          { role: 'system', content: systemPrompt },
+          {
+            role: 'user',
+            content: [
+              { type: 'text', text: userPrompt },
+              { type: 'image_url', image_url: { url: `data:image/png;base64,${base64Data}` } },
+            ],
+          },
+        ],
       }),
     });
 
@@ -175,7 +162,7 @@ IMPORTANT: Pay extra attention to arrows around XOR gateways. Each XOR typically
     }
 
     const result = await response.json();
-    const content = result.candidates?.[0]?.content?.parts?.[0]?.text || '';
+    const content = result.choices?.[0]?.message?.content || '';
     
     // Extract JSON from the response (it might be wrapped in markdown code blocks)
     let jsonStr = content;
