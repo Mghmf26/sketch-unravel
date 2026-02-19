@@ -19,6 +19,11 @@ const NODE_TYPE_CONFIG: Record<NodeType, { label: string; color: string; badge: 
   'interface': { label: 'Interface/External', color: 'bg-slate-100 text-slate-800 border-slate-300', badge: '⬜' },
   'event': { label: 'Event', color: 'bg-pink-100 text-pink-800 border-pink-300', badge: '🩷' },
   'xor': { label: 'XOR Gateway', color: 'bg-blue-100 text-blue-800 border-blue-300', badge: '🔵' },
+  'start-end': { label: 'Start/End', color: 'bg-green-100 text-green-800 border-green-300', badge: '🟢' },
+  'decision': { label: 'Decision', color: 'bg-orange-100 text-orange-800 border-orange-300', badge: '🔶' },
+  'storage': { label: 'Storage', color: 'bg-yellow-100 text-yellow-800 border-yellow-300', badge: '🔺' },
+  'delay': { label: 'Delay/Wait', color: 'bg-red-100 text-red-800 border-red-300', badge: '🔴' },
+  'document': { label: 'Document', color: 'bg-violet-100 text-violet-800 border-violet-300', badge: '📄' },
 };
 
 export default function DataEntry() {

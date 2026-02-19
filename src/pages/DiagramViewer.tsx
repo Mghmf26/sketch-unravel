@@ -173,6 +173,7 @@ export default function DiagramViewer() {
     const id = `${type.toUpperCase().replace('-', '')}-${Date.now().toString(36)}`;
     const labels: Record<NodeType, string> = {
       'in-scope': 'New Process Step', 'interface': 'New Interface', 'event': 'New Event', 'xor': 'XOR',
+      'start-end': 'Start', 'decision': 'Decision?', 'storage': 'Storage', 'delay': 'Delay', 'document': 'Document',
     };
     epcNodesRef.current = [...epcNodesRef.current, { id, label: labels[type], type, description: '' }];
     rebuildFlow();
@@ -281,6 +282,11 @@ export default function DiagramViewer() {
               if (t === 'in-scope') return '#10b981';
               if (t === 'event') return '#ec4899';
               if (t === 'xor') return '#3b82f6';
+              if (t === 'start-end') return '#22c55e';
+              if (t === 'decision') return '#f97316';
+              if (t === 'storage') return '#eab308';
+              if (t === 'delay') return '#ef4444';
+              if (t === 'document') return '#8b5cf6';
               return '#94a3b8';
             }}
           />
@@ -294,18 +300,33 @@ export default function DiagramViewer() {
                       <Plus className="h-3.5 w-3.5 mr-1" /> Add Node
                     </Button>
                   </DropdownMenuTrigger>
-                  <DropdownMenuContent align="end">
+                  <DropdownMenuContent align="end" className="w-52">
                     <DropdownMenuItem onClick={() => addNode('in-scope')}>
-                      <span className="w-2.5 h-2.5 rounded-sm bg-emerald-400 mr-2" /> Process Step (Green)
+                      <span className="w-2.5 h-2.5 rounded-sm bg-emerald-400 mr-2" /> Process Step
                     </DropdownMenuItem>
                     <DropdownMenuItem onClick={() => addNode('interface')}>
-                      <span className="w-2.5 h-2.5 rounded-sm bg-slate-300 mr-2" /> Interface (White)
+                      <span className="w-2.5 h-2.5 rounded-sm bg-slate-300 mr-2" /> Interface
                     </DropdownMenuItem>
                     <DropdownMenuItem onClick={() => addNode('event')}>
-                      <span className="w-2.5 h-2.5 rounded-sm bg-pink-400 mr-2" /> Event (Pink)
+                      <span className="w-2.5 h-2.5 rounded-sm bg-pink-400 mr-2" /> Event
                     </DropdownMenuItem>
                     <DropdownMenuItem onClick={() => addNode('xor')}>
-                      <span className="w-2.5 h-2.5 rounded-full bg-blue-400 mr-2" /> XOR Gateway (Blue)
+                      <span className="w-2.5 h-2.5 rounded-full bg-blue-400 mr-2" /> XOR Gateway
+                    </DropdownMenuItem>
+                    <DropdownMenuItem onClick={() => addNode('start-end')}>
+                      <span className="w-2.5 h-2.5 rounded-full bg-green-400 mr-2" /> Start / End
+                    </DropdownMenuItem>
+                    <DropdownMenuItem onClick={() => addNode('decision')}>
+                      <span className="w-2.5 h-2.5 rotate-45 bg-orange-400 mr-2" /> Decision
+                    </DropdownMenuItem>
+                    <DropdownMenuItem onClick={() => addNode('storage')}>
+                      <span className="w-0 h-0 border-l-[5px] border-r-[5px] border-b-[8px] border-transparent border-b-yellow-400 mr-2" /> Storage
+                    </DropdownMenuItem>
+                    <DropdownMenuItem onClick={() => addNode('delay')}>
+                      <span className="w-2.5 h-2.5 rounded-r-full bg-red-400 mr-2" /> Delay / Wait
+                    </DropdownMenuItem>
+                    <DropdownMenuItem onClick={() => addNode('document')}>
+                      <span className="w-2.5 h-2.5 rounded-sm bg-violet-400 mr-2" /> Document
                     </DropdownMenuItem>
                   </DropdownMenuContent>
                 </DropdownMenu>
