@@ -9,6 +9,8 @@ import {
   PlusCircle,
   Upload,
   Database,
+  ArrowUpRight,
+  TrendingUp,
 } from 'lucide-react';
 import { Card, CardContent } from '@/components/ui/card';
 import { loadDiagrams } from '@/lib/store';
@@ -25,17 +27,17 @@ export default function Dashboard() {
   const totalRisks = diagrams.reduce((sum, d) => sum + d.nodes.filter(n => n.type === 'event').length, 0);
 
   const stats = [
-    { label: 'TOTAL CLIENTS', value: 0, icon: Users },
-    { label: 'TOTAL PROCESSES', value: diagrams.length, icon: Network },
-    { label: 'TOTAL RISKS', value: totalRisks, icon: AlertTriangle },
-    { label: 'OPEN INCIDENTS', value: 0, icon: AlertCircle },
+    { label: 'TOTAL CLIENTS', value: 0, icon: Users, trend: null },
+    { label: 'TOTAL PROCESSES', value: diagrams.length, icon: Network, trend: diagrams.length > 0 ? '+' + diagrams.length : null },
+    { label: 'TOTAL RISKS', value: totalRisks, icon: AlertTriangle, trend: null },
+    { label: 'OPEN INCIDENTS', value: 0, icon: AlertCircle, trend: null },
   ];
 
   const quickActions = [
-    { label: 'Add Client', icon: UserPlus, onClick: () => {} },
-    { label: 'Add Business Process', icon: PlusCircle, onClick: () => navigate('/upload') },
-    { label: 'Upload Documents', icon: Upload, onClick: () => navigate('/upload') },
-    { label: 'Import Mainframe Data', icon: Database, onClick: () => {} },
+    { label: 'Add Client', description: 'Register a new client', icon: UserPlus, onClick: () => {} },
+    { label: 'Add Business Process', description: 'Create or extract a process', icon: PlusCircle, onClick: () => navigate('/upload') },
+    { label: 'Upload Documents', description: 'Upload diagram images', icon: Upload, onClick: () => navigate('/upload') },
+    { label: 'Import Mainframe Data', description: 'Import transaction logs', icon: Database, onClick: () => {} },
   ];
 
   const recentActivities = diagrams
@@ -48,22 +50,34 @@ export default function Dashboard() {
     }));
 
   return (
-    <div className="p-6 space-y-6 max-w-7xl">
+    <div className="p-8 space-y-8 max-w-7xl">
+      {/* Header */}
       <div>
-        <h1 className="text-2xl font-bold text-foreground">Welcome</h1>
-        <p className="text-sm text-muted-foreground">Business Process Analysis & Relationship Platform</p>
+        <h1 className="text-2xl font-bold text-foreground tracking-tight">Welcome back</h1>
+        <p className="text-sm text-muted-foreground mt-1">Business Process Analysis & Relationship Platform</p>
       </div>
 
       {/* Stats */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
         {stats.map((s) => (
-          <Card key={s.label} className="border-l-4 border-l-[hsl(var(--success))]">
-            <CardContent className="flex items-center justify-between p-5">
+          <Card key={s.label} className="group relative overflow-hidden border-0 shadow-sm hover:shadow-lg transition-all duration-300 cursor-default">
+            <div className="absolute inset-0 bg-gradient-to-br from-[hsl(var(--success))]/5 to-transparent" />
+            <div className="absolute top-0 left-0 w-1 h-full bg-[hsl(var(--success))] rounded-r" />
+            <CardContent className="relative flex items-center justify-between p-5">
               <div>
-                <p className="text-3xl font-bold text-[hsl(var(--success))]">{s.value}</p>
-                <p className="text-xs text-muted-foreground font-medium tracking-wide mt-1">{s.label}</p>
+                <div className="flex items-baseline gap-2">
+                  <p className="text-3xl font-extrabold text-foreground">{s.value}</p>
+                  {s.trend && (
+                    <span className="flex items-center gap-0.5 text-xs font-semibold text-[hsl(var(--success))]">
+                      <TrendingUp className="h-3 w-3" /> {s.trend}
+                    </span>
+                  )}
+                </div>
+                <p className="text-[10px] text-muted-foreground font-semibold tracking-widest mt-1.5 uppercase">{s.label}</p>
               </div>
-              <s.icon className="h-8 w-8 text-muted-foreground/30" />
+              <div className="h-11 w-11 rounded-xl bg-[hsl(var(--success))]/10 flex items-center justify-center group-hover:bg-[hsl(var(--success))]/20 transition-colors">
+                <s.icon className="h-5 w-5 text-[hsl(var(--success))]" />
+              </div>
             </CardContent>
           </Card>
         ))}
@@ -71,17 +85,23 @@ export default function Dashboard() {
 
       {/* Quick Actions */}
       <div>
-        <h2 className="text-lg font-semibold text-foreground mb-3">Quick Actions</h2>
+        <h2 className="text-base font-semibold text-foreground mb-4">Quick Actions</h2>
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
           {quickActions.map((a) => (
             <Card
               key={a.label}
-              className="cursor-pointer hover:shadow-md transition-shadow"
+              className="group cursor-pointer border-0 shadow-sm hover:shadow-lg transition-all duration-300 hover:-translate-y-0.5"
               onClick={a.onClick}
             >
-              <CardContent className="flex flex-col items-center justify-center py-8 gap-3">
-                <a.icon className="h-8 w-8 text-[hsl(var(--success))]" />
-                <span className="text-sm font-medium text-foreground">{a.label}</span>
+              <CardContent className="flex flex-col items-center justify-center py-8 gap-3 relative">
+                <div className="h-14 w-14 rounded-2xl bg-[hsl(var(--success))]/10 flex items-center justify-center group-hover:bg-[hsl(var(--success))]/20 group-hover:scale-110 transition-all duration-300">
+                  <a.icon className="h-7 w-7 text-[hsl(var(--success))]" />
+                </div>
+                <div className="text-center">
+                  <span className="text-sm font-semibold text-foreground block">{a.label}</span>
+                  <span className="text-[11px] text-muted-foreground mt-0.5 block">{a.description}</span>
+                </div>
+                <ArrowUpRight className="absolute top-3 right-3 h-3.5 w-3.5 text-muted-foreground/0 group-hover:text-muted-foreground/50 transition-all" />
               </CardContent>
             </Card>
           ))}
@@ -90,20 +110,26 @@ export default function Dashboard() {
 
       {/* Recent Activities */}
       <div>
-        <h2 className="text-lg font-semibold text-foreground mb-3">Recent Activities</h2>
-        <Card>
+        <h2 className="text-base font-semibold text-foreground mb-4">Recent Activities</h2>
+        <Card className="border-0 shadow-sm overflow-hidden">
           <CardContent className="p-0">
             {recentActivities.length === 0 ? (
-              <p className="p-6 text-sm text-muted-foreground text-center">No recent activities</p>
+              <div className="flex flex-col items-center justify-center py-14 gap-3">
+                <div className="h-12 w-12 rounded-full bg-muted flex items-center justify-center">
+                  <Network className="h-5 w-5 text-muted-foreground/50" />
+                </div>
+                <p className="text-sm text-muted-foreground">No recent activities yet</p>
+                <p className="text-xs text-muted-foreground/60">Activities will appear here as you work</p>
+              </div>
             ) : (
-              <div className="divide-y">
+              <div className="divide-y divide-border/50">
                 {recentActivities.map((a, i) => (
-                  <div key={i} className="flex items-center gap-3 px-6 py-4">
-                    <div className="h-8 w-8 rounded-full bg-[hsl(var(--success))]/10 flex items-center justify-center">
+                  <div key={i} className="flex items-center gap-4 px-6 py-4 hover:bg-muted/30 transition-colors">
+                    <div className="h-9 w-9 rounded-full bg-[hsl(var(--success))]/10 flex items-center justify-center flex-shrink-0">
                       <a.icon className="h-4 w-4 text-[hsl(var(--success))]" />
                     </div>
-                    <div>
-                      <p className="text-sm font-medium text-foreground">{a.text}</p>
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm font-medium text-foreground truncate">{a.text}</p>
                       <p className="text-xs text-muted-foreground">{a.time}</p>
                     </div>
                   </div>
