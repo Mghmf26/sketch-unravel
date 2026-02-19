@@ -9,43 +9,117 @@ interface EPCNodeData {
   [key: string]: unknown;
 }
 
-const STYLE_MAP: Record<NodeType, { bg: string; border: string; text: string; shape: string }> = {
-  'in-scope': { bg: '#dcfce7', border: '#16a34a', text: '#14532d', shape: 'rounded-lg' },
-  'interface': { bg: '#f8fafc', border: '#94a3b8', text: '#1e293b', shape: 'rounded-sm' },
-  'event': { bg: '#fce7f3', border: '#db2777', text: '#831843', shape: 'clip-hexagon' },
-  'xor': { bg: '#dbeafe', border: '#2563eb', text: '#1e3a8a', shape: 'rounded-full' },
+const STYLE_MAP: Record<NodeType, {
+  bgGradient: string; border: string; text: string; shadow: string; badgeBg: string;
+}> = {
+  'in-scope': {
+    bgGradient: 'linear-gradient(135deg, #ecfdf5 0%, #d1fae5 100%)',
+    border: '#10b981', text: '#065f46',
+    shadow: '0 4px 14px -2px rgba(16,185,129,0.20)', badgeBg: '#d1fae5',
+  },
+  'interface': {
+    bgGradient: 'linear-gradient(135deg, #ffffff 0%, #f1f5f9 100%)',
+    border: '#64748b', text: '#1e293b',
+    shadow: '0 4px 14px -2px rgba(100,116,139,0.15)', badgeBg: '#e2e8f0',
+  },
+  'event': {
+    bgGradient: 'linear-gradient(135deg, #fdf2f8 0%, #fce7f3 100%)',
+    border: '#ec4899', text: '#831843',
+    shadow: '0 4px 14px -2px rgba(236,72,153,0.20)', badgeBg: '#fce7f3',
+  },
+  'xor': {
+    bgGradient: 'linear-gradient(135deg, #eff6ff 0%, #dbeafe 100%)',
+    border: '#3b82f6', text: '#1e3a8a',
+    shadow: '0 4px 14px -2px rgba(59,130,246,0.20)', badgeBg: '#dbeafe',
+  },
 };
+
+const TYPE_LABELS: Record<NodeType, string> = {
+  'in-scope': 'Process', 'interface': 'Interface', 'event': 'Event', 'xor': 'XOR',
+};
+
+const handleStyle = (color: string) => ({
+  background: color, width: 10, height: 10,
+  border: '2px solid white', boxShadow: `0 0 0 1px ${color}40`,
+});
 
 function EPCCustomNode({ data }: NodeProps) {
   const d = data as EPCNodeData;
-  const style = STYLE_MAP[d.nodeType] || STYLE_MAP['in-scope'];
+  const s = STYLE_MAP[d.nodeType] || STYLE_MAP['in-scope'];
   const isXor = d.nodeType === 'xor';
   const isEvent = d.nodeType === 'event';
 
+  if (isXor) {
+    return (
+      <div className="flex flex-col items-center">
+        <span className="text-[9px] font-mono font-medium tracking-tight px-1.5 py-0.5 rounded-md mb-1.5"
+          style={{ color: s.border, backgroundColor: s.badgeBg }}>{d.nodeId}</span>
+        <div className="relative flex items-center justify-center"
+          style={{
+            width: 72, height: 72, background: s.bgGradient,
+            border: `2px solid ${s.border}`, borderRadius: 14,
+            transform: 'rotate(45deg)', boxShadow: s.shadow,
+          }}>
+          <Handle type="target" position={Position.Top} style={{ ...handleStyle(s.border), transform: 'rotate(-45deg)' }} />
+          <span className="text-xs font-bold" style={{ color: s.text, transform: 'rotate(-45deg)' }}>XOR</span>
+          <Handle type="source" position={Position.Bottom} style={{ ...handleStyle(s.border), transform: 'rotate(-45deg)' }} />
+        </div>
+        {d.label && d.label !== 'XOR' && (
+          <span className="mt-1.5 text-[10px] font-medium max-w-[120px] text-center leading-tight" style={{ color: s.text }}>
+            {d.label}
+          </span>
+        )}
+      </div>
+    );
+  }
+
+  if (isEvent) {
+    return (
+      <div className="flex flex-col items-center">
+        <div className="flex items-center gap-1.5 mb-1.5">
+          <span className="text-[9px] font-mono font-medium tracking-tight px-1.5 py-0.5 rounded-md"
+            style={{ color: s.border, backgroundColor: s.badgeBg }}>{d.nodeId}</span>
+          <span className="text-[9px] font-semibold px-2 py-0.5 rounded-full border"
+            style={{ borderColor: s.border, color: s.text, backgroundColor: s.badgeBg }}>
+            {TYPE_LABELS[d.nodeType]}
+          </span>
+        </div>
+        <div className="relative flex items-center justify-center"
+          style={{
+            minWidth: 160, minHeight: 72, background: s.bgGradient,
+            border: `2px solid ${s.border}`,
+            clipPath: 'polygon(20% 0%, 80% 0%, 100% 50%, 80% 100%, 20% 100%, 0% 50%)',
+            padding: '16px 36px', boxShadow: s.shadow,
+          }}>
+          <Handle type="target" position={Position.Top} style={handleStyle(s.border)} />
+          <span className="text-xs font-semibold leading-tight">{d.label}</span>
+          <Handle type="source" position={Position.Bottom} style={handleStyle(s.border)} />
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="flex flex-col items-center">
-      {/* Node ID label above */}
-      <div className="text-[10px] font-mono mb-1 px-1 rounded"
-        style={{ color: style.border, backgroundColor: `${style.bg}dd` }}>
-        {d.nodeId}
-      </div>
-
-      <div
-        className={`relative flex items-center justify-center text-center px-4 py-3 border-2 shadow-sm min-w-[180px] max-w-[240px] ${isXor ? 'rounded-full min-w-[70px] max-w-[70px] min-h-[70px] max-h-[70px] p-2' : isEvent ? 'min-w-[160px]' : 'rounded-lg'}`}
-        style={{
-          backgroundColor: style.bg,
-          borderColor: style.border,
-          color: style.text,
-          clipPath: isEvent ? 'polygon(25% 0%, 75% 0%, 100% 50%, 75% 100%, 25% 100%, 0% 50%)' : undefined,
-          minHeight: isEvent ? '80px' : undefined,
-          padding: isEvent ? '16px 32px' : undefined,
-        }}
-      >
-        <Handle type="target" position={Position.Top} className="!bg-slate-400 !w-2 !h-2" />
-        <span className={`${isXor ? 'text-xs font-bold' : 'text-xs leading-tight'}`}>
-          {isXor ? 'XOR' : d.label}
+      <div className="flex items-center gap-1.5 mb-1.5">
+        <span className="text-[9px] font-mono font-medium tracking-tight px-1.5 py-0.5 rounded-md"
+          style={{ color: s.border, backgroundColor: s.badgeBg }}>{d.nodeId}</span>
+        <span className="text-[9px] font-semibold px-2 py-0.5 rounded-full border"
+          style={{ borderColor: s.border, color: s.text, backgroundColor: s.badgeBg }}>
+          {TYPE_LABELS[d.nodeType]}
         </span>
-        <Handle type="source" position={Position.Bottom} className="!bg-slate-400 !w-2 !h-2" />
+      </div>
+      <div className="relative flex items-center justify-center text-center"
+        style={{
+          minWidth: 190, maxWidth: 260, padding: '14px 20px',
+          background: s.bgGradient, border: `2px solid ${s.border}`,
+          borderRadius: d.nodeType === 'interface' ? 8 : 12,
+          boxShadow: s.shadow,
+          ...(d.nodeType === 'interface' ? { borderLeft: `4px solid ${s.border}` } : {}),
+        }}>
+        <Handle type="target" position={Position.Top} style={handleStyle(s.border)} />
+        <span className="text-xs font-medium leading-snug">{d.label}</span>
+        <Handle type="source" position={Position.Bottom} style={handleStyle(s.border)} />
       </div>
     </div>
   );

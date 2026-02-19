@@ -34,11 +34,11 @@ const nodeTypes = { epc: EditableEPCNode };
 const EDGE_STYLE = {
   type: 'smoothstep' as const,
   animated: false,
-  style: { stroke: '#64748b', strokeWidth: 2 },
-  markerEnd: { type: MarkerType.ArrowClosed, color: '#64748b' },
-  labelStyle: { fontSize: 11, fontWeight: 600, fill: '#475569' },
-  labelBgStyle: { fill: '#f1f5f9', stroke: '#cbd5e1', strokeWidth: 1 },
-  labelBgPadding: [6, 4] as [number, number],
+  style: { stroke: '#94a3b8', strokeWidth: 2.5 },
+  markerEnd: { type: MarkerType.ArrowClosed, color: '#64748b', width: 18, height: 18 },
+  labelStyle: { fontSize: 11, fontWeight: 700, fill: '#334155', letterSpacing: '0.02em' },
+  labelBgStyle: { fill: '#f8fafc', stroke: '#e2e8f0', strokeWidth: 1, rx: 6, ry: 6 },
+  labelBgPadding: [8, 5] as [number, number],
 };
 
 function toFlowElements(
@@ -187,14 +187,25 @@ export default function DiagramCanvasEditor({ nodes: epcNodes, connections: epcC
         fitViewOptions={{ padding: 0.15 }}
         deleteKeyCode="Delete"
         attributionPosition="bottom-left"
-        connectionLineStyle={{ stroke: '#64748b', strokeWidth: 2 }}
+        connectionLineStyle={{ stroke: '#94a3b8', strokeWidth: 2.5 }}
         defaultEdgeOptions={EDGE_STYLE}
         snapToGrid
         snapGrid={[15, 15]}
+        style={{ background: '#f8fafc' }}
       >
-        <Background gap={15} />
-        <Controls />
-        <MiniMap nodeStrokeWidth={2} pannable zoomable />
+        <Background gap={20} size={1} color="#e2e8f0" />
+        <Controls className="!bg-white !border-border !shadow-lg !rounded-lg" />
+        <MiniMap
+          nodeStrokeWidth={2} pannable zoomable
+          style={{ border: '1px solid #e2e8f0', borderRadius: 8 }}
+          nodeColor={(n: any) => {
+            const t = n.data?.nodeType;
+            if (t === 'in-scope') return '#10b981';
+            if (t === 'event') return '#ec4899';
+            if (t === 'xor') return '#3b82f6';
+            return '#94a3b8';
+          }}
+        />
 
         <Panel position="top-right" className="flex gap-2">
           <DropdownMenu>
