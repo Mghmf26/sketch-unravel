@@ -1,4 +1,4 @@
-export type NodeType = 'in-scope' | 'interface' | 'event' | 'xor';
+export type NodeType = 'in-scope' | 'interface' | 'event' | 'xor' | 'start-end' | 'decision' | 'storage' | 'delay' | 'document';
 
 export interface EPCNode {
   id: string;
