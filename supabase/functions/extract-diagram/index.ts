@@ -19,9 +19,9 @@ serve(async (req) => {
       });
     }
 
-    const LOVABLE_API_KEY = Deno.env.get('LOVABLE_API_KEY');
-    if (!LOVABLE_API_KEY) {
-      return new Response(JSON.stringify({ error: 'Lovable API key not configured' }), {
+    const GEMINI_API_KEY = Deno.env.get('GEMINI_API_KEY');
+    if (!GEMINI_API_KEY) {
+      return new Response(JSON.stringify({ error: 'Gemini API key not configured' }), {
         status: 500,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       });
@@ -116,41 +116,27 @@ IMPORTANT: Pay extra attention to arrows around XOR gateways.`;
     // Strip the data URI prefix to get raw base64
     const base64Data = imageBase64.replace(/^data:image\/\w+;base64,/, '');
 
-    // Use Lovable AI Gateway with vision-capable model
-    const response = await fetch('https://ai.gateway.lovable.dev/v1/chat/completions', {
+    const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${GEMINI_API_KEY}`, {
       method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${LOVABLE_API_KEY}`,
-        'Content-Type': 'application/json',
-      },
+      headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
-        model: 'google/gemini-2.5-pro',
-        messages: [
-          { role: 'system', content: systemPrompt },
-          {
-            role: 'user',
-            content: [
-              { type: 'text', text: userPrompt },
-              { type: 'image_url', image_url: { url: `data:image/png;base64,${base64Data}` } },
-            ],
-          },
-        ],
+        systemInstruction: { parts: [{ text: systemPrompt }] },
+        contents: [{
+          parts: [
+            { text: userPrompt },
+            { inlineData: { mimeType: 'image/png', data: base64Data } },
+          ],
+        }],
       }),
     });
 
     if (!response.ok) {
       const errorText = await response.text();
-      console.error('AI gateway error:', response.status, errorText);
+      console.error('Gemini API error:', response.status, errorText);
       
       if (response.status === 429) {
         return new Response(JSON.stringify({ error: 'Rate limit exceeded. Please try again in a moment.' }), {
           status: 429,
-          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-        });
-      }
-      if (response.status === 402) {
-        return new Response(JSON.stringify({ error: 'Usage limit reached. Please add credits.' }), {
-          status: 402,
           headers: { ...corsHeaders, 'Content-Type': 'application/json' },
         });
       }
@@ -162,9 +148,9 @@ IMPORTANT: Pay extra attention to arrows around XOR gateways.`;
     }
 
     const result = await response.json();
-    const content = result.choices?.[0]?.message?.content || '';
+    const content = result.candidates?.[0]?.content?.parts?.[0]?.text || '';
     
-    // Extract JSON from the response (it might be wrapped in markdown code blocks)
+    // Extract JSON from the response
     let jsonStr = content;
     const jsonMatch = content.match(/```(?:json)?\s*([\s\S]*?)```/);
     if (jsonMatch) {
