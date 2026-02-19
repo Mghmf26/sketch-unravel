@@ -1,6 +1,6 @@
 import { useState, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Upload, Sparkles, ScanText, Loader2, Check, AlertCircle, ArrowLeft, Image, Eye, ChevronRight, Table2, LayoutGrid } from 'lucide-react';
+import { Upload, Sparkles, ScanText, Loader2, Check, AlertCircle, ArrowLeft, Image, Eye, ChevronRight, Table2, LayoutGrid, PenLine } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { toast } from '@/hooks/use-toast';
@@ -19,16 +19,16 @@ interface ExtractionData {
   connections: EPCConnection[];
 }
 
-// Node type colors moved to ExtractionResultsEditor component
+type MethodChoice = 'ai' | 'ocr' | 'manual' | null;
 
 export default function UploadExtract() {
   const navigate = useNavigate();
   const fileRef = useRef<HTMLInputElement>(null);
+  const [methodChoice, setMethodChoice] = useState<MethodChoice>(null);
   const [imagePreview, setImagePreview] = useState<string | null>(null);
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [loading, setLoading] = useState(false);
   const [progress, setProgress] = useState('');
-  const [method, setMethod] = useState<'ai' | 'ocr' | null>(null);
   const [extractedData, setExtractedData] = useState<ExtractionData | null>(null);
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -64,10 +64,8 @@ export default function UploadExtract() {
   const handleExtractAI = async () => {
     if (!imagePreview) return;
     setLoading(true);
-    setMethod('ai');
     setExtractedData(null);
     setProgress('Sending image to AI for analysis...');
-
     try {
       const { data, error } = await supabase.functions.invoke('extract-diagram', {
         body: { imageBase64: imagePreview },
@@ -92,9 +90,7 @@ export default function UploadExtract() {
   const handleExtractOCR = async () => {
     if (!selectedFile) return;
     setLoading(true);
-    setMethod('ocr');
     setExtractedData(null);
-
     try {
       const result = await extractWithOCR(selectedFile, setProgress);
       setProgress('Extraction complete!');
@@ -119,127 +115,165 @@ export default function UploadExtract() {
     reader.readAsDataURL(file);
   };
 
+  const handleMethodSelect = (m: MethodChoice) => {
+    if (m === 'manual') {
+      navigate('/data-entry');
+      return;
+    }
+    setMethodChoice(m);
+  };
+
   return (
     <div className="min-h-screen bg-muted/30">
       {/* Header */}
       <div className="sticky top-0 z-10 bg-background/95 backdrop-blur border-b">
         <div className="max-w-4xl mx-auto flex items-center gap-3 px-6 py-3">
-          <Button variant="ghost" size="icon" onClick={() => navigate('/')}>
+          <Button variant="ghost" size="icon" onClick={() => methodChoice ? setMethodChoice(null) : navigate('/')}>
             <ArrowLeft className="h-4 w-4" />
           </Button>
           <div>
-            <h1 className="text-lg font-bold text-foreground">Upload & Extract Diagram</h1>
-            <p className="text-xs text-muted-foreground">Upload an EPC diagram image and extract nodes, connections, and relationships</p>
+            <h1 className="text-lg font-bold text-foreground">
+              {!methodChoice ? 'Add New Business Process' : 'Upload & Extract Diagram'}
+            </h1>
+            <p className="text-xs text-muted-foreground">
+              {!methodChoice
+                ? 'Choose how you want to create your business process'
+                : methodChoice === 'ai'
+                  ? 'Upload a diagram image for AI-powered extraction'
+                  : 'Upload a diagram image for OCR-based extraction'}
+            </p>
           </div>
         </div>
       </div>
 
       <div className="p-6 max-w-4xl mx-auto space-y-6">
-        {/* Upload area */}
-        <Card className="overflow-hidden">
-          <CardContent className="p-0">
-            <input ref={fileRef} type="file" accept="image/*" className="hidden" onChange={handleFileChange} />
-            
-            {!imagePreview ? (
-              <div
-                className="border-2 border-dashed border-border rounded-xl m-4 p-12 text-center cursor-pointer hover:border-primary/50 hover:bg-muted/30 transition-all"
-                onClick={() => fileRef.current?.click()}
-                onDragOver={(e) => e.preventDefault()}
-                onDrop={handleDrop}
-              >
-                <div className="w-16 h-16 rounded-2xl bg-primary/10 flex items-center justify-center mx-auto mb-4">
-                  <Upload className="h-8 w-8 text-primary" />
-                </div>
-                <h2 className="text-lg font-semibold text-foreground mb-1">Drop your diagram image here</h2>
-                <p className="text-sm text-muted-foreground">or click to browse — supports PNG, JPG, WEBP</p>
-              </div>
-            ) : (
-              <div className="relative">
-                <div className="bg-muted/40 p-4">
-                  <img src={imagePreview} alt="Uploaded diagram" className="w-full max-h-[350px] object-contain rounded-lg" />
-                </div>
-                <div className="absolute top-3 right-3 flex gap-2">
-                  <Button
-                    variant="secondary"
-                    size="sm"
-                    className="shadow-md"
-                    onClick={() => { setImagePreview(null); setSelectedFile(null); setProgress(''); setExtractedData(null); }}
-                  >
-                    <Image className="mr-1 h-3.5 w-3.5" /> Change
-                  </Button>
-                </div>
-              </div>
-            )}
-          </CardContent>
-        </Card>
-
-        {/* Extraction methods */}
-        {imagePreview && !extractedData && (
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            {/* AI Method */}
-            <Card className={`transition-all ${method === 'ai' && loading ? 'ring-2 ring-primary shadow-lg' : 'hover:shadow-md'}`}>
+        {/* Step 1: Method selection */}
+        {!methodChoice && (
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
+            {/* AI Vision */}
+            <Card className="hover:shadow-lg hover:-translate-y-0.5 transition-all cursor-pointer group" onClick={() => handleMethodSelect('ai')}>
               <CardHeader className="pb-3">
-                <CardTitle className="flex items-center gap-2 text-base">
-                  <div className="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center">
-                    <Sparkles className="h-4 w-4 text-primary" />
-                  </div>
-                  AI Vision Extraction
-                </CardTitle>
+                <div className="w-12 h-12 rounded-xl bg-primary/10 flex items-center justify-center mb-3 group-hover:bg-primary/20 transition-colors">
+                  <Sparkles className="h-6 w-6 text-primary" />
+                </div>
+                <CardTitle className="text-base">AI Vision Extraction</CardTitle>
                 <CardDescription className="text-xs">
-                  AI analyzes shapes, colors, text, arrows and extracts everything with high accuracy.
+                  Upload a diagram image and let AI analyze shapes, text, arrows & connections automatically.
                 </CardDescription>
               </CardHeader>
               <CardContent className="pt-0">
-                <ul className="text-xs text-muted-foreground space-y-1.5 mb-4">
-                  <li className="flex items-center gap-1.5"><Check className="h-3 w-3 text-emerald-500 shrink-0" /> Accurate node type & shape detection</li>
-                  <li className="flex items-center gap-1.5"><Check className="h-3 w-3 text-emerald-500 shrink-0" /> Detects XOR gateways & decision labels</li>
-                  <li className="flex items-center gap-1.5"><Check className="h-3 w-3 text-emerald-500 shrink-0" /> Understands arrow directions & Yes/No branches</li>
-                  <li className="flex items-center gap-1.5"><AlertCircle className="h-3 w-3 text-amber-500 shrink-0" /> Uses AI credits (minimal cost)</li>
+                <ul className="text-xs text-muted-foreground space-y-1.5">
+                  <li className="flex items-center gap-1.5"><Check className="h-3 w-3 text-emerald-500 shrink-0" /> Highest accuracy</li>
+                  <li className="flex items-center gap-1.5"><Check className="h-3 w-3 text-emerald-500 shrink-0" /> Detects all node types & branches</li>
+                  <li className="flex items-center gap-1.5"><AlertCircle className="h-3 w-3 text-amber-500 shrink-0" /> Uses AI credits</li>
                 </ul>
-                <Button onClick={handleExtractAI} disabled={loading} className="w-full">
-                  {loading && method === 'ai' ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Sparkles className="mr-2 h-4 w-4" />}
-                  Extract with AI
-                </Button>
               </CardContent>
             </Card>
 
-            {/* OCR + Shape Detection Method */}
-            <Card className={`transition-all ${method === 'ocr' && loading ? 'ring-2 ring-primary shadow-lg' : 'hover:shadow-md'}`}>
+            {/* OCR + Shape */}
+            <Card className="hover:shadow-lg hover:-translate-y-0.5 transition-all cursor-pointer group" onClick={() => handleMethodSelect('ocr')}>
               <CardHeader className="pb-3">
-                <CardTitle className="flex items-center gap-2 text-base">
-                  <div className="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center">
-                    <ScanText className="h-4 w-4 text-primary" />
-                  </div>
-                  OCR + Shape Detection
-                </CardTitle>
+                <div className="w-12 h-12 rounded-xl bg-primary/10 flex items-center justify-center mb-3 group-hover:bg-primary/20 transition-colors">
+                  <ScanText className="h-6 w-6 text-primary" />
+                </div>
+                <CardTitle className="text-base">OCR + Shape Detection</CardTitle>
                 <CardDescription className="text-xs">
-                  Browser-based OCR for text, canvas pixel analysis for colors, shapes, and line tracing for arrows.
+                  Browser-based OCR & pixel analysis — free but may need manual adjustments.
                 </CardDescription>
               </CardHeader>
               <CardContent className="pt-0">
-                <ul className="text-xs text-muted-foreground space-y-1.5 mb-4">
-                  <li className="flex items-center gap-1.5"><Check className="h-3 w-3 text-emerald-500 shrink-0" /> 100% free, runs in browser</li>
-                  <li className="flex items-center gap-1.5"><Check className="h-3 w-3 text-emerald-500 shrink-0" /> Shape & color region detection</li>
-                  <li className="flex items-center gap-1.5"><Check className="h-3 w-3 text-emerald-500 shrink-0" /> Arrow/line tracing for connections</li>
-                  <li className="flex items-center gap-1.5"><AlertCircle className="h-3 w-3 text-amber-500 shrink-0" /> May need manual adjustments</li>
+                <ul className="text-xs text-muted-foreground space-y-1.5">
+                  <li className="flex items-center gap-1.5"><Check className="h-3 w-3 text-emerald-500 shrink-0" /> 100% free, runs locally</li>
+                  <li className="flex items-center gap-1.5"><Check className="h-3 w-3 text-emerald-500 shrink-0" /> Shape & color detection</li>
+                  <li className="flex items-center gap-1.5"><AlertCircle className="h-3 w-3 text-amber-500 shrink-0" /> May need edits after</li>
                 </ul>
-                <Button onClick={handleExtractOCR} disabled={loading} variant="outline" className="w-full">
-                  {loading && method === 'ocr' ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <ScanText className="mr-2 h-4 w-4" />}
-                  Extract with OCR
-                </Button>
+              </CardContent>
+            </Card>
+
+            {/* Manual */}
+            <Card className="hover:shadow-lg hover:-translate-y-0.5 transition-all cursor-pointer group" onClick={() => handleMethodSelect('manual')}>
+              <CardHeader className="pb-3">
+                <div className="w-12 h-12 rounded-xl bg-primary/10 flex items-center justify-center mb-3 group-hover:bg-primary/20 transition-colors">
+                  <PenLine className="h-6 w-6 text-primary" />
+                </div>
+                <CardTitle className="text-base">Build Manually</CardTitle>
+                <CardDescription className="text-xs">
+                  Create a process from scratch using the form editor — add nodes, connections & details by hand.
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="pt-0">
+                <ul className="text-xs text-muted-foreground space-y-1.5">
+                  <li className="flex items-center gap-1.5"><Check className="h-3 w-3 text-emerald-500 shrink-0" /> Full control over structure</li>
+                  <li className="flex items-center gap-1.5"><Check className="h-3 w-3 text-emerald-500 shrink-0" /> No image needed</li>
+                  <li className="flex items-center gap-1.5"><Check className="h-3 w-3 text-emerald-500 shrink-0" /> Add any node type</li>
+                </ul>
               </CardContent>
             </Card>
           </div>
         )}
 
-        {/* Progress */}
-        {progress && !extractedData && (
-          <Card className="border-primary/20">
-            <CardContent className="p-4 flex items-center gap-3">
-              {loading && <Loader2 className="h-4 w-4 animate-spin text-primary shrink-0" />}
-              <span className="text-sm text-foreground">{progress}</span>
-            </CardContent>
-          </Card>
+        {/* Step 2: Image upload (for AI or OCR) */}
+        {methodChoice && !extractedData && (
+          <>
+            <Card className="overflow-hidden">
+              <CardContent className="p-0">
+                <input ref={fileRef} type="file" accept="image/*" className="hidden" onChange={handleFileChange} />
+                {!imagePreview ? (
+                  <div
+                    className="border-2 border-dashed border-border rounded-xl m-4 p-12 text-center cursor-pointer hover:border-primary/50 hover:bg-muted/30 transition-all"
+                    onClick={() => fileRef.current?.click()}
+                    onDragOver={(e) => e.preventDefault()}
+                    onDrop={handleDrop}
+                  >
+                    <div className="w-16 h-16 rounded-2xl bg-primary/10 flex items-center justify-center mx-auto mb-4">
+                      <Upload className="h-8 w-8 text-primary" />
+                    </div>
+                    <h2 className="text-lg font-semibold text-foreground mb-1">Drop your diagram image here</h2>
+                    <p className="text-sm text-muted-foreground">or click to browse — supports PNG, JPG, WEBP</p>
+                  </div>
+                ) : (
+                  <div className="relative">
+                    <div className="bg-muted/40 p-4">
+                      <img src={imagePreview} alt="Uploaded diagram" className="w-full max-h-[350px] object-contain rounded-lg" />
+                    </div>
+                    <div className="absolute top-3 right-3 flex gap-2">
+                      <Button variant="secondary" size="sm" className="shadow-md"
+                        onClick={() => { setImagePreview(null); setSelectedFile(null); setProgress(''); setExtractedData(null); }}>
+                        <Image className="mr-1 h-3.5 w-3.5" /> Change
+                      </Button>
+                    </div>
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+
+            {/* Extract button */}
+            {imagePreview && (
+              <div className="flex justify-center">
+                {methodChoice === 'ai' ? (
+                  <Button onClick={handleExtractAI} disabled={loading} size="lg" className="shadow-md">
+                    {loading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Sparkles className="mr-2 h-4 w-4" />}
+                    Extract with AI Vision
+                  </Button>
+                ) : (
+                  <Button onClick={handleExtractOCR} disabled={loading} size="lg" variant="outline" className="shadow-md">
+                    {loading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <ScanText className="mr-2 h-4 w-4" />}
+                    Extract with OCR
+                  </Button>
+                )}
+              </div>
+            )}
+
+            {/* Progress */}
+            {progress && (
+              <Card className="border-primary/20">
+                <CardContent className="p-4 flex items-center gap-3">
+                  {loading && <Loader2 className="h-4 w-4 animate-spin text-primary shrink-0" />}
+                  <span className="text-sm text-foreground">{progress}</span>
+                </CardContent>
+              </Card>
+            )}
+          </>
         )}
 
         {/* Extraction Results Preview */}
@@ -253,9 +287,7 @@ export default function UploadExtract() {
                 </p>
               </div>
               <div className="flex gap-2">
-                <Button variant="outline" size="sm" onClick={() => setExtractedData(null)}>
-                  Re-extract
-                </Button>
+                <Button variant="outline" size="sm" onClick={() => setExtractedData(null)}>Re-extract</Button>
                 <Button size="sm" onClick={handleSaveAndView}>
                   <Eye className="mr-2 h-3.5 w-3.5" /> Save & View
                   <ChevronRight className="ml-1 h-3.5 w-3.5" />
@@ -272,7 +304,6 @@ export default function UploadExtract() {
                   <Table2 className="h-3.5 w-3.5" /> Table
                 </TabsTrigger>
               </TabsList>
-
               <TabsContent value="canvas">
                 <DiagramCanvasEditor
                   nodes={extractedData.nodes}
@@ -280,7 +311,6 @@ export default function UploadExtract() {
                   onChange={(nodes, connections) => setExtractedData({ ...extractedData, nodes, connections })}
                 />
               </TabsContent>
-
               <TabsContent value="table">
                 <ExtractionResultsEditor
                   nodes={extractedData.nodes}
@@ -292,7 +322,6 @@ export default function UploadExtract() {
               </TabsContent>
             </Tabs>
 
-            {/* Bottom action */}
             <div className="flex justify-end">
               <Button onClick={handleSaveAndView} size="lg">
                 <Eye className="mr-2 h-4 w-4" /> Save & View Diagram
