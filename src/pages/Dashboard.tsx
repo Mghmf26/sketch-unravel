@@ -60,23 +60,21 @@ export default function Dashboard() {
       {/* Stats */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
         {stats.map((s) => (
-          <Card key={s.label} className="group relative overflow-hidden border-0 shadow-sm hover:shadow-lg transition-all duration-300 cursor-default">
-            <div className="absolute inset-0 bg-gradient-to-br from-[hsl(var(--success))]/5 to-transparent" />
-            <div className="absolute top-0 left-0 w-1 h-full bg-[hsl(var(--success))] rounded-r" />
+          <Card key={s.label} className="group relative overflow-hidden border border-dashed border-primary/40 shadow-sm hover:shadow-lg transition-all duration-300 cursor-default bg-card">
             <CardContent className="relative flex items-center justify-between p-5">
               <div>
                 <div className="flex items-baseline gap-2">
-                  <p className="text-3xl font-extrabold text-foreground">{s.value}</p>
+                  <p className="text-3xl font-extrabold text-primary">{s.value}</p>
                   {s.trend && (
-                    <span className="flex items-center gap-0.5 text-xs font-semibold text-[hsl(var(--success))]">
+                    <span className="flex items-center gap-0.5 text-xs font-semibold text-primary">
                       <TrendingUp className="h-3 w-3" /> {s.trend}
                     </span>
                   )}
                 </div>
                 <p className="text-[10px] text-muted-foreground font-semibold tracking-widest mt-1.5 uppercase">{s.label}</p>
               </div>
-              <div className="h-11 w-11 rounded-xl bg-[hsl(var(--success))]/10 flex items-center justify-center group-hover:bg-[hsl(var(--success))]/20 transition-colors">
-                <s.icon className="h-5 w-5 text-[hsl(var(--success))]" />
+              <div className="h-11 w-11 rounded-xl bg-primary/10 flex items-center justify-center group-hover:bg-primary/20 transition-colors">
+                <s.icon className="h-5 w-5 text-primary" />
               </div>
             </CardContent>
           </Card>
@@ -90,12 +88,12 @@ export default function Dashboard() {
           {quickActions.map((a) => (
             <Card
               key={a.label}
-              className="group cursor-pointer border-0 shadow-sm hover:shadow-lg transition-all duration-300 hover:-translate-y-0.5"
+              className="group cursor-pointer border shadow-sm hover:shadow-lg transition-all duration-300 hover:-translate-y-0.5 bg-card"
               onClick={a.onClick}
             >
               <CardContent className="flex flex-col items-center justify-center py-8 gap-3 relative">
-                <div className="h-14 w-14 rounded-2xl bg-[hsl(var(--success))]/10 flex items-center justify-center group-hover:bg-[hsl(var(--success))]/20 group-hover:scale-110 transition-all duration-300">
-                  <a.icon className="h-7 w-7 text-[hsl(var(--success))]" />
+                <div className="h-14 w-14 rounded-2xl bg-primary/10 flex items-center justify-center group-hover:bg-primary/20 group-hover:scale-110 transition-all duration-300">
+                  <a.icon className="h-7 w-7 text-primary" />
                 </div>
                 <div className="text-center">
                   <span className="text-sm font-semibold text-foreground block">{a.label}</span>
@@ -111,7 +109,7 @@ export default function Dashboard() {
       {/* Recent Activities */}
       <div>
         <h2 className="text-base font-semibold text-foreground mb-4">Recent Activities</h2>
-        <Card className="border-0 shadow-sm overflow-hidden">
+        <Card className="border shadow-sm overflow-hidden bg-card">
           <CardContent className="p-0">
             {recentActivities.length === 0 ? (
               <div className="flex flex-col items-center justify-center py-14 gap-3">
@@ -125,8 +123,8 @@ export default function Dashboard() {
               <div className="divide-y divide-border/50">
                 {recentActivities.map((a, i) => (
                   <div key={i} className="flex items-center gap-4 px-6 py-4 hover:bg-muted/30 transition-colors">
-                    <div className="h-9 w-9 rounded-full bg-[hsl(var(--success))]/10 flex items-center justify-center flex-shrink-0">
-                      <a.icon className="h-4 w-4 text-[hsl(var(--success))]" />
+                    <div className="h-9 w-9 rounded-full bg-primary/10 flex items-center justify-center flex-shrink-0">
+                      <a.icon className="h-4 w-4 text-primary" />
                     </div>
                     <div className="flex-1 min-w-0">
                       <p className="text-sm font-medium text-foreground truncate">{a.text}</p>

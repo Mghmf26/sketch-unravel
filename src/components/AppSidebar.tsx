@@ -42,7 +42,7 @@ export function AppSidebar() {
         {/* Brand header */}
         <div className="px-4 py-5 border-b border-sidebar-border">
           <div className="flex items-center gap-2.5">
-            <div className="h-9 w-9 rounded-lg bg-[hsl(80,60%,45%)] flex items-center justify-center shadow-sm">
+            <div className="h-9 w-9 rounded-lg bg-sidebar-primary flex items-center justify-center shadow-sm">
               <Workflow className="h-5 w-5 text-white" />
             </div>
             <div>
@@ -68,7 +68,7 @@ export function AppSidebar() {
                         to={item.url}
                         end
                         className="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sidebar-foreground/80 hover:bg-sidebar-accent hover:text-sidebar-foreground transition-all duration-150"
-                        activeClassName="bg-[hsl(80,60%,45%)] text-white shadow-md shadow-[hsl(80,60%,45%)]/25 hover:bg-[hsl(80,60%,45%)] hover:text-white"
+                        activeClassName="bg-sidebar-primary text-white shadow-md shadow-sidebar-primary/25 hover:bg-sidebar-primary hover:text-white"
                       >
                         <item.icon className="h-[18px] w-[18px]" />
                         <span className="text-[13px] font-medium">{item.title}</span>
