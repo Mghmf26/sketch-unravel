@@ -1,17 +1,26 @@
 import { useNavigate } from 'react-router-dom';
 import { useEffect, useState } from 'react';
 import {
-  Users, Network, AlertTriangle, AlertCircle, UserPlus, PlusCircle, Upload, Database,
+  Users, Network, AlertTriangle, AlertCircle, UserPlus, PlusCircle, Upload, Database, Scale,
 } from 'lucide-react';
 import { Card, CardContent } from '@/components/ui/card';
-import { fetchProcesses, fetchClients, fetchRisks, fetchIncidents, type BusinessProcess, type Client } from '@/lib/api';
+import { useAuth } from '@/contexts/AuthContext';
+import {
+  fetchProcesses, fetchClients, fetchRisks, fetchIncidents, fetchRegulations,
+  fetchAllControls, fetchMainframeImports,
+  type BusinessProcess, type Client,
+} from '@/lib/api';
 
 export default function Dashboard() {
   const navigate = useNavigate();
+  const { profile } = useAuth();
   const [processes, setProcesses] = useState<BusinessProcess[]>([]);
   const [clients, setClients] = useState<Client[]>([]);
   const [riskCount, setRiskCount] = useState(0);
   const [incidentCount, setIncidentCount] = useState(0);
+  const [controlCount, setControlCount] = useState(0);
+  const [regulationCount, setRegulationCount] = useState(0);
+  const [importCount, setImportCount] = useState(0);
 
   useEffect(() => {
     Promise.all([
@@ -19,19 +28,30 @@ export default function Dashboard() {
       fetchClients(),
       fetchRisks(),
       fetchIncidents(),
-    ]).then(([p, c, r, i]) => {
+      fetchAllControls(),
+      fetchRegulations(),
+      fetchMainframeImports(),
+    ]).then(([p, c, r, i, ctrl, reg, imp]) => {
       setProcesses(p);
       setClients(c);
       setRiskCount(r.length);
       setIncidentCount(i.filter(inc => inc.status === 'open' || inc.status === 'investigating').length);
+      setControlCount(ctrl.length);
+      setRegulationCount(reg.length);
+      setImportCount(imp.length);
     });
   }, []);
 
+  const displayName = profile?.display_name || 'User';
+
   const stats = [
-    { label: 'TOTAL CLIENTS', value: clients.length, icon: Users },
-    { label: 'TOTAL PROCESSES', value: processes.length, icon: Network },
-    { label: 'TOTAL RISKS', value: riskCount, icon: AlertTriangle },
+    { label: 'CLIENTS', value: clients.length, icon: Users },
+    { label: 'PROCESSES', value: processes.length, icon: Network },
+    { label: 'RISKS', value: riskCount, icon: AlertTriangle },
     { label: 'OPEN INCIDENTS', value: incidentCount, icon: AlertCircle },
+    { label: 'CONTROLS', value: controlCount, icon: Scale },
+    { label: 'REGULATIONS', value: regulationCount, icon: Scale },
+    { label: 'MF IMPORTS', value: importCount, icon: Database },
   ];
 
   const quickActions = [
@@ -53,22 +73,20 @@ export default function Dashboard() {
   return (
     <div className="p-8 space-y-8 max-w-7xl">
       <div>
-        <h1 className="text-2xl font-bold text-foreground tracking-tight">Welcome, Herwig Thyssens</h1>
-        <p className="text-sm text-muted-foreground mt-1">Business Process Analysis &amp; Relationship Platform</p>
+        <h1 className="text-2xl font-bold text-foreground tracking-tight">Welcome, {displayName}</h1>
+        <p className="text-sm text-muted-foreground mt-1">MF AI Navigator — Process Intelligence Platform</p>
       </div>
 
       {/* Stats */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
+      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-7 gap-4">
         {stats.map((s) => (
           <Card key={s.label} className="group relative overflow-hidden border border-dashed border-primary/40 bg-card shadow-none hover:shadow-md transition-all duration-300 cursor-default rounded-lg">
-            <CardContent className="relative flex items-center justify-between p-5">
+            <CardContent className="relative flex items-center justify-between p-4">
               <div>
-                <p className="text-3xl font-bold text-primary">{s.value}</p>
-                <p className="text-[10px] text-muted-foreground font-semibold tracking-widest mt-1.5 uppercase">{s.label}</p>
+                <p className="text-2xl font-bold text-primary">{s.value}</p>
+                <p className="text-[9px] text-muted-foreground font-semibold tracking-widest mt-1 uppercase">{s.label}</p>
               </div>
-              <div className="h-11 w-11 flex items-center justify-center">
-                <s.icon className="h-6 w-6 text-primary/60" />
-              </div>
+              <s.icon className="h-5 w-5 text-primary/60" />
             </CardContent>
           </Card>
         ))}

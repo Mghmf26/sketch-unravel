@@ -32,7 +32,7 @@ import {
 interface MenuGroup {
   title: string;
   icon: React.ElementType;
-  children: { title: string; url: string; icon: React.ElementType; disabled?: boolean }[];
+  children: { title: string; url: string; icon: React.ElementType }[];
 }
 
 const menuGroups: MenuGroup[] = [
@@ -40,7 +40,7 @@ const menuGroups: MenuGroup[] = [
     title: 'Dashboard',
     icon: LayoutDashboard,
     children: [
-      { title: 'Admin Dashboard', url: '/admin', icon: ShieldCheck, disabled: true },
+      { title: 'Admin Dashboard', url: '/admin', icon: ShieldCheck },
       { title: 'Overview', url: '/', icon: LayoutDashboard },
       { title: 'Clients / Engagements', url: '/clients', icon: Users },
     ],
@@ -104,8 +104,8 @@ export function AppSidebar() {
               <Workflow className="h-5 w-5 text-white" />
             </div>
             <div>
-              <h1 className="text-sm font-bold text-sidebar-foreground tracking-tight leading-none">BPA Platform</h1>
-              <p className="text-[10px] text-sidebar-foreground/50 mt-0.5 tracking-wide">PROCESS MANAGEMENT</p>
+              <h1 className="text-sm font-bold text-sidebar-foreground tracking-tight leading-none">MF AI Navigator</h1>
+              <p className="text-[10px] text-sidebar-foreground/50 mt-0.5 tracking-wide">PROCESS INTELLIGENCE</p>
             </div>
           </div>
         </div>
@@ -138,23 +138,16 @@ export function AppSidebar() {
                     <div className="ml-3 border-l border-sidebar-border pl-2 mt-0.5 mb-1 space-y-0.5">
                       {group.children.map((item) => (
                         <SidebarMenuItem key={item.title}>
-                          <SidebarMenuButton asChild disabled={item.disabled}>
-                            {item.disabled ? (
-                              <span className="flex items-center gap-3 px-3 py-2 text-sidebar-foreground/30 cursor-not-allowed rounded-lg text-[12px]">
-                                <item.icon className="h-[15px] w-[15px]" />
-                                <span>{item.title}</span>
-                              </span>
-                            ) : (
-                              <NavLink
-                                to={item.url}
-                                end
-                                className="flex items-center gap-3 px-3 py-2 rounded-lg text-sidebar-foreground/70 hover:bg-sidebar-accent hover:text-sidebar-foreground transition-all duration-150 text-[12px]"
-                                activeClassName="bg-sidebar-accent text-sidebar-primary font-semibold border-l-[3px] border-sidebar-primary rounded-l-none hover:bg-sidebar-accent hover:text-sidebar-primary"
-                              >
-                                <item.icon className="h-[15px] w-[15px]" />
-                                <span className="font-medium">{item.title}</span>
-                              </NavLink>
-                            )}
+                          <SidebarMenuButton asChild>
+                            <NavLink
+                              to={item.url}
+                              end
+                              className="flex items-center gap-3 px-3 py-2 rounded-lg text-sidebar-foreground/70 hover:bg-sidebar-accent hover:text-sidebar-foreground transition-all duration-150 text-[12px]"
+                              activeClassName="bg-sidebar-accent text-sidebar-primary font-semibold border-l-[3px] border-sidebar-primary rounded-l-none hover:bg-sidebar-accent hover:text-sidebar-primary"
+                            >
+                              <item.icon className="h-[15px] w-[15px]" />
+                              <span className="font-medium">{item.title}</span>
+                            </NavLink>
                           </SidebarMenuButton>
                         </SidebarMenuItem>
                       ))}
@@ -168,7 +161,7 @@ export function AppSidebar() {
 
         {/* Version info at bottom */}
         <div className="mt-auto px-4 py-4 border-t border-sidebar-border">
-          <p className="text-[10px] text-sidebar-foreground/30 tracking-wide">v1.0.0 · © 2026 BPA</p>
+          <p className="text-[10px] text-sidebar-foreground/30 tracking-wide">v1.0.0 · © 2026 MF AI</p>
         </div>
       </SidebarContent>
     </Sidebar>
