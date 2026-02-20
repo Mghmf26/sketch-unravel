@@ -53,28 +53,21 @@ export default function Dashboard() {
     <div className="p-8 space-y-8 max-w-7xl">
       {/* Header */}
       <div>
-        <h1 className="text-2xl font-bold text-foreground tracking-tight">Welcome back</h1>
-        <p className="text-sm text-muted-foreground mt-1">Business Process Analysis & Relationship Platform</p>
+        <h1 className="text-2xl font-bold text-foreground tracking-tight">Welcome, John Doe</h1>
+        <p className="text-sm text-muted-foreground mt-1">Business Process Analysis &amp; Relationship Platform</p>
       </div>
 
       {/* Stats */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
         {stats.map((s) => (
-          <Card key={s.label} className="group relative overflow-hidden border border-dashed border-primary/40 shadow-sm hover:shadow-lg transition-all duration-300 cursor-default bg-card">
+          <Card key={s.label} className="group relative overflow-hidden border border-dashed border-primary/40 bg-card shadow-none hover:shadow-md transition-all duration-300 cursor-default rounded-lg">
             <CardContent className="relative flex items-center justify-between p-5">
               <div>
-                <div className="flex items-baseline gap-2">
-                  <p className="text-3xl font-extrabold text-primary">{s.value}</p>
-                  {s.trend && (
-                    <span className="flex items-center gap-0.5 text-xs font-semibold text-primary">
-                      <TrendingUp className="h-3 w-3" /> {s.trend}
-                    </span>
-                  )}
-                </div>
+                <p className="text-3xl font-bold text-primary">{s.value}</p>
                 <p className="text-[10px] text-muted-foreground font-semibold tracking-widest mt-1.5 uppercase">{s.label}</p>
               </div>
-              <div className="h-11 w-11 rounded-xl bg-primary/10 flex items-center justify-center group-hover:bg-primary/20 transition-colors">
-                <s.icon className="h-5 w-5 text-primary" />
+              <div className="h-11 w-11 flex items-center justify-center">
+                <s.icon className="h-6 w-6 text-primary/60" />
               </div>
             </CardContent>
           </Card>
@@ -88,18 +81,14 @@ export default function Dashboard() {
           {quickActions.map((a) => (
             <Card
               key={a.label}
-              className="group cursor-pointer border shadow-sm hover:shadow-lg transition-all duration-300 hover:-translate-y-0.5 bg-card"
+              className="group cursor-pointer border bg-card shadow-none hover:shadow-md transition-all duration-300 rounded-lg"
               onClick={a.onClick}
             >
-              <CardContent className="flex flex-col items-center justify-center py-8 gap-3 relative">
-                <div className="h-14 w-14 rounded-2xl bg-primary/10 flex items-center justify-center group-hover:bg-primary/20 group-hover:scale-110 transition-all duration-300">
-                  <a.icon className="h-7 w-7 text-primary" />
+              <CardContent className="flex flex-col items-center justify-center py-8 gap-3">
+                <div className="h-12 w-12 rounded-full bg-primary/10 flex items-center justify-center">
+                  <a.icon className="h-6 w-6 text-primary" />
                 </div>
-                <div className="text-center">
-                  <span className="text-sm font-semibold text-foreground block">{a.label}</span>
-                  <span className="text-[11px] text-muted-foreground mt-0.5 block">{a.description}</span>
-                </div>
-                <ArrowUpRight className="absolute top-3 right-3 h-3.5 w-3.5 text-muted-foreground/0 group-hover:text-muted-foreground/50 transition-all" />
+                <span className="text-sm font-medium text-foreground">{a.label}</span>
               </CardContent>
             </Card>
           ))}
