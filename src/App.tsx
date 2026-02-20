@@ -10,6 +10,12 @@ import Clients from "./pages/Clients";
 import DataEntry from "./pages/DataEntry";
 import DiagramViewer from "./pages/DiagramViewer";
 import UploadExtract from "./pages/UploadExtract";
+import ProcessDetails from "./pages/ProcessDetails";
+import RisksControls from "./pages/RisksControls";
+import Regulations from "./pages/Regulations";
+import Incidents from "./pages/Incidents";
+import MainframeImports from "./pages/MainframeImports";
+import ProcessingAnalysis from "./pages/ProcessingAnalysis";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -21,14 +27,18 @@ const App = () => (
       <Sonner />
       <BrowserRouter>
         <Routes>
-          {/* Pages with sidebar layout */}
           <Route path="/" element={<AppLayout><Dashboard /></AppLayout>} />
           <Route path="/clients" element={<AppLayout><Clients /></AppLayout>} />
           <Route path="/processes" element={<AppLayout><BusinessProcesses /></AppLayout>} />
+          <Route path="/process-details" element={<AppLayout><ProcessDetails /></AppLayout>} />
+          <Route path="/risks" element={<AppLayout><RisksControls /></AppLayout>} />
+          <Route path="/regulations" element={<AppLayout><Regulations /></AppLayout>} />
+          <Route path="/incidents" element={<AppLayout><Incidents /></AppLayout>} />
+          <Route path="/imports" element={<AppLayout><MainframeImports /></AppLayout>} />
+          <Route path="/processing-analysis" element={<AppLayout><ProcessingAnalysis /></AppLayout>} />
           <Route path="/new" element={<AppLayout><DataEntry /></AppLayout>} />
           <Route path="/upload" element={<AppLayout><UploadExtract /></AppLayout>} />
           <Route path="/edit/:id" element={<AppLayout><DataEntry /></AppLayout>} />
-          {/* Full-screen pages (no sidebar) */}
           <Route path="/view/:id" element={<DiagramViewer />} />
           <Route path="*" element={<NotFound />} />
         </Routes>
