@@ -14,6 +14,47 @@ export type Database = {
   }
   public: {
     Tables: {
+      business_processes: {
+        Row: {
+          client_id: string | null
+          created_at: string
+          department: string | null
+          description: string | null
+          id: string
+          owner: string | null
+          process_name: string
+          updated_at: string
+        }
+        Insert: {
+          client_id?: string | null
+          created_at?: string
+          department?: string | null
+          description?: string | null
+          id?: string
+          owner?: string | null
+          process_name: string
+          updated_at?: string
+        }
+        Update: {
+          client_id?: string | null
+          created_at?: string
+          department?: string | null
+          description?: string | null
+          id?: string
+          owner?: string | null
+          process_name?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "business_processes_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       clients: {
         Row: {
           address: string | null
@@ -55,6 +96,367 @@ export type Database = {
           updated_at?: string
         }
         Relationships: []
+      }
+      controls: {
+        Row: {
+          created_at: string
+          description: string | null
+          effectiveness: string | null
+          id: string
+          name: string
+          risk_id: string
+          type: string | null
+        }
+        Insert: {
+          created_at?: string
+          description?: string | null
+          effectiveness?: string | null
+          id?: string
+          name: string
+          risk_id: string
+          type?: string | null
+        }
+        Update: {
+          created_at?: string
+          description?: string | null
+          effectiveness?: string | null
+          id?: string
+          name?: string
+          risk_id?: string
+          type?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "controls_risk_id_fkey"
+            columns: ["risk_id"]
+            isOneToOne: false
+            referencedRelation: "risks"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      incidents: {
+        Row: {
+          created_at: string
+          date: string | null
+          description: string | null
+          id: string
+          process_id: string
+          severity: string | null
+          status: string | null
+          step_id: string
+          title: string
+        }
+        Insert: {
+          created_at?: string
+          date?: string | null
+          description?: string | null
+          id?: string
+          process_id: string
+          severity?: string | null
+          status?: string | null
+          step_id: string
+          title: string
+        }
+        Update: {
+          created_at?: string
+          date?: string | null
+          description?: string | null
+          id?: string
+          process_id?: string
+          severity?: string | null
+          status?: string | null
+          step_id?: string
+          title?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "incidents_process_id_fkey"
+            columns: ["process_id"]
+            isOneToOne: false
+            referencedRelation: "business_processes"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "incidents_step_id_fkey"
+            columns: ["step_id"]
+            isOneToOne: false
+            referencedRelation: "process_steps"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      mainframe_imports: {
+        Row: {
+          created_at: string
+          dataset_name: string | null
+          description: string | null
+          id: string
+          last_sync: string | null
+          process_id: string
+          record_count: number | null
+          source_name: string
+          source_type: string
+          status: string | null
+          step_id: string | null
+        }
+        Insert: {
+          created_at?: string
+          dataset_name?: string | null
+          description?: string | null
+          id?: string
+          last_sync?: string | null
+          process_id: string
+          record_count?: number | null
+          source_name: string
+          source_type?: string
+          status?: string | null
+          step_id?: string | null
+        }
+        Update: {
+          created_at?: string
+          dataset_name?: string | null
+          description?: string | null
+          id?: string
+          last_sync?: string | null
+          process_id?: string
+          record_count?: number | null
+          source_name?: string
+          source_type?: string
+          status?: string | null
+          step_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "mainframe_imports_process_id_fkey"
+            columns: ["process_id"]
+            isOneToOne: false
+            referencedRelation: "business_processes"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "mainframe_imports_step_id_fkey"
+            columns: ["step_id"]
+            isOneToOne: false
+            referencedRelation: "process_steps"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      mf_questions: {
+        Row: {
+          answer: string | null
+          category: string | null
+          confidence: number | null
+          created_at: string
+          id: string
+          process_id: string
+          question: string
+        }
+        Insert: {
+          answer?: string | null
+          category?: string | null
+          confidence?: number | null
+          created_at?: string
+          id?: string
+          process_id: string
+          question: string
+        }
+        Update: {
+          answer?: string | null
+          category?: string | null
+          confidence?: number | null
+          created_at?: string
+          id?: string
+          process_id?: string
+          question?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "mf_questions_process_id_fkey"
+            columns: ["process_id"]
+            isOneToOne: false
+            referencedRelation: "business_processes"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      process_steps: {
+        Row: {
+          created_at: string
+          description: string | null
+          id: string
+          label: string
+          position_index: number | null
+          process_id: string
+          type: string
+        }
+        Insert: {
+          created_at?: string
+          description?: string | null
+          id?: string
+          label: string
+          position_index?: number | null
+          process_id: string
+          type?: string
+        }
+        Update: {
+          created_at?: string
+          description?: string | null
+          id?: string
+          label?: string
+          position_index?: number | null
+          process_id?: string
+          type?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "process_steps_process_id_fkey"
+            columns: ["process_id"]
+            isOneToOne: false
+            referencedRelation: "business_processes"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      regulations: {
+        Row: {
+          authority: string | null
+          compliance_status: string | null
+          created_at: string
+          description: string | null
+          id: string
+          name: string
+          process_id: string
+          step_id: string
+        }
+        Insert: {
+          authority?: string | null
+          compliance_status?: string | null
+          created_at?: string
+          description?: string | null
+          id?: string
+          name: string
+          process_id: string
+          step_id: string
+        }
+        Update: {
+          authority?: string | null
+          compliance_status?: string | null
+          created_at?: string
+          description?: string | null
+          id?: string
+          name?: string
+          process_id?: string
+          step_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "regulations_process_id_fkey"
+            columns: ["process_id"]
+            isOneToOne: false
+            referencedRelation: "business_processes"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "regulations_step_id_fkey"
+            columns: ["step_id"]
+            isOneToOne: false
+            referencedRelation: "process_steps"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      risks: {
+        Row: {
+          created_at: string
+          description: string
+          id: string
+          impact: string
+          likelihood: string
+          process_id: string
+          step_id: string
+        }
+        Insert: {
+          created_at?: string
+          description: string
+          id?: string
+          impact?: string
+          likelihood?: string
+          process_id: string
+          step_id: string
+        }
+        Update: {
+          created_at?: string
+          description?: string
+          id?: string
+          impact?: string
+          likelihood?: string
+          process_id?: string
+          step_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "risks_process_id_fkey"
+            columns: ["process_id"]
+            isOneToOne: false
+            referencedRelation: "business_processes"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "risks_step_id_fkey"
+            columns: ["step_id"]
+            isOneToOne: false
+            referencedRelation: "process_steps"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      step_connections: {
+        Row: {
+          id: string
+          label: string | null
+          process_id: string
+          source_step_id: string
+          target_step_id: string
+        }
+        Insert: {
+          id?: string
+          label?: string | null
+          process_id: string
+          source_step_id: string
+          target_step_id: string
+        }
+        Update: {
+          id?: string
+          label?: string | null
+          process_id?: string
+          source_step_id?: string
+          target_step_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "step_connections_process_id_fkey"
+            columns: ["process_id"]
+            isOneToOne: false
+            referencedRelation: "business_processes"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "step_connections_source_step_id_fkey"
+            columns: ["source_step_id"]
+            isOneToOne: false
+            referencedRelation: "process_steps"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "step_connections_target_step_id_fkey"
+            columns: ["target_step_id"]
+            isOneToOne: false
+            referencedRelation: "process_steps"
+            referencedColumns: ["id"]
+          },
+        ]
       }
     }
     Views: {
