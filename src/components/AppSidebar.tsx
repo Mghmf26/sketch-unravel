@@ -68,7 +68,7 @@ export function AppSidebar() {
                         to={item.url}
                         end
                         className="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sidebar-foreground/80 hover:bg-sidebar-accent hover:text-sidebar-foreground transition-all duration-150"
-                        activeClassName="bg-sidebar-primary text-white shadow-md shadow-sidebar-primary/25 hover:bg-sidebar-primary hover:text-white"
+                        activeClassName="bg-sidebar-accent text-sidebar-primary font-semibold border-l-[3px] border-sidebar-primary rounded-l-none hover:bg-sidebar-accent hover:text-sidebar-primary"
                       >
                         <item.icon className="h-[18px] w-[18px]" />
                         <span className="text-[13px] font-medium">{item.title}</span>
