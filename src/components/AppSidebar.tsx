@@ -25,7 +25,7 @@ import {
 const menuItems = [
   { title: 'Admin Dashboard', url: '/admin', icon: ShieldCheck, disabled: true },
   { title: 'Dashboard', url: '/', icon: LayoutDashboard },
-  { title: 'Clients / Engagements', url: '/clients', icon: Users, disabled: true },
+  { title: 'Clients / Engagements', url: '/clients', icon: Users },
   { title: 'Business Processes', url: '/processes', icon: Network },
   { title: 'Process Details', url: '/process-details', icon: FileText, disabled: true },
   { title: 'Risks & Controls', url: '/risks', icon: AlertTriangle, disabled: true },

@@ -6,6 +6,7 @@ import { BrowserRouter, Routes, Route } from "react-router-dom";
 import AppLayout from "@/components/AppLayout";
 import Dashboard from "./pages/Dashboard";
 import BusinessProcesses from "./pages/BusinessProcesses";
+import Clients from "./pages/Clients";
 import DataEntry from "./pages/DataEntry";
 import DiagramViewer from "./pages/DiagramViewer";
 import UploadExtract from "./pages/UploadExtract";
@@ -22,6 +23,7 @@ const App = () => (
         <Routes>
           {/* Pages with sidebar layout */}
           <Route path="/" element={<AppLayout><Dashboard /></AppLayout>} />
+          <Route path="/clients" element={<AppLayout><Clients /></AppLayout>} />
           <Route path="/processes" element={<AppLayout><BusinessProcesses /></AppLayout>} />
           <Route path="/new" element={<AppLayout><DataEntry /></AppLayout>} />
           <Route path="/upload" element={<AppLayout><UploadExtract /></AppLayout>} />
