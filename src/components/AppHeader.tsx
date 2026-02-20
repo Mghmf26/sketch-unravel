@@ -18,7 +18,7 @@ export function AppHeader() {
 
   if (!user) return null;
 
-  const displayName = profile?.display_name || user.email || 'User';
+  const displayName = profile?.display_name || user?.email || 'Herwig';
   const initials = displayName.slice(0, 2).toUpperCase();
 
   return (
