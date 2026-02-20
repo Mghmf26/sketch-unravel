@@ -9,35 +9,42 @@ import {
   PlusCircle,
   Upload,
   Database,
-  ArrowUpRight,
-  TrendingUp,
 } from 'lucide-react';
 import { Card, CardContent } from '@/components/ui/card';
 import { loadDiagrams } from '@/lib/store';
+import { supabase } from '@/integrations/supabase/client';
 import type { EPCDiagram } from '@/types/epc';
 
 export default function Dashboard() {
   const navigate = useNavigate();
   const [diagrams, setDiagrams] = useState<EPCDiagram[]>([]);
+  const [clientCount, setClientCount] = useState(0);
 
   useEffect(() => {
     setDiagrams(loadDiagrams());
+    supabase.from('clients').select('id', { count: 'exact', head: true }).then(({ count }) => {
+      setClientCount(count || 0);
+    });
   }, []);
 
-  const totalRisks = diagrams.reduce((sum, d) => sum + d.nodes.filter(n => n.type === 'event').length, 0);
+  const totalRisks = diagrams.reduce(
+    (sum, d) => sum + (d.riskScenarios?.length || 0) + d.nodes.filter((n) => n.type === 'event').length,
+    0
+  );
+  const totalIncidents = diagrams.reduce((sum, d) => sum + (d.incidents?.length || 0), 0);
 
   const stats = [
-    { label: 'TOTAL CLIENTS', value: 0, icon: Users, trend: null },
-    { label: 'TOTAL PROCESSES', value: diagrams.length, icon: Network, trend: diagrams.length > 0 ? '+' + diagrams.length : null },
-    { label: 'TOTAL RISKS', value: totalRisks, icon: AlertTriangle, trend: null },
-    { label: 'OPEN INCIDENTS', value: 0, icon: AlertCircle, trend: null },
+    { label: 'TOTAL CLIENTS', value: clientCount, icon: Users },
+    { label: 'TOTAL PROCESSES', value: diagrams.length, icon: Network },
+    { label: 'TOTAL RISKS', value: totalRisks, icon: AlertTriangle },
+    { label: 'OPEN INCIDENTS', value: totalIncidents, icon: AlertCircle },
   ];
 
   const quickActions = [
-    { label: 'Add Client', description: 'Register a new client', icon: UserPlus, onClick: () => {} },
+    { label: 'Add Client', description: 'Register a new client', icon: UserPlus, onClick: () => navigate('/clients') },
     { label: 'Add Business Process', description: 'Create or extract a process', icon: PlusCircle, onClick: () => navigate('/upload') },
     { label: 'Upload Documents', description: 'Upload diagram images', icon: Upload, onClick: () => navigate('/upload') },
-    { label: 'Import Mainframe Data', description: 'Import transaction logs', icon: Database, onClick: () => {} },
+    { label: 'Import Mainframe Data', description: 'Import transaction logs', icon: Database, onClick: () => navigate('/imports') },
   ];
 
   const recentActivities = diagrams
@@ -51,9 +58,8 @@ export default function Dashboard() {
 
   return (
     <div className="p-8 space-y-8 max-w-7xl">
-      {/* Header */}
       <div>
-        <h1 className="text-2xl font-bold text-foreground tracking-tight">Welcome, John Doe</h1>
+        <h1 className="text-2xl font-bold text-foreground tracking-tight">Welcome, Herwig Thyssens</h1>
         <p className="text-sm text-muted-foreground mt-1">Business Process Analysis &amp; Relationship Platform</p>
       </div>
 
@@ -79,11 +85,7 @@ export default function Dashboard() {
         <h2 className="text-base font-semibold text-foreground mb-4">Quick Actions</h2>
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
           {quickActions.map((a) => (
-            <Card
-              key={a.label}
-              className="group cursor-pointer border bg-card shadow-none hover:shadow-md transition-all duration-300 rounded-lg"
-              onClick={a.onClick}
-            >
+            <Card key={a.label} className="group cursor-pointer border bg-card shadow-none hover:shadow-md transition-all duration-300 rounded-lg" onClick={a.onClick}>
               <CardContent className="flex flex-col items-center justify-center py-8 gap-3">
                 <div className="h-12 w-12 rounded-full bg-primary/10 flex items-center justify-center">
                   <a.icon className="h-6 w-6 text-primary" />

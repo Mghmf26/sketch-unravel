@@ -34,13 +34,20 @@ export function getDiagram(id: string): EPCDiagram | undefined {
   return loadDiagrams().find(d => d.id === id);
 }
 
-export function createNewDiagram(processId: string, processName: string): EPCDiagram {
+export function createNewDiagram(processId: string, processName: string, clientId?: string, owner?: string, department?: string): EPCDiagram {
   return {
     id: crypto.randomUUID(),
     processId,
     processName,
+    clientId,
+    owner,
+    department,
     nodes: [],
     connections: [],
+    riskScenarios: [],
+    incidents: [],
+    regulations: [],
+    mfQuestions: [],
     createdAt: new Date().toISOString(),
     updatedAt: new Date().toISOString(),
   };
