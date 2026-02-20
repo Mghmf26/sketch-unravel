@@ -94,14 +94,9 @@ export default function BusinessProcesses() {
           <h1 className="text-2xl font-bold text-foreground tracking-tight">Business Processes</h1>
           <p className="text-sm text-muted-foreground mt-1">Manage and analyze business processes across clients</p>
         </div>
-        <div className="flex gap-2">
-          <Button onClick={() => openDialog('add')} className="bg-primary hover:bg-primary/90 shadow-md">
-            <Plus className="mr-2 h-4 w-4" /> Add Process
-          </Button>
-          <Button variant="outline" onClick={() => navigate('/upload')}>
-            <FileSpreadsheet className="mr-2 h-4 w-4" /> Extract from Diagram
-          </Button>
-        </div>
+        <Button onClick={() => navigate('/upload')} className="bg-primary hover:bg-primary/90 shadow-md">
+          <Plus className="mr-2 h-4 w-4" /> Add Process
+        </Button>
       </div>
 
       {/* Filters */}

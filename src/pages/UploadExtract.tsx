@@ -6,11 +6,11 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/com
 import { toast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 import { extractWithOCR } from '@/lib/ocr-extract';
-import { saveDiagram } from '@/lib/store';
+import { insertProcess, insertStep } from '@/lib/api';
 import ExtractionResultsEditor from '@/components/ExtractionResultsEditor';
 import DiagramCanvasEditor from '@/components/DiagramCanvasEditor';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import type { EPCDiagram, EPCNode, EPCConnection } from '@/types/epc';
+import type { EPCNode, EPCConnection } from '@/types/epc';
 
 interface ExtractionData {
   processId: string;
@@ -45,20 +45,51 @@ export default function UploadExtract() {
     reader.readAsDataURL(file);
   };
 
-  const handleSaveAndView = () => {
+  const handleSaveAndView = async () => {
     if (!extractedData) return;
-    const diagram: EPCDiagram = {
-      id: crypto.randomUUID(),
-      processId: extractedData.processId || 'PROCESS-001',
-      processName: extractedData.processName || 'Extracted Process',
-      nodes: extractedData.nodes.map((n) => ({ ...n, description: n.description || '' })),
-      connections: extractedData.connections.map((c) => ({ ...c, id: c.id || crypto.randomUUID() })),
-      createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString(),
-    };
-    saveDiagram(diagram);
-    toast({ title: 'Diagram saved!', description: `${diagram.nodes.length} nodes, ${diagram.connections.length} connections.` });
-    navigate(`/view/${diagram.id}`);
+    setLoading(true);
+    try {
+      // 1. Create the business process in the DB
+      const process = await insertProcess({
+        process_name: extractedData.processName || 'Extracted Process',
+      });
+
+      // 2. Insert each node as a process_step
+      const stepIdMap: Record<string, string> = {};
+      for (let i = 0; i < extractedData.nodes.length; i++) {
+        const n = extractedData.nodes[i];
+        const step = await insertStep({
+          process_id: process.id,
+          label: n.label,
+          type: n.type,
+          description: n.description || null,
+          position_index: i,
+        });
+        stepIdMap[n.id] = step.id;
+      }
+
+      // 3. Insert connections as step_connections
+      for (const c of extractedData.connections) {
+        const sourceId = stepIdMap[c.source];
+        const targetId = stepIdMap[c.target];
+        if (sourceId && targetId) {
+          await supabase.from('step_connections').insert({
+            process_id: process.id,
+            source_step_id: sourceId,
+            target_step_id: targetId,
+            label: c.label || null,
+          });
+        }
+      }
+
+      toast({ title: 'Process saved!', description: `${extractedData.nodes.length} steps, ${extractedData.connections.length} connections.` });
+      navigate('/processes');
+    } catch (err: any) {
+      console.error(err);
+      toast({ title: 'Save failed', description: err.message, variant: 'destructive' });
+    } finally {
+      setLoading(false);
+    }
   };
 
   const handleExtractAI = async () => {
@@ -128,7 +159,7 @@ export default function UploadExtract() {
       {/* Header */}
       <div className="sticky top-0 z-10 bg-background/95 backdrop-blur border-b">
         <div className="max-w-4xl mx-auto flex items-center gap-3 px-6 py-3">
-          <Button variant="ghost" size="icon" onClick={() => methodChoice ? setMethodChoice(null) : navigate('/')}>
+          <Button variant="ghost" size="icon" onClick={() => methodChoice ? setMethodChoice(null) : navigate('/processes')}>
             <ArrowLeft className="h-4 w-4" />
           </Button>
           <div>
