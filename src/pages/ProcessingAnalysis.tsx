@@ -1,25 +1,31 @@
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { ArrowLeft, BarChart3, Cpu, AlertTriangle, Shield, FileText, Layers } from 'lucide-react';
+import { ArrowLeft, BarChart3, Cpu, Layers, FileText } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { loadDiagrams } from '@/lib/store';
-import type { EPCDiagram } from '@/types/epc';
+import {
+  fetchProcesses, fetchMFQuestions,
+  type BusinessProcess, type MFQuestion,
+} from '@/lib/api';
 
 export default function ProcessingAnalysis() {
   const navigate = useNavigate();
-  const [diagrams, setDiagrams] = useState<EPCDiagram[]>([]);
+  const [processes, setProcesses] = useState<BusinessProcess[]>([]);
+  const [mfQuestions, setMfQuestions] = useState<MFQuestion[]>([]);
 
-  useEffect(() => { setDiagrams(loadDiagrams()); }, []);
+  useEffect(() => {
+    Promise.all([fetchProcesses(), fetchMFQuestions()]).then(([p, q]) => {
+      setProcesses(p); setMfQuestions(q);
+    });
+  }, []);
 
-  const allMFQ = diagrams.flatMap((d) =>
-    (d.mfQuestions || []).map((q) => ({ ...q, processName: d.processName }))
-  );
+  const processMap: Record<string, string> = {};
+  processes.forEach(p => processMap[p.id] = p.process_name);
 
-  const avgConfidence = allMFQ.length > 0 ? Math.round(allMFQ.reduce((s, q) => s + q.confidence, 0) / allMFQ.length) : 0;
-  const categories = [...new Set(allMFQ.map((q) => q.category).filter(Boolean))];
+  const avgConfidence = mfQuestions.length > 0 ? Math.round(mfQuestions.reduce((s, q) => s + Number(q.confidence), 0) / mfQuestions.length) : 0;
+  const categories = [...new Set(mfQuestions.map(q => q.category).filter(Boolean))];
 
   return (
     <div className="p-8 space-y-6 max-w-7xl">
@@ -31,14 +37,13 @@ export default function ProcessingAnalysis() {
         </div>
       </div>
 
-      {/* Stats */}
       <div className="grid grid-cols-1 sm:grid-cols-4 gap-4">
         {[
-          { label: 'AI QUESTIONS', value: allMFQ.length, icon: Cpu },
+          { label: 'AI QUESTIONS', value: mfQuestions.length, icon: Cpu },
           { label: 'AVG CONFIDENCE', value: `${avgConfidence}%`, icon: BarChart3 },
           { label: 'CATEGORIES', value: categories.length, icon: Layers },
-          { label: 'PROCESSES ANALYZED', value: diagrams.filter(d => (d.mfQuestions?.length || 0) > 0).length, icon: FileText },
-        ].map((s) => (
+          { label: 'PROCESSES ANALYZED', value: processes.filter(p => mfQuestions.some(q => q.process_id === p.id)).length, icon: FileText },
+        ].map(s => (
           <Card key={s.label} className="border border-dashed border-primary/40 bg-card">
             <CardContent className="flex items-center justify-between p-5">
               <div>
@@ -51,11 +56,10 @@ export default function ProcessingAnalysis() {
         ))}
       </div>
 
-      {/* Analysis Table */}
       <Card className="border-0 shadow-sm overflow-hidden">
         <CardHeader>
           <CardTitle className="text-base">Mainframe AI Question Analysis</CardTitle>
-          <CardDescription>Questions generated from mainframe data analysis mapped to business processes. Each question assesses data integrity, access controls, and processing completeness.</CardDescription>
+          <CardDescription>Questions assessing data integrity, access controls, and processing completeness per process</CardDescription>
         </CardHeader>
         <Table>
           <TableHeader>
@@ -68,17 +72,17 @@ export default function ProcessingAnalysis() {
             </TableRow>
           </TableHeader>
           <TableBody>
-            {allMFQ.length === 0 ? (
+            {mfQuestions.length === 0 ? (
               <TableRow><TableCell colSpan={5} className="text-center py-12 text-muted-foreground">No MF AI questions added yet. Add them via Business Processes.</TableCell></TableRow>
             ) : (
-              allMFQ.map((q) => (
+              mfQuestions.map(q => (
                 <TableRow key={q.id}>
-                  <TableCell className="font-medium text-sm">{q.processName}</TableCell>
+                  <TableCell className="font-medium text-sm">{processMap[q.process_id] || '—'}</TableCell>
                   <TableCell><Badge variant="outline" className="text-[10px]">{q.category || '—'}</Badge></TableCell>
                   <TableCell className="text-sm max-w-xs">{q.question}</TableCell>
                   <TableCell className="text-sm text-muted-foreground max-w-xs">{q.answer}</TableCell>
                   <TableCell className="text-center">
-                    <Badge className={`text-[10px] border-0 ${q.confidence >= 80 ? 'bg-primary/15 text-primary' : q.confidence >= 50 ? 'bg-yellow-500/15 text-yellow-600' : 'bg-destructive/15 text-destructive'}`}>{q.confidence}%</Badge>
+                    <Badge className={`text-[10px] border-0 ${Number(q.confidence) >= 80 ? 'bg-primary/15 text-primary' : Number(q.confidence) >= 50 ? 'bg-yellow-500/15 text-yellow-600' : 'bg-destructive/15 text-destructive'}`}>{q.confidence}%</Badge>
                   </TableCell>
                 </TableRow>
               ))
@@ -87,7 +91,6 @@ export default function ProcessingAnalysis() {
         </Table>
       </Card>
 
-      {/* Mapping concept */}
       <Card className="border bg-muted/20">
         <CardContent className="p-5">
           <h3 className="text-sm font-semibold text-foreground mb-2">Risk Scenario Template</h3>

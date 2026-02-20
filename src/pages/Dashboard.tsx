@@ -1,43 +1,37 @@
 import { useNavigate } from 'react-router-dom';
 import { useEffect, useState } from 'react';
 import {
-  Users,
-  Network,
-  AlertTriangle,
-  AlertCircle,
-  UserPlus,
-  PlusCircle,
-  Upload,
-  Database,
+  Users, Network, AlertTriangle, AlertCircle, UserPlus, PlusCircle, Upload, Database,
 } from 'lucide-react';
 import { Card, CardContent } from '@/components/ui/card';
-import { loadDiagrams } from '@/lib/store';
-import { supabase } from '@/integrations/supabase/client';
-import type { EPCDiagram } from '@/types/epc';
+import { fetchProcesses, fetchClients, fetchRisks, fetchIncidents, type BusinessProcess, type Client } from '@/lib/api';
 
 export default function Dashboard() {
   const navigate = useNavigate();
-  const [diagrams, setDiagrams] = useState<EPCDiagram[]>([]);
-  const [clientCount, setClientCount] = useState(0);
+  const [processes, setProcesses] = useState<BusinessProcess[]>([]);
+  const [clients, setClients] = useState<Client[]>([]);
+  const [riskCount, setRiskCount] = useState(0);
+  const [incidentCount, setIncidentCount] = useState(0);
 
   useEffect(() => {
-    setDiagrams(loadDiagrams());
-    supabase.from('clients').select('id', { count: 'exact', head: true }).then(({ count }) => {
-      setClientCount(count || 0);
+    Promise.all([
+      fetchProcesses(),
+      fetchClients(),
+      fetchRisks(),
+      fetchIncidents(),
+    ]).then(([p, c, r, i]) => {
+      setProcesses(p);
+      setClients(c);
+      setRiskCount(r.length);
+      setIncidentCount(i.filter(inc => inc.status === 'open' || inc.status === 'investigating').length);
     });
   }, []);
 
-  const totalRisks = diagrams.reduce(
-    (sum, d) => sum + (d.riskScenarios?.length || 0) + d.nodes.filter((n) => n.type === 'event').length,
-    0
-  );
-  const totalIncidents = diagrams.reduce((sum, d) => sum + (d.incidents?.length || 0), 0);
-
   const stats = [
-    { label: 'TOTAL CLIENTS', value: clientCount, icon: Users },
-    { label: 'TOTAL PROCESSES', value: diagrams.length, icon: Network },
-    { label: 'TOTAL RISKS', value: totalRisks, icon: AlertTriangle },
-    { label: 'OPEN INCIDENTS', value: totalIncidents, icon: AlertCircle },
+    { label: 'TOTAL CLIENTS', value: clients.length, icon: Users },
+    { label: 'TOTAL PROCESSES', value: processes.length, icon: Network },
+    { label: 'TOTAL RISKS', value: riskCount, icon: AlertTriangle },
+    { label: 'OPEN INCIDENTS', value: incidentCount, icon: AlertCircle },
   ];
 
   const quickActions = [
@@ -47,12 +41,12 @@ export default function Dashboard() {
     { label: 'Import Mainframe Data', description: 'Import transaction logs', icon: Database, onClick: () => navigate('/imports') },
   ];
 
-  const recentActivities = diagrams
-    .sort((a, b) => new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime())
+  const recentActivities = processes
+    .sort((a, b) => new Date(b.updated_at).getTime() - new Date(a.updated_at).getTime())
     .slice(0, 5)
-    .map((d) => ({
-      text: `Process updated: ${d.processName}`,
-      time: formatTimeAgo(d.updatedAt),
+    .map((p) => ({
+      text: `Process updated: ${p.process_name}`,
+      time: formatTimeAgo(p.updated_at),
       icon: Network,
     }));
 
