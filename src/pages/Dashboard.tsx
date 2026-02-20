@@ -42,7 +42,7 @@ export default function Dashboard() {
     });
   }, []);
 
-  const displayName = profile?.display_name || 'User';
+  const displayName = profile?.display_name || 'Herwig';
 
   const stats = [
     { label: 'CLIENTS', value: clients.length, icon: Users },
