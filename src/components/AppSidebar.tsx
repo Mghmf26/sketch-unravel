@@ -14,6 +14,8 @@ import {
   ChevronRight,
   Cpu,
   BarChart3,
+  PieChart,
+  Brain,
 } from 'lucide-react';
 import { NavLink } from '@/components/NavLink';
 import { useLocation } from 'react-router-dom';
@@ -60,6 +62,14 @@ const menuGroups: MenuGroup[] = [
     children: [
       { title: 'Mainframe Imports', url: '/imports', icon: Database },
       { title: 'Processing Analysis', url: '/processing-analysis', icon: BarChart3 },
+    ],
+  },
+  {
+    title: 'Reporting',
+    icon: PieChart,
+    children: [
+      { title: 'Visual Analytics', url: '/analytics', icon: BarChart3 },
+      { title: 'AI Reports', url: '/ai-reports', icon: Brain },
     ],
   },
 ];

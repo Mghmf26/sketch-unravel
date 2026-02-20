@@ -16,6 +16,8 @@ import Regulations from "./pages/Regulations";
 import Incidents from "./pages/Incidents";
 import MainframeImports from "./pages/MainframeImports";
 import ProcessingAnalysis from "./pages/ProcessingAnalysis";
+import VisualAnalytics from "./pages/VisualAnalytics";
+import AIReports from "./pages/AIReports";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -36,6 +38,8 @@ const App = () => (
           <Route path="/incidents" element={<AppLayout><Incidents /></AppLayout>} />
           <Route path="/imports" element={<AppLayout><MainframeImports /></AppLayout>} />
           <Route path="/processing-analysis" element={<AppLayout><ProcessingAnalysis /></AppLayout>} />
+          <Route path="/analytics" element={<AppLayout><VisualAnalytics /></AppLayout>} />
+          <Route path="/ai-reports" element={<AppLayout><AIReports /></AppLayout>} />
           <Route path="/new" element={<AppLayout><DataEntry /></AppLayout>} />
           <Route path="/upload" element={<AppLayout><UploadExtract /></AppLayout>} />
           <Route path="/edit/:id" element={<AppLayout><DataEntry /></AppLayout>} />
