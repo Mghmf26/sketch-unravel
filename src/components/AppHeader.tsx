@@ -11,6 +11,7 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
+import { SidebarTrigger } from '@/components/ui/sidebar';
 
 export function AppHeader() {
   const { user, profile, role, signOut } = useAuth();
@@ -22,9 +23,11 @@ export function AppHeader() {
   const initials = displayName.slice(0, 2).toUpperCase();
 
   return (
-    <header className="h-14 border-b border-border bg-card flex items-center justify-between px-6 shrink-0">
-      <div className="flex items-center gap-2">
-        <span className="text-sm text-muted-foreground">MF AI Navigator</span>
+    <header className="h-14 border-b border-border bg-card flex items-center justify-between px-4 shrink-0">
+      <div className="flex items-center gap-3">
+        <SidebarTrigger className="h-8 w-8" />
+        <div className="h-5 w-px bg-border" />
+        <span className="text-sm text-muted-foreground font-medium">MF AI Navigator</span>
       </div>
       <div className="flex items-center gap-3">
         {role === 'admin' && (
@@ -32,17 +35,26 @@ export function AppHeader() {
         )}
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
-            <Button variant="ghost" className="flex items-center gap-2 h-9 px-2">
-              <Avatar className="h-7 w-7">
-                <AvatarFallback className="bg-primary/10 text-primary text-xs font-semibold">{initials}</AvatarFallback>
+            <Button variant="ghost" className="flex items-center gap-2 h-9 px-2 hover:bg-muted">
+              <Avatar className="h-8 w-8 ring-2 ring-primary/20">
+                <AvatarFallback className="bg-primary/15 text-primary text-xs font-bold">{initials}</AvatarFallback>
               </Avatar>
-              <span className="text-sm font-medium text-foreground hidden sm:inline">{displayName}</span>
+              <div className="hidden sm:flex flex-col items-start">
+                <span className="text-sm font-semibold text-foreground leading-tight">{displayName}</span>
+                <span className="text-[10px] text-muted-foreground leading-tight">
+                  {profile?.job_title || (role === 'admin' ? 'Administrator' : 'User')}
+                </span>
+              </div>
               <ChevronDown className="h-3.5 w-3.5 text-muted-foreground" />
             </Button>
           </DropdownMenuTrigger>
-          <DropdownMenuContent align="end" className="w-48">
+          <DropdownMenuContent align="end" className="w-52">
+            <div className="px-3 py-2 border-b border-border mb-1">
+              <p className="text-sm font-semibold text-foreground">{displayName}</p>
+              <p className="text-xs text-muted-foreground truncate">{user?.email}</p>
+            </div>
             <DropdownMenuItem onClick={() => navigate('/profile')}>
-              <User className="mr-2 h-4 w-4" /> My Profile
+              <User className="mr-2 h-4 w-4" /> View Profile
             </DropdownMenuItem>
             {role === 'admin' && (
               <DropdownMenuItem onClick={() => navigate('/admin')}>
