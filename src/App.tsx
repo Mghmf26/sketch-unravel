@@ -13,6 +13,7 @@ import DiagramViewer from "./pages/DiagramViewer";
 import UploadExtract from "./pages/UploadExtract";
 import ProcessDetails from "./pages/ProcessDetails";
 import RisksControls from "./pages/RisksControls";
+import Controls from "./pages/Controls";
 import Regulations from "./pages/Regulations";
 import Incidents from "./pages/Incidents";
 import MainframeImports from "./pages/MainframeImports";
@@ -64,6 +65,7 @@ const App = () => (
             <Route path="/processes" element={<ProtectedRoute><BusinessProcesses /></ProtectedRoute>} />
             <Route path="/process-details" element={<ProtectedRoute><ProcessDetails /></ProtectedRoute>} />
             <Route path="/risks" element={<ProtectedRoute><RisksControls /></ProtectedRoute>} />
+            <Route path="/controls" element={<ProtectedRoute><Controls /></ProtectedRoute>} />
             <Route path="/regulations" element={<ProtectedRoute><Regulations /></ProtectedRoute>} />
             <Route path="/incidents" element={<ProtectedRoute><Incidents /></ProtectedRoute>} />
             <Route path="/imports" element={<ProtectedRoute><MainframeImports /></ProtectedRoute>} />
