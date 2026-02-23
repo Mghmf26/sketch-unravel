@@ -239,7 +239,7 @@ function ControlDialog({ mode, control, risks, processes, onClose, onRefresh }: 
   const [type, setType] = useState(control?.type || 'preventive');
   const [effectiveness, setEffectiveness] = useState(control?.effectiveness || 'effective');
 
-  const filteredRisks = risks.filter(r => !filterProcessId || r.process_id === filterProcessId);
+  const filteredRisks = risks.filter(r => filterProcessId === '__all__' || r.process_id === filterProcessId);
   const processMap: Record<string, string> = {};
   processes.forEach(p => processMap[p.id] = p.process_name);
 
@@ -265,7 +265,7 @@ function ControlDialog({ mode, control, risks, processes, onClose, onRefresh }: 
             <Select value={filterProcessId} onValueChange={v => { setFilterProcessId(v); setRiskId(''); }}>
               <SelectTrigger><SelectValue placeholder="All processes" /></SelectTrigger>
               <SelectContent>
-                <SelectItem value="">All Processes</SelectItem>
+                <SelectItem value="__all__">All Processes</SelectItem>
                 {processes.map(p => <SelectItem key={p.id} value={p.id}>{p.process_name}</SelectItem>)}
               </SelectContent>
             </Select>
