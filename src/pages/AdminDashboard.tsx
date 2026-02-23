@@ -20,7 +20,7 @@ interface UserRow {
 
 export default function AdminDashboard() {
   const navigate = useNavigate();
-  const { role } = useAuth();
+  const { role, loading } = useAuth();
   const [users, setUsers] = useState<UserRow[]>([]);
 
   const loadUsers = async () => {
@@ -49,6 +49,10 @@ export default function AdminDashboard() {
       loadUsers();
     }
   };
+
+  if (loading) {
+    return <div className="p-8 text-center text-muted-foreground">Loading...</div>;
+  }
 
   if (role !== 'admin') {
     return (
