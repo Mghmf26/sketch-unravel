@@ -59,13 +59,13 @@ export default function Dashboard() {
           </p>
           <div className="flex gap-3 mt-5">
             <Badge className="bg-[hsl(var(--sidebar-primary)/0.15)] text-[hsl(var(--sidebar-primary))] border-0 px-3 py-1 text-xs font-medium">
-              {processes.length} Processes
-            </Badge>
-            <Badge className="bg-white/10 text-white/80 border-0 px-3 py-1 text-xs font-medium">
               {clients.length} Clients
             </Badge>
             <Badge className="bg-white/10 text-white/80 border-0 px-3 py-1 text-xs font-medium">
-              {importCount} Data Sources
+              {processes.length} Processes
+            </Badge>
+            <Badge className="bg-white/10 text-white/80 border-0 px-3 py-1 text-xs font-medium">
+              {importCount} MF Data Sources
             </Badge>
           </div>
         </div>
