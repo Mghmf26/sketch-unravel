@@ -194,6 +194,7 @@ export type Database = {
           created_at: string
           dataset_name: string | null
           description: string | null
+          file_url: string | null
           id: string
           last_sync: string | null
           process_id: string
@@ -207,6 +208,7 @@ export type Database = {
           created_at?: string
           dataset_name?: string | null
           description?: string | null
+          file_url?: string | null
           id?: string
           last_sync?: string | null
           process_id: string
@@ -220,6 +222,7 @@ export type Database = {
           created_at?: string
           dataset_name?: string | null
           description?: string | null
+          file_url?: string | null
           id?: string
           last_sync?: string | null
           process_id?: string
