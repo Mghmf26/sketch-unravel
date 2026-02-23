@@ -11,14 +11,15 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 import { toast } from '@/hooks/use-toast';
 import {
-  fetchProcesses, fetchRisks, fetchAllControls, fetchClients,
+  fetchProcesses, fetchSteps, fetchRisks, fetchAllControls, fetchClients,
   insertControl, deleteControl, updateControl,
-  type BusinessProcess, type Risk, type Control, type Client,
+  type BusinessProcess, type ProcessStep, type Risk, type Control, type Client,
 } from '@/lib/api';
 
 export default function Controls() {
   const navigate = useNavigate();
   const [processes, setProcesses] = useState<BusinessProcess[]>([]);
+  const [steps, setSteps] = useState<ProcessStep[]>([]);
   const [risks, setRisks] = useState<Risk[]>([]);
   const [controls, setControls] = useState<Control[]>([]);
   const [clients, setClients] = useState<Client[]>([]);
@@ -29,12 +30,13 @@ export default function Controls() {
   const [search, setSearch] = useState('');
   const [filterClient, setFilterClient] = useState('all');
   const [filterProcess, setFilterProcess] = useState('all');
+  const [filterStep, setFilterStep] = useState('all');
   const [filterType, setFilterType] = useState('all');
   const [filterEffectiveness, setFilterEffectiveness] = useState('all');
 
   const reload = async () => {
-    const [p, r, c, cl] = await Promise.all([fetchProcesses(), fetchRisks(), fetchAllControls(), fetchClients()]);
-    setProcesses(p); setRisks(r); setControls(c); setClients(cl);
+    const [p, st, r, c, cl] = await Promise.all([fetchProcesses(), fetchSteps(), fetchRisks(), fetchAllControls(), fetchClients()]);
+    setProcesses(p); setSteps(st); setRisks(r); setControls(c); setClients(cl);
   };
   useEffect(() => { reload(); }, []);
 
@@ -51,6 +53,7 @@ export default function Controls() {
     const proc = risk ? processMap[risk.process_id] : null;
     if (filterClient !== 'all' && proc?.client_id !== filterClient) return false;
     if (filterProcess !== 'all' && risk?.process_id !== filterProcess) return false;
+    if (filterStep !== 'all' && risk?.step_id !== filterStep) return false;
     if (filterType !== 'all' && c.type !== filterType) return false;
     if (filterEffectiveness !== 'all' && c.effectiveness !== filterEffectiveness) return false;
     if (search) {
@@ -69,8 +72,8 @@ export default function Controls() {
     corrective: controls.filter(c => c.type === 'corrective').length,
   };
 
-  const hasFilters = search || filterClient !== 'all' || filterProcess !== 'all' || filterType !== 'all' || filterEffectiveness !== 'all';
-  const clearFilters = () => { setSearch(''); setFilterClient('all'); setFilterProcess('all'); setFilterType('all'); setFilterEffectiveness('all'); };
+  const hasFilters = search || filterClient !== 'all' || filterProcess !== 'all' || filterStep !== 'all' || filterType !== 'all' || filterEffectiveness !== 'all';
+  const clearFilters = () => { setSearch(''); setFilterClient('all'); setFilterProcess('all'); setFilterStep('all'); setFilterType('all'); setFilterEffectiveness('all'); };
 
   return (
     <div className="p-8 space-y-6 max-w-7xl">
@@ -120,11 +123,18 @@ export default function Controls() {
                 {clients.map(c => <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>)}
               </SelectContent>
             </Select>
-            <Select value={filterProcess} onValueChange={setFilterProcess}>
+            <Select value={filterProcess} onValueChange={v => { setFilterProcess(v); setFilterStep('all'); }}>
               <SelectTrigger className="w-[200px]"><SelectValue placeholder="All Processes" /></SelectTrigger>
               <SelectContent>
                 <SelectItem value="all">All Processes</SelectItem>
                 {processes.filter(p => filterClient === 'all' || p.client_id === filterClient).map(p => <SelectItem key={p.id} value={p.id}>{p.process_name}</SelectItem>)}
+              </SelectContent>
+            </Select>
+            <Select value={filterStep} onValueChange={setFilterStep}>
+              <SelectTrigger className="w-[180px]"><SelectValue placeholder="All Steps" /></SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All Steps</SelectItem>
+                {steps.filter(s => filterProcess === 'all' || s.process_id === filterProcess).map(s => <SelectItem key={s.id} value={s.id}>{s.label}</SelectItem>)}
               </SelectContent>
             </Select>
             <Select value={filterType} onValueChange={setFilterType}>

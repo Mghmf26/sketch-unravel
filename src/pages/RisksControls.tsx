@@ -30,6 +30,7 @@ export default function RisksControls() {
   const [search, setSearch] = useState('');
   const [filterClient, setFilterClient] = useState('all');
   const [filterProcess, setFilterProcess] = useState('all');
+  const [filterStep, setFilterStep] = useState('all');
   const [filterSeverity, setFilterSeverity] = useState('all');
 
   const reload = async () => {
@@ -50,6 +51,7 @@ export default function RisksControls() {
     const proc = processMap[r.process_id];
     if (filterClient !== 'all' && proc?.client_id !== filterClient) return false;
     if (filterProcess !== 'all' && r.process_id !== filterProcess) return false;
+    if (filterStep !== 'all' && r.step_id !== filterStep) return false;
     if (filterSeverity !== 'all') {
       const isMatch = filterSeverity === 'high' ? (r.impact === 'high' || r.likelihood === 'high') :
         filterSeverity === 'medium' ? (r.impact === 'medium' && r.likelihood !== 'high') :
@@ -73,8 +75,8 @@ export default function RisksControls() {
     totalControls: controls.length,
   };
 
-  const hasFilters = search || filterClient !== 'all' || filterProcess !== 'all' || filterSeverity !== 'all';
-  const clearFilters = () => { setSearch(''); setFilterClient('all'); setFilterProcess('all'); setFilterSeverity('all'); };
+  const hasFilters = search || filterClient !== 'all' || filterProcess !== 'all' || filterStep !== 'all' || filterSeverity !== 'all';
+  const clearFilters = () => { setSearch(''); setFilterClient('all'); setFilterProcess('all'); setFilterStep('all'); setFilterSeverity('all'); };
 
   return (
     <div className="p-8 space-y-6 max-w-7xl">
@@ -125,11 +127,18 @@ export default function RisksControls() {
                 {clients.map(c => <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>)}
               </SelectContent>
             </Select>
-            <Select value={filterProcess} onValueChange={setFilterProcess}>
+            <Select value={filterProcess} onValueChange={v => { setFilterProcess(v); setFilterStep('all'); }}>
               <SelectTrigger className="w-[200px]"><SelectValue placeholder="All Processes" /></SelectTrigger>
               <SelectContent>
                 <SelectItem value="all">All Processes</SelectItem>
                 {processes.filter(p => filterClient === 'all' || p.client_id === filterClient).map(p => <SelectItem key={p.id} value={p.id}>{p.process_name}</SelectItem>)}
+              </SelectContent>
+            </Select>
+            <Select value={filterStep} onValueChange={setFilterStep}>
+              <SelectTrigger className="w-[180px]"><SelectValue placeholder="All Steps" /></SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All Steps</SelectItem>
+                {steps.filter(s => filterProcess === 'all' || s.process_id === filterProcess).map(s => <SelectItem key={s.id} value={s.id}>{s.label}</SelectItem>)}
               </SelectContent>
             </Select>
             <Select value={filterSeverity} onValueChange={setFilterSeverity}>
