@@ -20,7 +20,7 @@ interface UserRow {
 
 export default function AdminDashboard() {
   const navigate = useNavigate();
-  const { role } = useAuth();
+  const { role, loading } = useAuth();
   const [users, setUsers] = useState<UserRow[]>([]);
 
   const loadUsers = async () => {
