@@ -172,7 +172,7 @@ export default function DiagramCanvasEditor({ nodes: epcNodes, connections: epcC
   }, [onChange]);
 
   return (
-    <div className="h-[500px] rounded-lg border bg-background overflow-hidden">
+    <div className="h-[75vh] rounded-lg border bg-background overflow-hidden">
       <ReactFlow
         nodes={flowNodes}
         edges={flowEdges}
