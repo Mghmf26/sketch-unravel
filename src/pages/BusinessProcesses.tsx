@@ -78,6 +78,16 @@ export default function BusinessProcesses() {
 
   const closeDialog = () => { setDialog(null); setSelectedProcess(null); };
 
+  // Counts per process
+  const countFor = (processId: string) => ({
+    steps: steps.filter(s => s.process_id === processId).length,
+    risks: risks.filter(r => r.process_id === processId).length,
+    controls: controls.filter(c => risks.some(r => r.id === c.risk_id && r.process_id === processId)).length,
+    incidents: incidents.filter(i => i.process_id === processId).length,
+    regulations: regulations.filter(r => r.process_id === processId).length,
+    mfq: mfQuestions.filter(q => q.process_id === processId),
+  });
+
   // Summary stats
   const totalSteps = steps.length;
   const totalRisks = risks.length;
