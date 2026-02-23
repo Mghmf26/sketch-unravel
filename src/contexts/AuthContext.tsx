@@ -31,12 +31,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [loading, setLoading] = useState(true);
 
   const fetchProfileAndRole = async (userId: string) => {
-    const [{ data: p }, { data: r }] = await Promise.all([
+    const [{ data: p }, { data: roles }] = await Promise.all([
       supabase.from('profiles').select('*').eq('user_id', userId).single(),
-      supabase.from('user_roles').select('role').eq('user_id', userId).limit(1).single(),
+      supabase.from('user_roles').select('role').eq('user_id', userId),
     ]);
     setProfile(p as Profile | null);
-    setRole((r as any)?.role ?? 'user');
+    // Prioritize admin role if user has multiple roles
+    const roleList = (roles || []) as { role: string }[];
+    const isAdmin = roleList.some(r => r.role === 'admin');
+    setRole(isAdmin ? 'admin' : (roleList[0]?.role ?? 'user'));
   };
 
   const refreshProfile = async () => {
