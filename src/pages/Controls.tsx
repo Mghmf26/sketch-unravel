@@ -229,9 +229,9 @@ function ControlDialog({ mode, control, risks, processes, onClose, onRefresh }: 
   const [filterProcessId, setFilterProcessId] = useState(() => {
     if (control) {
       const risk = risks.find(r => r.id === control.risk_id);
-      return risk?.process_id || '';
+      return risk?.process_id || '__all__';
     }
-    return '';
+    return '__all__';
   });
   const [riskId, setRiskId] = useState(control?.risk_id || '');
   const [name, setName] = useState(control?.name || '');
