@@ -21,6 +21,7 @@ export type Database = {
           department: string | null
           description: string | null
           id: string
+          image_url: string | null
           owner: string | null
           process_name: string
           updated_at: string
@@ -31,6 +32,7 @@ export type Database = {
           department?: string | null
           description?: string | null
           id?: string
+          image_url?: string | null
           owner?: string | null
           process_name: string
           updated_at?: string
@@ -41,6 +43,7 @@ export type Database = {
           department?: string | null
           description?: string | null
           id?: string
+          image_url?: string | null
           owner?: string | null
           process_name?: string
           updated_at?: string

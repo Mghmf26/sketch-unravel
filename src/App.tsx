@@ -24,6 +24,7 @@ import ForgotPassword from "./pages/ForgotPassword";
 import ResetPassword from "./pages/ResetPassword";
 import Profile from "./pages/Profile";
 import AdminDashboard from "./pages/AdminDashboard";
+import ProcessView from "./pages/ProcessView";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -70,6 +71,7 @@ const App = () => (
             <Route path="/upload" element={<ProtectedRoute><UploadExtract /></ProtectedRoute>} />
             <Route path="/edit/:id" element={<ProtectedRoute><DataEntry /></ProtectedRoute>} />
             <Route path="/view/:id" element={<DiagramViewer />} />
+            <Route path="/process-view/:id" element={<ProtectedRoute><ProcessView /></ProtectedRoute>} />
             <Route path="*" element={<NotFound />} />
           </Routes>
         </AuthProvider>
