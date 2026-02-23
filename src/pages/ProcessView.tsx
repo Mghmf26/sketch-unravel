@@ -213,7 +213,7 @@ export default function ProcessView() {
               <CardHeader className="pb-3 border-b">
                 <div className="flex items-center justify-between">
                   <CardTitle className="text-sm font-semibold">Process Steps</CardTitle>
-                  <Button size="xs" variant="ghost" onClick={() => insertStep({ process_id: id!, label: 'New Step', type: 'in-scope' }).then(loadData)}>
+                  <Button size="sm" variant="ghost" onClick={() => insertStep({ process_id: id!, label: 'New Step', type: 'in-scope' }).then(loadData)}>
                     <Plus className="h-3.5 w-3.5 mr-1" /> Add Step
                   </Button>
                 </div>
@@ -253,7 +253,7 @@ export default function ProcessView() {
               <CardHeader className="pb-3 border-b">
                 <div className="flex items-center justify-between">
                   <CardTitle className="text-sm font-semibold">Step Connections</CardTitle>
-                  <Button size="xs" variant="ghost" onClick={() => {
+                  <Button size="sm" variant="ghost" onClick={() => {
                     if (steps.length < 2) return;
                     insertStepConnection({ process_id: id!, source_step_id: steps[0].id, target_step_id: steps[1].id }).then(loadData);
                   }}>
