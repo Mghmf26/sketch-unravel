@@ -50,10 +50,24 @@ export default function UploadExtract() {
     if (!extractedData) return;
     setLoading(true);
     try {
+      // 0. Upload the source image to storage if available
+      let imageUrl: string | null = null;
+      if (selectedFile) {
+        const fileExt = selectedFile.name.split('.').pop();
+        const filePath = `upload-${Date.now()}/${Math.random().toString(36).slice(2)}.${fileExt}`;
+        const { error: uploadError } = await supabase.storage.from('process-images').upload(filePath, selectedFile);
+        if (uploadError) console.error('Image upload failed:', uploadError);
+        else {
+          const { data: { publicUrl } } = supabase.storage.from('process-images').getPublicUrl(filePath);
+          imageUrl = publicUrl;
+        }
+      }
+
       // 1. Create the business process in the DB
       const process = await insertProcess({
         process_name: extractedData.processName || 'Extracted Process',
-      });
+        ...(imageUrl ? { image_url: imageUrl } : {}),
+      } as any);
 
       // 2. Insert each node as a process_step
       const stepIdMap: Record<string, string> = {};
@@ -84,7 +98,7 @@ export default function UploadExtract() {
       }
 
       toast({ title: 'Process saved!', description: `${extractedData.nodes.length} steps, ${extractedData.connections.length} connections.` });
-      navigate('/processes');
+      navigate(`/process-view/${process.id}`);
     } catch (err: any) {
       console.error(err);
       toast({ title: 'Save failed', description: err.message, variant: 'destructive' });
