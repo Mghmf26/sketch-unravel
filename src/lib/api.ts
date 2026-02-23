@@ -264,3 +264,36 @@ export async function deleteMFQuestion(id: string) {
   const { error } = await supabase.from('mf_questions').delete().eq('id', id);
   if (error) throw error;
 }
+
+// ---- Step Connections ----
+
+export interface StepConnection {
+  id: string;
+  process_id: string;
+  source_step_id: string;
+  target_step_id: string;
+  label: string | null;
+}
+
+export async function fetchStepConnections(processId?: string) {
+  let q = supabase.from('step_connections').select('*');
+  if (processId) q = q.eq('process_id', processId);
+  const { data } = await q;
+  return (data || []) as StepConnection[];
+}
+
+export async function insertStepConnection(c: Partial<StepConnection>) {
+  const { data, error } = await supabase.from('step_connections').insert(c as any).select().single();
+  if (error) throw error;
+  return data as StepConnection;
+}
+
+export async function deleteStepConnection(id: string) {
+  const { error } = await supabase.from('step_connections').delete().eq('id', id);
+  if (error) throw error;
+}
+
+export async function updateStep(id: string, s: Partial<ProcessStep>) {
+  const { error } = await supabase.from('process_steps').update(s).eq('id', id);
+  if (error) throw error;
+}
