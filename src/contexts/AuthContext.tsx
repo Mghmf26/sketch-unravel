@@ -31,12 +31,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [loading, setLoading] = useState(true);
 
   const fetchProfileAndRole = async (userId: string) => {
-    const [{ data: p }, { data: r }] = await Promise.all([
+    const [{ data: p }, { data: roles }] = await Promise.all([
       supabase.from('profiles').select('*').eq('user_id', userId).single(),
-      supabase.from('user_roles').select('role').eq('user_id', userId).limit(1).single(),
+      supabase.from('user_roles').select('role').eq('user_id', userId),
     ]);
     setProfile(p as Profile | null);
-    setRole((r as any)?.role ?? 'user');
+    // Prioritize admin role if user has multiple roles
+    const roleList = (roles || []) as { role: string }[];
+    const isAdmin = roleList.some(r => r.role === 'admin');
+    setRole(isAdmin ? 'admin' : (roleList[0]?.role ?? 'user'));
   };
 
   const refreshProfile = async () => {
@@ -44,7 +47,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   };
 
   useEffect(() => {
+    let isMounted = true;
+
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, sess) => {
+      if (!isMounted) return;
       setSession(sess);
       setUser(sess?.user ?? null);
       if (sess?.user) {
@@ -53,19 +59,25 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         setProfile(null);
         setRole(null);
       }
-      setLoading(false);
     });
 
-    supabase.auth.getSession().then(({ data: { session: sess } }) => {
+    const initAuth = async () => {
+      const { data: { session: sess } } = await supabase.auth.getSession();
+      if (!isMounted) return;
       setSession(sess);
       setUser(sess?.user ?? null);
       if (sess?.user) {
-        fetchProfileAndRole(sess.user.id);
+        await fetchProfileAndRole(sess.user.id);
       }
       setLoading(false);
-    });
+    };
 
-    return () => subscription.unsubscribe();
+    initAuth();
+
+    return () => {
+      isMounted = false;
+      subscription.unsubscribe();
+    };
   }, []);
 
   const signOut = async () => {
