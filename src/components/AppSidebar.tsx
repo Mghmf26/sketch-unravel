@@ -9,14 +9,12 @@ import {
   AlertCircle,
   Database,
   ShieldCheck,
-  Workflow,
   ChevronDown,
   ChevronRight,
   Cpu,
   BarChart3,
   PieChart,
   Brain,
-  Sparkles,
 } from 'lucide-react';
 import { NavLink } from '@/components/NavLink';
 import { useLocation } from 'react-router-dom';
@@ -30,6 +28,7 @@ import {
   SidebarMenuItem,
   useSidebar,
 } from '@/components/ui/sidebar';
+import mfAiLogo from '@/assets/mf-ai-logo.png';
 
 interface MenuGroup {
   title: string;
@@ -104,14 +103,10 @@ export function AppSidebar() {
         <div className="px-3 py-5 border-b border-sidebar-border">
           {!isCollapsed ? (
             <div className="flex items-center gap-3">
-              <div className="relative h-10 w-10 rounded-xl bg-gradient-to-br from-sidebar-primary to-sidebar-primary/60 flex items-center justify-center shadow-lg shadow-sidebar-primary/20">
-                <Workflow className="h-5 w-5 text-sidebar-primary-foreground" />
-                <div className="absolute -top-0.5 -right-0.5 h-3 w-3 rounded-full bg-sidebar-primary animate-pulse" />
-              </div>
+              <img src={mfAiLogo} alt="MF AI" className="h-10 w-10 rounded-xl shadow-lg object-cover" />
               <div className="flex-1 min-w-0">
-                <h1 className="text-sm font-bold text-sidebar-foreground tracking-tight leading-none flex items-center gap-1.5">
+                <h1 className="text-sm font-bold text-sidebar-foreground tracking-tight leading-none">
                   MF AI Navigator
-                  <Sparkles className="h-3 w-3 text-sidebar-primary" />
                 </h1>
                 <p className="text-[9px] text-sidebar-primary/70 mt-1 tracking-[0.2em] uppercase font-semibold">
                   Process Intelligence
@@ -120,9 +115,7 @@ export function AppSidebar() {
             </div>
           ) : (
             <div className="flex justify-center">
-              <div className="h-9 w-9 rounded-xl bg-gradient-to-br from-sidebar-primary to-sidebar-primary/60 flex items-center justify-center shadow-lg shadow-sidebar-primary/20">
-                <Workflow className="h-4.5 w-4.5 text-sidebar-primary-foreground" />
-              </div>
+              <img src={mfAiLogo} alt="MF AI" className="h-9 w-9 rounded-xl shadow-lg object-cover" />
             </div>
           )}
         </div>
