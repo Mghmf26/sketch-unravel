@@ -47,7 +47,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   };
 
   useEffect(() => {
+    let isMounted = true;
+
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, sess) => {
+      if (!isMounted) return;
       setSession(sess);
       setUser(sess?.user ?? null);
       if (sess?.user) {
@@ -56,19 +59,25 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         setProfile(null);
         setRole(null);
       }
-      setLoading(false);
     });
 
-    supabase.auth.getSession().then(({ data: { session: sess } }) => {
+    const initAuth = async () => {
+      const { data: { session: sess } } = await supabase.auth.getSession();
+      if (!isMounted) return;
       setSession(sess);
       setUser(sess?.user ?? null);
       if (sess?.user) {
-        fetchProfileAndRole(sess.user.id);
+        await fetchProfileAndRole(sess.user.id);
       }
       setLoading(false);
-    });
+    };
 
-    return () => subscription.unsubscribe();
+    initAuth();
+
+    return () => {
+      isMounted = false;
+      subscription.unsubscribe();
+    };
   }, []);
 
   const signOut = async () => {
