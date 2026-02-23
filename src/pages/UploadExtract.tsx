@@ -326,6 +326,19 @@ export default function UploadExtract() {
               </div>
             </div>
 
+            {/* Process Name Input */}
+            <Card>
+              <CardContent className="p-4">
+                <label className="text-xs font-medium text-muted-foreground mb-1.5 block">Process Name *</label>
+                <Input
+                  value={extractedData.processName}
+                  onChange={(e) => setExtractedData({ ...extractedData, processName: e.target.value })}
+                  placeholder="Enter a name for this process..."
+                  className="text-base font-medium"
+                />
+              </CardContent>
+            </Card>
+
             <Tabs defaultValue="canvas">
               <TabsList className="mb-3">
                 <TabsTrigger value="canvas" className="gap-1.5">
