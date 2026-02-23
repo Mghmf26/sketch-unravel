@@ -9,14 +9,12 @@ import {
   AlertCircle,
   Database,
   ShieldCheck,
-  Workflow,
   ChevronDown,
   ChevronRight,
   Cpu,
   BarChart3,
   PieChart,
   Brain,
-  Sparkles,
 } from 'lucide-react';
 import { NavLink } from '@/components/NavLink';
 import { useLocation } from 'react-router-dom';
@@ -30,6 +28,7 @@ import {
   SidebarMenuItem,
   useSidebar,
 } from '@/components/ui/sidebar';
+import mfAiLogo from '@/assets/mf-ai-logo.png';
 
 interface MenuGroup {
   title: string;

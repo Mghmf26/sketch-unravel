@@ -20,8 +20,6 @@ export function AppHeader() {
   const displayName = profile?.display_name || user?.email || 'Herwig';
   const initials = displayName.slice(0, 2).toUpperCase();
 
-  const displayName = profile?.display_name || user?.email || 'Herwig';
-  const initials = displayName.slice(0, 2).toUpperCase();
 
   return (
     <header className="h-14 border-b border-border bg-card flex items-center justify-between px-4 shrink-0">
