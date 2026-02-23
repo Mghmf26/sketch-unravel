@@ -53,7 +53,7 @@ export default function MainframeImports() {
 
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
         {[
-          { title: 'DATA SOURCES', value: imports.length, icon: Database },
+          { title: 'MF DATA SOURCES', value: imports.length, icon: Database },
           { title: 'TOTAL RECORDS', value: totalRecords.toLocaleString(), icon: HardDrive },
           { title: 'ACTIVE CONNECTIONS', value: connectedCount, icon: Server },
         ].map(s => (
@@ -71,8 +71,8 @@ export default function MainframeImports() {
 
       <Card className="border-0 shadow-sm overflow-hidden">
         <CardHeader>
-          <CardTitle className="text-base">Mainframe Data Sources</CardTitle>
-          <CardDescription>Data sources linked to business process steps — the system of record for each process</CardDescription>
+          <CardTitle className="text-base">MF Data Sources</CardTitle>
+          <CardDescription>MF data sources linked to business process steps — the system of record for each process</CardDescription>
         </CardHeader>
         <Table>
           <TableHeader>
@@ -89,7 +89,7 @@ export default function MainframeImports() {
           </TableHeader>
           <TableBody>
             {imports.length === 0 ? (
-              <TableRow><TableCell colSpan={8} className="text-center py-12 text-muted-foreground">No mainframe data sources added yet.</TableCell></TableRow>
+              <TableRow><TableCell colSpan={8} className="text-center py-12 text-muted-foreground">No MF data sources added yet.</TableCell></TableRow>
             ) : (
               imports.map(ds => {
                 const fileUrl = (ds as any).file_url;
