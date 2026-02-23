@@ -1,6 +1,7 @@
 import { useState, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Upload, Sparkles, ScanText, Loader2, Check, AlertCircle, ArrowLeft, Image, Eye, ChevronRight, Table2, LayoutGrid, PenLine } from 'lucide-react';
+import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { toast } from '@/hooks/use-toast';
@@ -325,6 +326,19 @@ export default function UploadExtract() {
                 </Button>
               </div>
             </div>
+
+            {/* Process Name Input */}
+            <Card>
+              <CardContent className="p-4">
+                <label className="text-xs font-medium text-muted-foreground mb-1.5 block">Process Name *</label>
+                <Input
+                  value={extractedData.processName}
+                  onChange={(e) => setExtractedData({ ...extractedData, processName: e.target.value })}
+                  placeholder="Enter a name for this process..."
+                  className="text-base font-medium"
+                />
+              </CardContent>
+            </Card>
 
             <Tabs defaultValue="canvas">
               <TabsList className="mb-3">
