@@ -52,7 +52,8 @@ const menuGroups: MenuGroup[] = [
     children: [
       { title: 'All Processes', url: '/processes', icon: Network },
       { title: 'Process Details', url: '/process-details', icon: FileText },
-      { title: 'Risks & Controls', url: '/risks', icon: AlertTriangle },
+      { title: 'Risks', url: '/risks', icon: AlertTriangle },
+      { title: 'Controls', url: '/controls', icon: ShieldCheck },
       { title: 'Regulations', url: '/regulations', icon: Scale },
       { title: 'Incidents', url: '/incidents', icon: AlertCircle },
     ],

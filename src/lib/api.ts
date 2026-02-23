@@ -297,3 +297,18 @@ export async function updateStep(id: string, s: Partial<ProcessStep>) {
   const { error } = await supabase.from('process_steps').update(s).eq('id', id);
   if (error) throw error;
 }
+
+export async function updateRisk(id: string, r: Partial<Risk>) {
+  const { error } = await supabase.from('risks').update(r).eq('id', id);
+  if (error) throw error;
+}
+
+export async function updateControl(id: string, c: Partial<Control>) {
+  const { error } = await supabase.from('controls').update(c).eq('id', id);
+  if (error) throw error;
+}
+
+export async function updateRegulation(id: string, r: Partial<Regulation>) {
+  const { error } = await supabase.from('regulations').update(r).eq('id', id);
+  if (error) throw error;
+}
