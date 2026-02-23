@@ -50,6 +50,10 @@ export default function AdminDashboard() {
     }
   };
 
+  if (loading) {
+    return <div className="p-8 text-center text-muted-foreground">Loading...</div>;
+  }
+
   if (role !== 'admin') {
     return (
       <div className="p-8">
