@@ -1,6 +1,6 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { ArrowLeft, Database, Upload, FileText, HardDrive, Server, Plus, Trash2 } from 'lucide-react';
+import { ArrowLeft, Database, Upload, FileText, HardDrive, Server, Plus, Trash2, Pencil, Search, X, File } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -10,6 +10,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 import { toast } from '@/hooks/use-toast';
+import { supabase } from '@/integrations/supabase/client';
 import {
   fetchProcesses, fetchSteps, fetchMainframeImports,
   insertMainframeImport, deleteMainframeImport,
@@ -81,29 +82,40 @@ export default function MainframeImports() {
               <TableHead className="font-semibold text-xs uppercase">Process</TableHead>
               <TableHead className="font-semibold text-xs uppercase">Step</TableHead>
               <TableHead className="font-semibold text-xs uppercase text-center">Records</TableHead>
+              <TableHead className="font-semibold text-xs uppercase text-center">File</TableHead>
               <TableHead className="font-semibold text-xs uppercase text-center">Status</TableHead>
               <TableHead className="font-semibold text-xs uppercase text-right">Actions</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
             {imports.length === 0 ? (
-              <TableRow><TableCell colSpan={7} className="text-center py-12 text-muted-foreground">No mainframe data sources added yet.</TableCell></TableRow>
+              <TableRow><TableCell colSpan={8} className="text-center py-12 text-muted-foreground">No mainframe data sources added yet.</TableCell></TableRow>
             ) : (
-              imports.map(ds => (
-                <TableRow key={ds.id}>
-                  <TableCell className="font-medium text-sm">{ds.source_name}</TableCell>
-                  <TableCell><Badge variant="outline" className="text-[10px]">{ds.source_type}</Badge></TableCell>
-                  <TableCell className="text-sm">{processMap[ds.process_id] || '—'}</TableCell>
-                  <TableCell className="text-sm"><Badge variant="outline" className="text-[10px]">{ds.step_id ? stepMap[ds.step_id] || '—' : '—'}</Badge></TableCell>
-                  <TableCell className="text-center text-sm font-medium">{(ds.record_count || 0).toLocaleString()}</TableCell>
-                  <TableCell className="text-center">
-                    <Badge className={`text-[10px] border-0 ${ds.status === 'active' ? 'bg-primary/15 text-primary' : ds.status === 'pending' ? 'bg-yellow-500/15 text-yellow-600' : 'bg-destructive/15 text-destructive'}`}>{ds.status}</Badge>
-                  </TableCell>
-                  <TableCell className="text-right">
-                    <Button variant="ghost" size="icon" className="h-7 w-7 hover:text-destructive" onClick={async () => { await deleteMainframeImport(ds.id); reload(); }}><Trash2 className="h-3 w-3" /></Button>
-                  </TableCell>
-                </TableRow>
-              ))
+              imports.map(ds => {
+                const fileUrl = (ds as any).file_url;
+                return (
+                  <TableRow key={ds.id}>
+                    <TableCell className="font-medium text-sm">{ds.source_name}</TableCell>
+                    <TableCell><Badge variant="outline" className="text-[10px]">{ds.source_type}</Badge></TableCell>
+                    <TableCell className="text-sm">{processMap[ds.process_id] || '—'}</TableCell>
+                    <TableCell className="text-sm"><Badge variant="outline" className="text-[10px]">{ds.step_id ? stepMap[ds.step_id] || '—' : '—'}</Badge></TableCell>
+                    <TableCell className="text-center text-sm font-medium">{(ds.record_count || 0).toLocaleString()}</TableCell>
+                    <TableCell className="text-center">
+                      {fileUrl ? (
+                        <a href={fileUrl} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1 text-xs text-primary hover:underline">
+                          <File className="h-3 w-3" /> View
+                        </a>
+                      ) : <span className="text-muted-foreground text-xs">—</span>}
+                    </TableCell>
+                    <TableCell className="text-center">
+                      <Badge className={`text-[10px] border-0 ${ds.status === 'active' ? 'bg-primary/15 text-primary' : ds.status === 'pending' ? 'bg-yellow-500/15 text-yellow-600' : 'bg-destructive/15 text-destructive'}`}>{ds.status}</Badge>
+                    </TableCell>
+                    <TableCell className="text-right">
+                      <Button variant="ghost" size="icon" className="h-7 w-7 hover:text-destructive" onClick={async () => { await deleteMainframeImport(ds.id); reload(); }}><Trash2 className="h-3 w-3" /></Button>
+                    </TableCell>
+                  </TableRow>
+                );
+              })
             )}
           </TableBody>
         </Table>
@@ -136,16 +148,42 @@ function AddImportDialog({ processes, steps, onClose, onRefresh }: { processes: 
   const [datasetName, setDatasetName] = useState('');
   const [desc, setDesc] = useState('');
   const [recordCount, setRecordCount] = useState(0);
+  const [file, setFile] = useState<File | null>(null);
+  const [uploading, setUploading] = useState(false);
+  const fileRef = useRef<HTMLInputElement>(null);
 
   const filteredSteps = steps.filter(s => s.process_id === processId);
 
   const add = async () => {
     if (!sourceName.trim() || !processId) { toast({ title: 'Provide a source name and select a process', variant: 'destructive' }); return; }
+
+    let fileUrl: string | null = null;
+    if (file) {
+      setUploading(true);
+      const ext = file.name.split('.').pop();
+      const path = `${crypto.randomUUID()}.${ext}`;
+      const { error: uploadErr } = await supabase.storage.from('import-files').upload(path, file);
+      if (uploadErr) { toast({ title: 'File upload failed', description: uploadErr.message, variant: 'destructive' }); setUploading(false); return; }
+      const { data: urlData } = supabase.storage.from('import-files').getPublicUrl(path);
+      fileUrl = urlData.publicUrl;
+      setUploading(false);
+    }
+
     await insertMainframeImport({
       process_id: processId, step_id: stepId || null, source_name: sourceName.trim(),
       source_type: sourceType, dataset_name: datasetName || null, description: desc || null,
       record_count: recordCount, status: 'active',
-    });
+    } as any);
+
+    // Update with file_url if uploaded
+    if (fileUrl) {
+      // We need the ID of the just-inserted record, so re-fetch and update the latest
+      const latest = await supabase.from('mainframe_imports').select('id').order('created_at', { ascending: false }).limit(1).single();
+      if (latest.data) {
+        await supabase.from('mainframe_imports').update({ file_url: fileUrl } as any).eq('id', latest.data.id);
+      }
+    }
+
     toast({ title: 'Data source added' });
     onRefresh(); onClose();
   };
@@ -153,7 +191,7 @@ function AddImportDialog({ processes, steps, onClose, onRefresh }: { processes: 
   return (
     <Dialog open onOpenChange={onClose}>
       <DialogContent className="sm:max-w-md">
-        <DialogHeader><DialogTitle>Add Mainframe Data Source</DialogTitle><DialogDescription>Link a mainframe data source to a business process step.</DialogDescription></DialogHeader>
+        <DialogHeader><DialogTitle>Add Mainframe Data Source</DialogTitle><DialogDescription>Link a mainframe data source to a business process step. Optionally upload supporting files.</DialogDescription></DialogHeader>
         <div className="grid gap-3 py-2">
           <Select value={processId} onValueChange={v => { setProcessId(v); setStepId(''); }}><SelectTrigger><SelectValue placeholder="Select process" /></SelectTrigger><SelectContent>{processes.map(p => <SelectItem key={p.id} value={p.id}>{p.process_name}</SelectItem>)}</SelectContent></Select>
           <Select value={stepId} onValueChange={setStepId}><SelectTrigger><SelectValue placeholder="Select step (optional)" /></SelectTrigger><SelectContent>{filteredSteps.map(s => <SelectItem key={s.id} value={s.id}>{s.label}</SelectItem>)}</SelectContent></Select>
@@ -164,7 +202,26 @@ function AddImportDialog({ processes, steps, onClose, onRefresh }: { processes: 
           </div>
           <Textarea placeholder="Description" value={desc} onChange={e => setDesc(e.target.value)} rows={2} />
           <Input type="number" placeholder="Record count" value={recordCount} onChange={e => setRecordCount(Number(e.target.value))} />
-          <Button onClick={add}>Add Data Source</Button>
+
+          {/* File upload */}
+          <div className="border border-dashed border-primary/40 rounded-lg p-4">
+            <input ref={fileRef} type="file" className="hidden" accept=".pdf,.doc,.docx,.xls,.xlsx,.csv,.txt,.json,.xml,.jcl,.cbl,.cpy" onChange={e => setFile(e.target.files?.[0] || null)} />
+            {file ? (
+              <div className="flex items-center gap-2">
+                <File className="h-4 w-4 text-primary" />
+                <span className="text-sm font-medium flex-1 truncate">{file.name}</span>
+                <Button variant="ghost" size="sm" onClick={() => { setFile(null); if (fileRef.current) fileRef.current.value = ''; }}><X className="h-3 w-3" /></Button>
+              </div>
+            ) : (
+              <button onClick={() => fileRef.current?.click()} className="w-full flex flex-col items-center gap-1 text-muted-foreground hover:text-foreground transition-colors cursor-pointer">
+                <Upload className="h-5 w-5" />
+                <span className="text-xs font-medium">Upload file or document</span>
+                <span className="text-[10px]">PDF, Excel, CSV, COBOL, JCL, etc.</span>
+              </button>
+            )}
+          </div>
+
+          <Button onClick={add} disabled={uploading}>{uploading ? 'Uploading...' : 'Add Data Source'}</Button>
         </div>
       </DialogContent>
     </Dialog>

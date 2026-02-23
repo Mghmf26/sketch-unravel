@@ -29,6 +29,7 @@ export default function Regulations() {
   const [search, setSearch] = useState('');
   const [filterClient, setFilterClient] = useState('all');
   const [filterProcess, setFilterProcess] = useState('all');
+  const [filterStep, setFilterStep] = useState('all');
   const [filterStatus, setFilterStatus] = useState('all');
 
   const reload = async () => {
@@ -48,6 +49,7 @@ export default function Regulations() {
     const proc = processMap[r.process_id];
     if (filterClient !== 'all' && proc?.client_id !== filterClient) return false;
     if (filterProcess !== 'all' && r.process_id !== filterProcess) return false;
+    if (filterStep !== 'all' && r.step_id !== filterStep) return false;
     if (filterStatus !== 'all' && r.compliance_status !== filterStatus) return false;
     if (search) {
       const q = search.toLowerCase();
@@ -64,8 +66,8 @@ export default function Regulations() {
     nonCompliant: regulations.filter(r => r.compliance_status === 'non-compliant').length,
   };
 
-  const hasFilters = search || filterClient !== 'all' || filterProcess !== 'all' || filterStatus !== 'all';
-  const clearFilters = () => { setSearch(''); setFilterClient('all'); setFilterProcess('all'); setFilterStatus('all'); };
+  const hasFilters = search || filterClient !== 'all' || filterProcess !== 'all' || filterStep !== 'all' || filterStatus !== 'all';
+  const clearFilters = () => { setSearch(''); setFilterClient('all'); setFilterProcess('all'); setFilterStep('all'); setFilterStatus('all'); };
 
   return (
     <div className="p-8 space-y-6 max-w-7xl">
@@ -115,11 +117,18 @@ export default function Regulations() {
                 {clients.map(c => <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>)}
               </SelectContent>
             </Select>
-            <Select value={filterProcess} onValueChange={setFilterProcess}>
+            <Select value={filterProcess} onValueChange={v => { setFilterProcess(v); setFilterStep('all'); }}>
               <SelectTrigger className="w-[200px]"><SelectValue placeholder="All Processes" /></SelectTrigger>
               <SelectContent>
                 <SelectItem value="all">All Processes</SelectItem>
                 {processes.filter(p => filterClient === 'all' || p.client_id === filterClient).map(p => <SelectItem key={p.id} value={p.id}>{p.process_name}</SelectItem>)}
+              </SelectContent>
+            </Select>
+            <Select value={filterStep} onValueChange={setFilterStep}>
+              <SelectTrigger className="w-[180px]"><SelectValue placeholder="All Steps" /></SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All Steps</SelectItem>
+                {steps.filter(s => filterProcess === 'all' || s.process_id === filterProcess).map(s => <SelectItem key={s.id} value={s.id}>{s.label}</SelectItem>)}
               </SelectContent>
             </Select>
             <Select value={filterStatus} onValueChange={setFilterStatus}>
