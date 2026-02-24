@@ -133,6 +133,7 @@ export default function DiagramCanvasEditor({
   ]);
   const [historyIndex, setHistoryIndex] = useState(0);
   const [showHistory, setShowHistory] = useState(false);
+  const [showLegend, setShowLegend] = useState(false);
 
   const pushHistory = useCallback((desc: string, nodes: EPCNode[], conns: EPCConnection[]) => {
     setHistory(prev => {
