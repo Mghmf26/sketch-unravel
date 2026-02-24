@@ -701,3 +701,42 @@ function AddMFQuestionDialog({ processId, onClose, onRefresh }: { processId: str
     </Dialog>
   );
 }
+
+function AddRaciDialog({ processId, stepId, onClose, onRefresh }: { processId: string; stepId: string; onClose: () => void; onRefresh: () => void }) {
+  const [roleName, setRoleName] = useState('');
+  const [responsible, setResponsible] = useState('');
+  const [accountable, setAccountable] = useState('');
+  const [consulted, setConsulted] = useState('');
+  const [informed, setInformed] = useState('');
+  const submit = async () => {
+    if (!roleName.trim()) return;
+    await insertStepRaci({
+      process_id: processId, step_id: stepId, role_name: roleName.trim(),
+      responsible: responsible || null, accountable: accountable || null,
+      consulted: consulted || null, informed: informed || null,
+    });
+    toast({ title: 'RACI entry added' }); onRefresh(); onClose();
+  };
+  return (
+    <Dialog open onOpenChange={onClose}>
+      <DialogContent className="sm:max-w-md">
+        <DialogHeader>
+          <DialogTitle>Add RACI Assignment</DialogTitle>
+          <DialogDescription>Define who is Responsible, Accountable, Consulted, and Informed for this step.</DialogDescription>
+        </DialogHeader>
+        <div className="grid gap-3 py-2">
+          <div className="grid gap-1.5"><Label>Role / Function Name *</Label><Input value={roleName} onChange={e => setRoleName(e.target.value)} placeholder="e.g. Finance Manager, IT Operations" /></div>
+          <div className="grid grid-cols-2 gap-3">
+            <div className="grid gap-1.5"><Label>Responsible</Label><Input value={responsible} onChange={e => setResponsible(e.target.value)} placeholder="Person / team" /></div>
+            <div className="grid gap-1.5"><Label>Accountable</Label><Input value={accountable} onChange={e => setAccountable(e.target.value)} placeholder="Person / team" /></div>
+          </div>
+          <div className="grid grid-cols-2 gap-3">
+            <div className="grid gap-1.5"><Label>Consulted</Label><Input value={consulted} onChange={e => setConsulted(e.target.value)} placeholder="Person / team" /></div>
+            <div className="grid gap-1.5"><Label>Informed</Label><Input value={informed} onChange={e => setInformed(e.target.value)} placeholder="Person / team" /></div>
+          </div>
+        </div>
+        <DialogFooter><Button variant="outline" onClick={onClose}>Cancel</Button><Button onClick={submit}>Add</Button></DialogFooter>
+      </DialogContent>
+    </Dialog>
+  );
+}
