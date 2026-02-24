@@ -17,7 +17,7 @@ import {
 } from '@/lib/api';
 
 const MF_AI_POTENTIAL_LEVELS = ['very low', 'low', 'medium', 'high', 'very high'] as const;
-const ENGAGEMENT_MODES = ['audit', 'assurance', 'advisory'] as const;
+const ENGAGEMENT_MODES = ['external audit', 'internal audit', 'assurance', 'advisory'] as const;
 
 export default function Dashboard() {
   const navigate = useNavigate();
@@ -29,7 +29,7 @@ export default function Dashboard() {
   const [controls, setControls] = useState<Control[]>([]);
   const [regulations, setRegulations] = useState<Regulation[]>([]);
   const [importCount, setImportCount] = useState(0);
-  const [activeMode, setActiveMode] = useState<string>('audit');
+  const [activeMode, setActiveMode] = useState<string>('external audit');
 
   useEffect(() => {
     Promise.all([
@@ -44,7 +44,7 @@ export default function Dashboard() {
   const displayName = profile?.display_name || 'User';
 
   // Filter clients by active mode
-  const modeClients = clients.filter(c => (c as any).engagement_mode === activeMode || (!((c as any).engagement_mode) && activeMode === 'audit'));
+  const modeClients = clients.filter(c => (c as any).engagement_mode === activeMode || (!((c as any).engagement_mode) && activeMode === 'external audit'));
   const modeClientIds = new Set(modeClients.map(c => c.id));
   const modeProcesses = processes.filter(p => p.client_id && modeClientIds.has(p.client_id));
   const modeProcessIds = new Set(modeProcesses.map(p => p.id));
@@ -105,13 +105,13 @@ export default function Dashboard() {
               onClick={() => setActiveMode(mode)}
               className={`capitalize gap-2 ${activeMode === mode ? 'shadow-lg shadow-primary/20' : ''}`}
             >
-              {mode === 'audit' && <ClipboardCheck className="h-4 w-4" />}
+              {(mode === 'external audit' || mode === 'internal audit') && <ClipboardCheck className="h-4 w-4" />}
               {mode === 'assurance' && <Shield className="h-4 w-4" />}
               {mode === 'advisory' && <Briefcase className="h-4 w-4" />}
               {mode}
               <Badge variant="secondary" className="ml-1 text-[10px] px-1.5 py-0">
-                {modeClients.length === clients.filter(c => (c as any).engagement_mode === mode || (!((c as any).engagement_mode) && mode === 'audit')).length
-                  ? clients.filter(c => (c as any).engagement_mode === mode || (!((c as any).engagement_mode) && mode === 'audit')).length
+                {modeClients.length === clients.filter(c => (c as any).engagement_mode === mode || (!((c as any).engagement_mode) && mode === 'external audit')).length
+                  ? clients.filter(c => (c as any).engagement_mode === mode || (!((c as any).engagement_mode) && mode === 'external audit')).length
                   : 0}
               </Badge>
             </Button>
