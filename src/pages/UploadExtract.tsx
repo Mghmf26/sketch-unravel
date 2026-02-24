@@ -4,14 +4,18 @@ import { Upload, Sparkles, ScanText, Loader2, Check, AlertCircle, ArrowLeft, Ima
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
+import { Label } from '@/components/ui/label';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Textarea } from '@/components/ui/textarea';
 import { toast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 import { extractWithOCR } from '@/lib/ocr-extract';
-import { insertProcess, insertStep } from '@/lib/api';
+import { insertProcess, fetchClients, type Client } from '@/lib/api';
 import ExtractionResultsEditor from '@/components/ExtractionResultsEditor';
 import DiagramCanvasEditor from '@/components/DiagramCanvasEditor';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import type { EPCNode, EPCConnection } from '@/types/epc';
+import { useEffect } from 'react';
 
 interface ExtractionData {
   processId: string;
