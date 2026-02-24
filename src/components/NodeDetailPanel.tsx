@@ -1,10 +1,18 @@
-import { X, ShieldAlert, Shield, BookOpen, AlertTriangle, Info } from 'lucide-react';
+import { useState, useCallback } from 'react';
+import { X, ShieldAlert, Shield, BookOpen, AlertTriangle, Info, Pencil, Check } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
+import { Input } from '@/components/ui/input';
+import { Textarea } from '@/components/ui/textarea';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Separator } from '@/components/ui/separator';
-import type { Risk, Control, Regulation, Incident } from '@/lib/api';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { toast } from '@/hooks/use-toast';
+import {
+  updateStep, updateRisk, updateControl, updateRegulation, updateIncident,
+  type Risk, type Control, type Regulation, type Incident,
+} from '@/lib/api';
 import type { EPCNode, NodeType } from '@/types/epc';
 
 interface NodeDetailPanelProps {
@@ -15,6 +23,7 @@ interface NodeDetailPanelProps {
   incidents: Incident[];
   defaultTab?: string;
   onClose: () => void;
+  onDataChanged?: () => void;
 }
 
 const TYPE_COLORS: Record<string, { bg: string; text: string; border: string }> = {
@@ -60,13 +69,87 @@ function StatusBadge({ value }: { value: string }) {
   return <span className={`px-1.5 py-0.5 rounded text-[9px] font-bold uppercase ${colors[value] || 'bg-muted text-muted-foreground'}`}>{value}</span>;
 }
 
-export default function NodeDetailPanel({ node, risks, controls, regulations, incidents, defaultTab = 'overview', onClose }: NodeDetailPanelProps) {
+// Inline editable field
+function EditableField({ label, value, onSave, multiline = false }: {
+  label: string; value: string; onSave: (val: string) => void; multiline?: boolean;
+}) {
+  const [editing, setEditing] = useState(false);
+  const [text, setText] = useState(value);
+
+  const commit = () => {
+    setEditing(false);
+    if (text !== value) onSave(text);
+  };
+
+  if (!editing) {
+    return (
+      <div className="group">
+        <span className="text-[10px] font-semibold text-muted-foreground uppercase">{label}</span>
+        <div className="flex items-start gap-1">
+          <p className="text-sm flex-1">{value || <span className="text-muted-foreground italic">No {label.toLowerCase()}</span>}</p>
+          <button onClick={() => { setText(value); setEditing(true); }}
+            className="opacity-0 group-hover:opacity-100 transition-opacity p-0.5 rounded hover:bg-muted">
+            <Pencil className="h-3 w-3 text-muted-foreground" />
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div>
+      <span className="text-[10px] font-semibold text-muted-foreground uppercase">{label}</span>
+      <div className="flex items-end gap-1 mt-0.5">
+        {multiline ? (
+          <Textarea value={text} onChange={e => setText(e.target.value)} className="text-sm min-h-[60px]" autoFocus onKeyDown={e => { if (e.key === 'Escape') setEditing(false); }} />
+        ) : (
+          <Input value={text} onChange={e => setText(e.target.value)} className="text-sm h-8" autoFocus
+            onKeyDown={e => { if (e.key === 'Enter') commit(); if (e.key === 'Escape') setEditing(false); }} />
+        )}
+        <Button size="icon" variant="ghost" className="h-7 w-7 shrink-0" onClick={commit}>
+          <Check className="h-3.5 w-3.5 text-primary" />
+        </Button>
+      </div>
+    </div>
+  );
+}
+
+// Inline select
+function EditableSelect({ label, value, options, onSave }: {
+  label: string; value: string; options: string[]; onSave: (val: string) => void;
+}) {
+  return (
+    <div>
+      <span className="text-[9px] text-muted-foreground">{label}:</span>
+      <Select value={value} onValueChange={onSave}>
+        <SelectTrigger className="h-6 text-[10px] w-auto min-w-[80px] px-1.5 border-dashed">
+          <SelectValue />
+        </SelectTrigger>
+        <SelectContent>
+          {options.map(o => <SelectItem key={o} value={o} className="text-xs">{o}</SelectItem>)}
+        </SelectContent>
+      </Select>
+    </div>
+  );
+}
+
+export default function NodeDetailPanel({ node, risks, controls, regulations, incidents, defaultTab = 'overview', onClose, onDataChanged }: NodeDetailPanelProps) {
   const tc = TYPE_COLORS[node.type] || TYPE_COLORS['in-scope'];
   const stepRisks = risks.filter(r => r.step_id === node.id);
   const stepRiskIds = new Set(stepRisks.map(r => r.id));
   const stepControls = controls.filter(c => stepRiskIds.has(c.risk_id));
   const stepRegulations = regulations.filter(r => r.step_id === node.id);
   const stepIncidents = incidents.filter(i => i.step_id === node.id);
+
+  const saveField = useCallback(async (fn: () => Promise<void>, msg: string) => {
+    try {
+      await fn();
+      toast({ title: msg });
+      onDataChanged?.();
+    } catch {
+      toast({ title: 'Save failed', variant: 'destructive' });
+    }
+  }, [onDataChanged]);
 
   return (
     <div className="w-[340px] bg-background border-l shadow-lg flex flex-col h-full overflow-hidden" style={{ borderTopColor: tc.border, borderTopWidth: 3 }}>
@@ -117,14 +200,10 @@ export default function NodeDetailPanel({ node, risks, controls, regulations, in
 
         <ScrollArea className="flex-1 px-4 py-2">
           <TabsContent value="overview" className="mt-0 space-y-3">
-            <div>
-              <span className="text-[10px] font-semibold text-muted-foreground uppercase">Name</span>
-              <p className="text-sm">{node.label}</p>
-            </div>
-            <div>
-              <span className="text-[10px] font-semibold text-muted-foreground uppercase">Description</span>
-              <p className="text-sm text-muted-foreground">{node.description || 'No description'}</p>
-            </div>
+            <EditableField label="Name" value={node.label}
+              onSave={val => saveField(() => updateStep(node.id, { label: val }), 'Name updated')} />
+            <EditableField label="Description" value={node.description || ''} multiline
+              onSave={val => saveField(() => updateStep(node.id, { description: val }), 'Description updated')} />
             <div>
               <span className="text-[10px] font-semibold text-muted-foreground uppercase">Type</span>
               <p className="text-sm">{TYPE_LABELS[node.type] || node.type}</p>
@@ -157,16 +236,13 @@ export default function NodeDetailPanel({ node, risks, controls, regulations, in
               const riskControls = controls.filter(c => c.risk_id === risk.id);
               return (
                 <div key={risk.id} className="p-3 rounded-lg border bg-orange-50/50 space-y-2">
-                  <p className="text-sm font-medium">{risk.description}</p>
-                  <div className="flex gap-2">
-                    <div className="flex items-center gap-1">
-                      <span className="text-[9px] text-muted-foreground">Likelihood:</span>
-                      <SeverityBadge value={risk.likelihood} />
-                    </div>
-                    <div className="flex items-center gap-1">
-                      <span className="text-[9px] text-muted-foreground">Impact:</span>
-                      <SeverityBadge value={risk.impact} />
-                    </div>
+                  <EditableField label="Risk Description" value={risk.description}
+                    onSave={val => saveField(() => updateRisk(risk.id, { description: val }), 'Risk updated')} />
+                  <div className="flex gap-3">
+                    <EditableSelect label="Likelihood" value={risk.likelihood} options={['low', 'medium', 'high', 'critical']}
+                      onSave={val => saveField(() => updateRisk(risk.id, { likelihood: val }), 'Likelihood updated')} />
+                    <EditableSelect label="Impact" value={risk.impact} options={['low', 'medium', 'high', 'critical']}
+                      onSave={val => saveField(() => updateRisk(risk.id, { impact: val }), 'Impact updated')} />
                   </div>
                   {riskControls.length > 0 && (
                     <div className="pl-2 border-l-2 border-blue-200 space-y-1 mt-1">
@@ -192,12 +268,15 @@ export default function NodeDetailPanel({ node, risks, controls, regulations, in
               <div key={ctrl.id} className="p-3 rounded-lg border bg-blue-50/50 space-y-1.5">
                 <div className="flex items-center gap-2">
                   <Shield className="h-3.5 w-3.5 text-blue-500" />
-                  <span className="text-sm font-medium">{ctrl.name}</span>
+                  <EditableField label="Name" value={ctrl.name}
+                    onSave={val => saveField(() => updateControl(ctrl.id, { name: val }), 'Control updated')} />
                 </div>
                 {ctrl.description && <p className="text-xs text-muted-foreground">{ctrl.description}</p>}
-                <div className="flex gap-2">
-                  <StatusBadge value={ctrl.type || 'preventive'} />
-                  <StatusBadge value={ctrl.effectiveness || 'effective'} />
+                <div className="flex gap-3">
+                  <EditableSelect label="Type" value={ctrl.type || 'preventive'} options={['preventive', 'detective', 'corrective']}
+                    onSave={val => saveField(() => updateControl(ctrl.id, { type: val }), 'Type updated')} />
+                  <EditableSelect label="Effectiveness" value={ctrl.effectiveness || 'effective'} options={['effective', 'partially', 'ineffective']}
+                    onSave={val => saveField(() => updateControl(ctrl.id, { effectiveness: val }), 'Effectiveness updated')} />
                 </div>
               </div>
             ))}
@@ -210,12 +289,15 @@ export default function NodeDetailPanel({ node, risks, controls, regulations, in
               <div key={reg.id} className="p-3 rounded-lg border bg-purple-50/50 space-y-1.5">
                 <div className="flex items-center gap-2">
                   <BookOpen className="h-3.5 w-3.5 text-purple-500" />
-                  <span className="text-sm font-medium">{reg.name}</span>
+                  <EditableField label="Name" value={reg.name}
+                    onSave={val => saveField(() => updateRegulation(reg.id, { name: val }), 'Regulation updated')} />
                 </div>
-                {reg.description && <p className="text-xs text-muted-foreground">{reg.description}</p>}
-                <div className="flex gap-2">
+                <EditableField label="Description" value={reg.description || ''} multiline
+                  onSave={val => saveField(() => updateRegulation(reg.id, { description: val }), 'Description updated')} />
+                <div className="flex gap-3">
                   {reg.authority && <Badge variant="outline" className="text-[9px]">{reg.authority}</Badge>}
-                  <StatusBadge value={reg.compliance_status || 'partial'} />
+                  <EditableSelect label="Compliance" value={reg.compliance_status || 'partial'} options={['compliant', 'partial', 'non-compliant']}
+                    onSave={val => saveField(() => updateRegulation(reg.id, { compliance_status: val }), 'Status updated')} />
                 </div>
               </div>
             ))}
@@ -228,13 +310,16 @@ export default function NodeDetailPanel({ node, risks, controls, regulations, in
               <div key={inc.id} className="p-3 rounded-lg border bg-red-50/50 space-y-1.5">
                 <div className="flex items-center gap-2">
                   <AlertTriangle className="h-3.5 w-3.5 text-red-500" />
-                  <span className="text-sm font-medium">{inc.title}</span>
+                  <EditableField label="Title" value={inc.title}
+                    onSave={val => saveField(() => updateIncident(inc.id, { title: val }), 'Incident updated')} />
                 </div>
-                {inc.description && <p className="text-xs text-muted-foreground">{inc.description}</p>}
-                <div className="flex gap-2">
-                  <SeverityBadge value={inc.severity} />
-                  <StatusBadge value={inc.status || 'open'} />
-                  {inc.date && <span className="text-[9px] text-muted-foreground">{inc.date}</span>}
+                <EditableField label="Description" value={inc.description || ''} multiline
+                  onSave={val => saveField(() => updateIncident(inc.id, { description: val }), 'Description updated')} />
+                <div className="flex gap-3">
+                  <EditableSelect label="Severity" value={inc.severity} options={['low', 'medium', 'high', 'critical']}
+                    onSave={val => saveField(() => updateIncident(inc.id, { severity: val }), 'Severity updated')} />
+                  <EditableSelect label="Status" value={inc.status || 'open'} options={['open', 'investigating', 'resolved', 'closed']}
+                    onSave={val => saveField(() => updateIncident(inc.id, { status: val }), 'Status updated')} />
                 </div>
               </div>
             ))}

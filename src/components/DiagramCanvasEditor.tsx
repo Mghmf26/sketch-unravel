@@ -15,9 +15,10 @@ import {
   type NodeChange,
 } from '@xyflow/react';
 import '@xyflow/react/dist/style.css';
-import { Plus, LayoutGrid } from 'lucide-react';
+import { Plus, LayoutGrid, Save, Undo2, Redo2, History, ChevronRight } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
+import { ScrollArea } from '@/components/ui/scroll-area';
 import EditableEPCNode from '@/components/EditableEPCNode';
 import NodeDetailPanel from '@/components/NodeDetailPanel';
 import { getLayoutedElements } from '@/lib/layout';
@@ -32,6 +33,7 @@ interface DiagramCanvasEditorProps {
   regulations?: Regulation[];
   incidents?: Incident[];
   onChange: (nodes: EPCNode[], connections: EPCConnection[]) => void;
+  onDataChanged?: () => void;
 }
 
 const nodeTypes = { epc: EditableEPCNode };
@@ -45,6 +47,14 @@ const EDGE_STYLE = {
   labelBgStyle: { fill: '#f8fafc', stroke: '#e2e8f0', strokeWidth: 1, rx: 6, ry: 6 },
   labelBgPadding: [8, 5] as [number, number],
 };
+
+interface HistoryEntry {
+  id: string;
+  timestamp: Date;
+  description: string;
+  nodes: EPCNode[];
+  connections: EPCConnection[];
+}
 
 function toFlowElements(
   epcNodes: EPCNode[],
@@ -102,14 +112,72 @@ function toFlowElements(
 }
 
 export default function DiagramCanvasEditor({
-  nodes: epcNodes, connections: epcConnections,
+  nodes: initialNodes, connections: initialConnections,
   risks = [], controls = [], regulations = [], incidents = [],
-  onChange
+  onChange, onDataChanged
 }: DiagramCanvasEditorProps) {
-  const epcNodesRef = useRef(epcNodes);
-  const epcConnectionsRef = useRef(epcConnections);
-  epcNodesRef.current = epcNodes;
-  epcConnectionsRef.current = epcConnections;
+  // Local working state (not saved until user clicks Save)
+  const [workingNodes, setWorkingNodes] = useState<EPCNode[]>(initialNodes);
+  const [workingConns, setWorkingConns] = useState<EPCConnection[]>(initialConnections);
+  const workingNodesRef = useRef(workingNodes);
+  const workingConnsRef = useRef(workingConns);
+  workingNodesRef.current = workingNodes;
+  workingConnsRef.current = workingConns;
+
+  // Track if there are unsaved changes
+  const [hasChanges, setHasChanges] = useState(false);
+
+  // History for undo/redo
+  const [history, setHistory] = useState<HistoryEntry[]>([
+    { id: crypto.randomUUID(), timestamp: new Date(), description: 'Initial state', nodes: initialNodes, connections: initialConnections }
+  ]);
+  const [historyIndex, setHistoryIndex] = useState(0);
+  const [showHistory, setShowHistory] = useState(false);
+
+  const pushHistory = useCallback((desc: string, nodes: EPCNode[], conns: EPCConnection[]) => {
+    setHistory(prev => {
+      const truncated = prev.slice(0, historyIndex + 1);
+      return [...truncated, { id: crypto.randomUUID(), timestamp: new Date(), description: desc, nodes, connections: conns }];
+    });
+    setHistoryIndex(prev => prev + 1);
+    setHasChanges(true);
+  }, [historyIndex]);
+
+  const canUndo = historyIndex > 0;
+  const canRedo = historyIndex < history.length - 1;
+
+  const handleUndo = useCallback(() => {
+    if (!canUndo) return;
+    const newIdx = historyIndex - 1;
+    const entry = history[newIdx];
+    setHistoryIndex(newIdx);
+    setWorkingNodes(entry.nodes);
+    setWorkingConns(entry.connections);
+    setHasChanges(newIdx > 0);
+  }, [canUndo, historyIndex, history]);
+
+  const handleRedo = useCallback(() => {
+    if (!canRedo) return;
+    const newIdx = historyIndex + 1;
+    const entry = history[newIdx];
+    setHistoryIndex(newIdx);
+    setWorkingNodes(entry.nodes);
+    setWorkingConns(entry.connections);
+    setHasChanges(true);
+  }, [canRedo, historyIndex, history]);
+
+  const goToHistory = useCallback((idx: number) => {
+    const entry = history[idx];
+    setHistoryIndex(idx);
+    setWorkingNodes(entry.nodes);
+    setWorkingConns(entry.connections);
+    setHasChanges(idx > 0);
+  }, [history]);
+
+  const handleSave = useCallback(() => {
+    onChange(workingNodesRef.current, workingConnsRef.current);
+    setHasChanges(false);
+  }, [onChange]);
 
   // Detail panel state
   const [selectedNodeId, setSelectedNodeId] = useState<string | null>(null);
@@ -126,21 +194,25 @@ export default function DiagramCanvasEditor({
   }, []);
 
   const handleDeleteNode = useCallback((nodeId: string) => {
-    const updatedNodes = epcNodesRef.current.filter(n => n.id !== nodeId);
-    const updatedConns = epcConnectionsRef.current.filter(c => c.source !== nodeId && c.target !== nodeId);
+    const updatedNodes = workingNodesRef.current.filter(n => n.id !== nodeId);
+    const updatedConns = workingConnsRef.current.filter(c => c.source !== nodeId && c.target !== nodeId);
     if (selectedNodeId === nodeId) setSelectedNodeId(null);
-    onChange(updatedNodes, updatedConns);
-  }, [onChange, selectedNodeId]);
+    setWorkingNodes(updatedNodes);
+    setWorkingConns(updatedConns);
+    pushHistory(`Deleted node`, updatedNodes, updatedConns);
+  }, [selectedNodeId, pushHistory]);
 
   const handleLabelChange = useCallback((nodeId: string, label: string) => {
-    const updatedNodes = epcNodesRef.current.map(n => n.id === nodeId ? { ...n, label } : n);
-    onChange(updatedNodes, epcConnectionsRef.current);
-  }, [onChange]);
+    const updatedNodes = workingNodesRef.current.map(n => n.id === nodeId ? { ...n, label } : n);
+    setWorkingNodes(updatedNodes);
+    pushHistory(`Renamed to "${label}"`, updatedNodes, workingConnsRef.current);
+  }, [pushHistory]);
 
   const handleTypeChange = useCallback((nodeId: string, type: NodeType) => {
-    const updatedNodes = epcNodesRef.current.map(n => n.id === nodeId ? { ...n, type } : n);
-    onChange(updatedNodes, epcConnectionsRef.current);
-  }, [onChange]);
+    const updatedNodes = workingNodesRef.current.map(n => n.id === nodeId ? { ...n, type } : n);
+    setWorkingNodes(updatedNodes);
+    pushHistory(`Changed type to ${type}`, updatedNodes, workingConnsRef.current);
+  }, [pushHistory]);
 
   const callbacks = useMemo(() => ({
     onDelete: handleDeleteNode,
@@ -150,14 +222,15 @@ export default function DiagramCanvasEditor({
     onIndicatorClick: handleIndicatorClick,
   }), [handleDeleteNode, handleLabelChange, handleTypeChange, handleNodeClick, handleIndicatorClick]);
 
-  const initial = useMemo(() => toFlowElements(epcNodes, epcConnections, risks, controls, regulations, incidents, callbacks), []);
+  const initial = useMemo(() => toFlowElements(workingNodes, workingConns, risks, controls, regulations, incidents, callbacks), []);
   const [flowNodes, setFlowNodes, onNodesChange] = useNodesState(initial.nodes);
   const [flowEdges, setFlowEdges, onEdgesChange] = useEdgesState(initial.edges);
 
-  const prevDataRef = useRef({ nodes: epcNodes, connections: epcConnections });
-  if (epcNodes !== prevDataRef.current.nodes || epcConnections !== prevDataRef.current.connections) {
-    prevDataRef.current = { nodes: epcNodes, connections: epcConnections };
-    const { nodes: ln, edges: le } = toFlowElements(epcNodes, epcConnections, risks, controls, regulations, incidents, callbacks);
+  // Sync working state to flow elements
+  const prevWorkingRef = useRef({ nodes: workingNodes, connections: workingConns });
+  if (workingNodes !== prevWorkingRef.current.nodes || workingConns !== prevWorkingRef.current.connections) {
+    prevWorkingRef.current = { nodes: workingNodes, connections: workingConns };
+    const { nodes: ln, edges: le } = toFlowElements(workingNodes, workingConns, risks, controls, regulations, incidents, callbacks);
     const posMap = new Map(flowNodes.map(n => [n.id, n.position]));
     const merged = ln.map(n => ({ ...n, position: posMap.get(n.id) || n.position }));
     setFlowNodes(merged);
@@ -171,17 +244,20 @@ export default function DiagramCanvasEditor({
       target: connection.target,
       label: '',
     };
-    onChange(epcNodesRef.current, [...epcConnectionsRef.current, newConn]);
-  }, [onChange]);
+    const updatedConns = [...workingConnsRef.current, newConn];
+    setWorkingConns(updatedConns);
+    pushHistory('Added connection', workingNodesRef.current, updatedConns);
+  }, [pushHistory]);
 
   const handleEdgesChange = useCallback((changes: EdgeChange[]) => {
     onEdgesChange(changes);
     const removals = changes.filter(c => c.type === 'remove').map(c => (c as any).id);
     if (removals.length > 0) {
-      const updatedConns = epcConnectionsRef.current.filter(c => !removals.includes(c.id));
-      onChange(epcNodesRef.current, updatedConns);
+      const updatedConns = workingConnsRef.current.filter(c => !removals.includes(c.id));
+      setWorkingConns(updatedConns);
+      pushHistory('Removed connection', workingNodesRef.current, updatedConns);
     }
-  }, [onEdgesChange, onChange]);
+  }, [onEdgesChange, pushHistory]);
 
   const handleNodesChange = useCallback((changes: NodeChange[]) => {
     onNodesChange(changes);
@@ -194,11 +270,13 @@ export default function DiagramCanvasEditor({
       'start-end': 'Start', 'decision': 'Decision?', 'storage': 'Storage', 'delay': 'Delay', 'document': 'Document',
     };
     const newNode: EPCNode = { id, label: labels[type], type, description: '' };
-    onChange([...epcNodesRef.current, newNode], epcConnectionsRef.current);
-  }, [onChange]);
+    const updatedNodes = [...workingNodesRef.current, newNode];
+    setWorkingNodes(updatedNodes);
+    pushHistory(`Added ${labels[type]}`, updatedNodes, workingConnsRef.current);
+  }, [pushHistory]);
 
   const autoLayout = useCallback(() => {
-    const { nodes: ln, edges: le } = toFlowElements(epcNodesRef.current, epcConnectionsRef.current, risks, controls, regulations, incidents, callbacks);
+    const { nodes: ln, edges: le } = toFlowElements(workingNodesRef.current, workingConnsRef.current, risks, controls, regulations, incidents, callbacks);
     setFlowNodes(ln);
     setFlowEdges(le);
   }, [callbacks, setFlowNodes, setFlowEdges, risks, controls, regulations, incidents]);
@@ -206,17 +284,18 @@ export default function DiagramCanvasEditor({
   const onEdgeDoubleClick = useCallback((_event: React.MouseEvent, edge: Edge) => {
     const newLabel = prompt('Connection label (e.g. Yes, No, or leave empty):', (edge.label as string) || '');
     if (newLabel === null) return;
-    const updatedConns = epcConnectionsRef.current.map(c =>
+    const updatedConns = workingConnsRef.current.map(c =>
       c.id === edge.id ? { ...c, label: newLabel || undefined } : c
     );
-    onChange(epcNodesRef.current, updatedConns);
-  }, [onChange]);
+    setWorkingConns(updatedConns);
+    pushHistory('Changed connection label', workingNodesRef.current, updatedConns);
+  }, [pushHistory]);
 
   const onPaneClick = useCallback(() => {
     setSelectedNodeId(null);
   }, []);
 
-  const selectedNode = selectedNodeId ? epcNodes.find(n => n.id === selectedNodeId) : null;
+  const selectedNode = selectedNodeId ? workingNodes.find(n => n.id === selectedNodeId) : null;
 
   return (
     <div className="flex h-[75vh] rounded-lg border bg-background overflow-hidden">
@@ -259,7 +338,20 @@ export default function DiagramCanvasEditor({
             }}
           />
 
-          <Panel position="top-right" className="flex gap-2">
+          {/* Top-right: Add Node + Layout + Save + Undo/Redo + History */}
+          <Panel position="top-right" className="flex gap-2 items-center">
+            <Button size="sm" variant="ghost" className="h-8 w-8 p-0" disabled={!canUndo} onClick={handleUndo} title="Undo">
+              <Undo2 className="h-4 w-4" />
+            </Button>
+            <Button size="sm" variant="ghost" className="h-8 w-8 p-0" disabled={!canRedo} onClick={handleRedo} title="Redo">
+              <Redo2 className="h-4 w-4" />
+            </Button>
+            <Button size="sm" variant={showHistory ? "default" : "ghost"} className="h-8 w-8 p-0" onClick={() => setShowHistory(v => !v)} title="Change history">
+              <History className="h-4 w-4" />
+            </Button>
+
+            <div className="w-px h-5 bg-border mx-1" />
+
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <Button size="sm" variant="secondary" className="shadow-md">
@@ -300,12 +392,55 @@ export default function DiagramCanvasEditor({
             <Button size="sm" variant="secondary" className="shadow-md" onClick={autoLayout} title="Auto-layout">
               <LayoutGrid className="h-3.5 w-3.5 mr-1" /> Layout
             </Button>
+
+            <Button size="sm" variant={hasChanges ? "default" : "secondary"} className="shadow-md" onClick={handleSave} disabled={!hasChanges}>
+              <Save className="h-3.5 w-3.5 mr-1" /> Save
+            </Button>
           </Panel>
 
           <Panel position="bottom-right" className="text-[10px] text-muted-foreground bg-background/80 px-2 py-1 rounded">
             Click node to inspect · Double-click label to edit · Click type badge to cycle · Drag handle to connect · Delete key to remove
           </Panel>
         </ReactFlow>
+
+        {/* Collapsible history panel */}
+        {showHistory && (
+          <div className="absolute top-12 right-2 w-64 bg-background border rounded-lg shadow-xl z-50 overflow-hidden">
+            <div className="flex items-center justify-between px-3 py-2 border-b bg-muted/30">
+              <span className="text-xs font-semibold flex items-center gap-1.5">
+                <History className="h-3.5 w-3.5" /> Change History
+              </span>
+              <Button size="icon" variant="ghost" className="h-6 w-6" onClick={() => setShowHistory(false)}>
+                <ChevronRight className="h-3.5 w-3.5" />
+              </Button>
+            </div>
+            <ScrollArea className="max-h-[300px]">
+              <div className="p-1">
+                {history.map((entry, idx) => (
+                  <button
+                    key={entry.id}
+                    onClick={() => goToHistory(idx)}
+                    className={`w-full text-left px-2.5 py-1.5 rounded text-xs transition-colors ${
+                      idx === historyIndex
+                        ? 'bg-primary/10 text-primary font-medium'
+                        : idx > historyIndex
+                        ? 'text-muted-foreground/50 hover:bg-muted/50'
+                        : 'text-foreground hover:bg-muted/50'
+                    }`}
+                  >
+                    <div className="flex items-center gap-2">
+                      <span className={`w-1.5 h-1.5 rounded-full shrink-0 ${idx === historyIndex ? 'bg-primary' : idx > historyIndex ? 'bg-muted-foreground/30' : 'bg-muted-foreground/60'}`} />
+                      <span className="truncate">{entry.description}</span>
+                    </div>
+                    <span className="text-[9px] text-muted-foreground ml-3.5">
+                      {entry.timestamp.toLocaleTimeString()}
+                    </span>
+                  </button>
+                ))}
+              </div>
+            </ScrollArea>
+          </div>
+        )}
       </div>
 
       {/* Right detail panel */}
@@ -318,6 +453,7 @@ export default function DiagramCanvasEditor({
           incidents={incidents}
           defaultTab={detailTab}
           onClose={() => setSelectedNodeId(null)}
+          onDataChanged={onDataChanged}
         />
       )}
     </div>

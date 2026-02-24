@@ -206,7 +206,9 @@ function EditableEPCNode({ id, data, selected }: NodeProps) {
     </div>
   );
 
-  const hasRelations = (d.riskCount || 0) + (d.controlCount || 0) + (d.regulationCount || 0) + (d.incidentCount || 0) > 0;
+  // Only step-type nodes can have relations (risks/controls/regulations/incidents are linked to steps)
+  const isStepType = d.nodeType === 'in-scope';
+  const hasRelations = isStepType && (d.riskCount || 0) + (d.controlCount || 0) + (d.regulationCount || 0) + (d.incidentCount || 0) > 0;
 
   // XOR — blue diamond
   if (d.nodeType === 'xor') {
@@ -268,7 +270,6 @@ function EditableEPCNode({ id, data, selected }: NodeProps) {
           )}
           <Handle type="source" position={Position.Bottom} style={handleStyle(s.border)} />
         </div>
-        {hasRelations && indicatorRow}
         {selected && <DeleteButton id={id} onDelete={d.onDelete} />}
       </div>
     );
@@ -360,7 +361,6 @@ function EditableEPCNode({ id, data, selected }: NodeProps) {
             <Handle type="source" position={Position.Bottom} style={handleStyle(s.border)} />
           </div>
         </div>
-        {hasRelations && indicatorRow}
         {selected && <DeleteButton id={id} onDelete={d.onDelete} />}
       </div>
     );

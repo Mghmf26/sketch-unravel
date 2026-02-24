@@ -160,7 +160,7 @@ export default function ProcessView() {
         </TabsContent>
 
         <TabsContent value="diagram" className="mt-0">
-          <DiagramCanvasEditor nodes={epcNodes} connections={epcConns} risks={risks} controls={controls} regulations={regulations} incidents={incidents} onChange={handleDiagramChange} />
+          <DiagramCanvasEditor nodes={epcNodes} connections={epcConns} risks={risks} controls={controls} regulations={regulations} incidents={incidents} onChange={handleDiagramChange} onDataChanged={loadData} />
         </TabsContent>
       </Tabs>
     </div>
