@@ -10,9 +10,11 @@ import DiagramCanvasEditor from '@/components/DiagramCanvasEditor';
 import ProcessEditTab from '@/components/ProcessEditTab';
 import {
   fetchProcesses, fetchSteps, fetchStepConnections,
+  fetchRisks, fetchAllControls, fetchRegulations, fetchIncidents,
   updateProcess, updateStep, insertStep,
   insertStepConnection,
-  type BusinessProcess, type ProcessStep, type StepConnection
+  type BusinessProcess, type ProcessStep, type StepConnection,
+  type Risk, type Control, type Regulation, type Incident,
 } from '@/lib/api';
 import type { EPCNode, EPCConnection, NodeType } from '@/types/epc';
 
@@ -22,17 +24,27 @@ export default function ProcessView() {
   const [process, setProcess] = useState<BusinessProcess | null>(null);
   const [steps, setSteps] = useState<ProcessStep[]>([]);
   const [connections, setConnections] = useState<StepConnection[]>([]);
+  const [risks, setRisks] = useState<Risk[]>([]);
+  const [controls, setControls] = useState<Control[]>([]);
+  const [regulations, setRegulations] = useState<Regulation[]>([]);
+  const [incidents, setIncidents] = useState<Incident[]>([]);
   const [loading, setLoading] = useState(true);
   const [uploading, setUploading] = useState(false);
 
   const loadData = async () => {
     if (!id) return;
     try {
-      const [allP, s, c] = await Promise.all([
-        fetchProcesses(), fetchSteps(id), fetchStepConnections(id)
+      const [allP, s, c, r, ctrl, reg, inc] = await Promise.all([
+        fetchProcesses(), fetchSteps(id), fetchStepConnections(id),
+        fetchRisks(id), fetchAllControls(), fetchRegulations(id), fetchIncidents(id),
       ]);
       const p = allP.find(x => x.id === id);
-      if (p) { setProcess(p); setSteps(s); setConnections(c); }
+      if (p) {
+        setProcess(p); setSteps(s); setConnections(c);
+        const riskIds = new Set(r.map(x => x.id));
+        setRisks(r); setControls(ctrl.filter(x => riskIds.has(x.risk_id)));
+        setRegulations(reg); setIncidents(inc);
+      }
     } catch (err) {
       console.error(err);
       toast({ title: 'Error loading process', variant: 'destructive' });
@@ -148,7 +160,7 @@ export default function ProcessView() {
         </TabsContent>
 
         <TabsContent value="diagram" className="mt-0">
-          <DiagramCanvasEditor nodes={epcNodes} connections={epcConns} onChange={handleDiagramChange} />
+          <DiagramCanvasEditor nodes={epcNodes} connections={epcConns} risks={risks} controls={controls} regulations={regulations} incidents={incidents} onChange={handleDiagramChange} />
         </TabsContent>
       </Tabs>
     </div>
