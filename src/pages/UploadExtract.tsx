@@ -4,14 +4,18 @@ import { Upload, Sparkles, ScanText, Loader2, Check, AlertCircle, ArrowLeft, Ima
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
+import { Label } from '@/components/ui/label';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Textarea } from '@/components/ui/textarea';
 import { toast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 import { extractWithOCR } from '@/lib/ocr-extract';
-import { insertProcess, insertStep } from '@/lib/api';
+import { insertProcess, insertStep, fetchClients, type Client } from '@/lib/api';
 import ExtractionResultsEditor from '@/components/ExtractionResultsEditor';
 import DiagramCanvasEditor from '@/components/DiagramCanvasEditor';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import type { EPCNode, EPCConnection } from '@/types/epc';
+import { useEffect } from 'react';
 
 interface ExtractionData {
   processId: string;
@@ -31,6 +35,18 @@ export default function UploadExtract() {
   const [loading, setLoading] = useState(false);
   const [progress, setProgress] = useState('');
   const [extractedData, setExtractedData] = useState<ExtractionData | null>(null);
+  const [clients, setClients] = useState<Client[]>([]);
+
+  // Manual build form state
+  const [manualName, setManualName] = useState('');
+  const [manualClient, setManualClient] = useState('');
+  const [manualOwner, setManualOwner] = useState('');
+  const [manualDept, setManualDept] = useState('');
+  const [manualDesc, setManualDesc] = useState('');
+
+  useEffect(() => {
+    fetchClients().then(setClients);
+  }, []);
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -162,11 +178,31 @@ export default function UploadExtract() {
   };
 
   const handleMethodSelect = (m: MethodChoice) => {
-    if (m === 'manual') {
-      navigate('/data-entry');
+    setMethodChoice(m);
+  };
+
+  const handleManualCreate = async () => {
+    if (!manualName.trim()) {
+      toast({ title: 'Process name required', variant: 'destructive' });
       return;
     }
-    setMethodChoice(m);
+    setLoading(true);
+    try {
+      const process = await insertProcess({
+        process_name: manualName.trim(),
+        client_id: manualClient || null,
+        owner: manualOwner.trim() || null,
+        department: manualDept.trim() || null,
+        description: manualDesc.trim() || null,
+      } as any);
+      toast({ title: 'Process created', description: 'You can now add steps, risks, controls, and more.' });
+      navigate(`/process-view/${process.id}?tab=edit`);
+    } catch (err: any) {
+      console.error(err);
+      toast({ title: 'Failed to create process', description: err.message, variant: 'destructive' });
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -184,9 +220,11 @@ export default function UploadExtract() {
             <p className="text-xs text-muted-foreground">
               {!methodChoice
                 ? 'Choose how you want to create your business process'
-                : methodChoice === 'ai'
-                  ? 'Upload a diagram image for AI-powered extraction'
-                  : 'Upload a diagram image for OCR-based extraction'}
+                : methodChoice === 'manual'
+                  ? 'Create a process from scratch — add steps, risks, controls & more'
+                  : methodChoice === 'ai'
+                    ? 'Upload a diagram image for AI-powered extraction'
+                    : 'Upload a diagram image for OCR-based extraction'}
             </p>
           </div>
         </div>
@@ -258,8 +296,56 @@ export default function UploadExtract() {
           </div>
         )}
 
+        {/* Manual Build Form */}
+        {methodChoice === 'manual' && (
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-lg">Create New Process</CardTitle>
+              <CardDescription className="text-xs">
+                Fill in the process details below. After creating, you'll be taken to the Edit Data view where you can add steps, risks, controls, regulations, incidents, and RACI.
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label>Process Name *</Label>
+                  <Input value={manualName} onChange={e => setManualName(e.target.value)} placeholder="e.g., Fund Allocation Process" />
+                </div>
+                <div className="space-y-2">
+                  <Label>Client</Label>
+                  <Select value={manualClient} onValueChange={setManualClient}>
+                    <SelectTrigger><SelectValue placeholder="Select client (optional)" /></SelectTrigger>
+                    <SelectContent>
+                      {clients.map(c => <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>)}
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="space-y-2">
+                  <Label>Owner</Label>
+                  <Input value={manualOwner} onChange={e => setManualOwner(e.target.value)} placeholder="e.g., John Smith" />
+                </div>
+                <div className="space-y-2">
+                  <Label>Department</Label>
+                  <Input value={manualDept} onChange={e => setManualDept(e.target.value)} placeholder="e.g., Treasury Operations" />
+                </div>
+              </div>
+              <div className="space-y-2">
+                <Label>Description</Label>
+                <Textarea value={manualDesc} onChange={e => setManualDesc(e.target.value)} placeholder="Describe the business process..." className="min-h-[80px]" />
+              </div>
+              <div className="flex justify-end pt-2">
+                <Button onClick={handleManualCreate} disabled={loading || !manualName.trim()} size="lg">
+                  {loading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <PenLine className="mr-2 h-4 w-4" />}
+                  Create & Start Building
+                  <ChevronRight className="ml-1 h-4 w-4" />
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
+        )}
+
         {/* Step 2: Image upload (for AI or OCR) */}
-        {methodChoice && !extractedData && (
+        {methodChoice && methodChoice !== 'manual' && !extractedData && (
           <>
             <Card className="overflow-hidden">
               <CardContent className="p-0">

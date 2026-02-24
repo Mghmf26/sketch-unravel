@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useParams, useNavigate, useSearchParams } from 'react-router-dom';
 import { ArrowLeft, Image as ImageIcon, LayoutGrid, Share2, Upload } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
@@ -21,6 +21,8 @@ import type { EPCNode, EPCConnection, NodeType } from '@/types/epc';
 export default function ProcessView() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  const defaultTab = searchParams.get('tab') === 'edit' ? 'edit' : 'image';
   const [process, setProcess] = useState<BusinessProcess | null>(null);
   const [steps, setSteps] = useState<ProcessStep[]>([]);
   const [connections, setConnections] = useState<StepConnection[]>([]);
@@ -116,7 +118,7 @@ export default function ProcessView() {
         </div>
       </div>
 
-      <Tabs defaultValue="image" className="space-y-4">
+      <Tabs defaultValue={defaultTab} className="space-y-4">
         <TabsList className="bg-muted/50 p-1">
           <TabsTrigger value="image" className="gap-2"><ImageIcon className="h-4 w-4" /> Image View</TabsTrigger>
           <TabsTrigger value="edit" className="gap-2"><LayoutGrid className="h-4 w-4" /> Edit Data</TabsTrigger>
