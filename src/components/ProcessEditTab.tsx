@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import {
   Plus, Trash2, ArrowRight, ShieldAlert, Shield, BookOpen,
-  AlertTriangle, Database, HelpCircle, ChevronDown, ChevronRight, Pencil
+  AlertTriangle, Database, HelpCircle, ChevronDown, ChevronRight, Pencil, Users
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -17,7 +17,7 @@ import { toast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 import {
   fetchSteps, fetchStepConnections, fetchRisks, fetchControls, fetchAllControls,
-  fetchRegulations, fetchIncidents, fetchMainframeImports, fetchMFQuestions,
+  fetchRegulations, fetchIncidents, fetchMainframeImports, fetchMFQuestions, fetchStepRaci,
   insertStep, deleteStep, updateStep,
   insertStepConnection, deleteStepConnection,
   insertRisk, deleteRisk,
@@ -26,15 +26,16 @@ import {
   insertIncident, deleteIncident, updateIncident,
   insertMainframeImport, deleteMainframeImport,
   insertMFQuestion, deleteMFQuestion,
+  insertStepRaci, deleteStepRaci,
   type ProcessStep, type StepConnection, type Risk, type Control,
-  type Regulation, type Incident, type MainframeImport, type MFQuestion,
+  type Regulation, type Incident, type MainframeImport, type MFQuestion, type StepRaci,
 } from '@/lib/api';
 
 interface ProcessEditTabProps {
   processId: string;
 }
 
-type AddDialog = 'step' | 'risk' | 'control' | 'regulation' | 'incident' | 'import' | 'mfq' | 'connection' | null;
+type AddDialog = 'step' | 'risk' | 'control' | 'regulation' | 'incident' | 'import' | 'mfq' | 'connection' | 'raci' | null;
 
 export default function ProcessEditTab({ processId }: ProcessEditTabProps) {
   const [steps, setSteps] = useState<ProcessStep[]>([]);
@@ -45,6 +46,7 @@ export default function ProcessEditTab({ processId }: ProcessEditTabProps) {
   const [incidents, setIncidents] = useState<Incident[]>([]);
   const [imports, setImports] = useState<MainframeImport[]>([]);
   const [mfQuestions, setMfQuestions] = useState<MFQuestion[]>([]);
+  const [raciEntries, setRaciEntries] = useState<StepRaci[]>([]);
   const [addDialog, setAddDialog] = useState<AddDialog>(null);
   const [contextStepId, setContextStepId] = useState<string | null>(null);
   const [contextRiskId, setContextRiskId] = useState<string | null>(null);
@@ -52,18 +54,19 @@ export default function ProcessEditTab({ processId }: ProcessEditTabProps) {
   // Collapsible sections
   const [openSections, setOpenSections] = useState<Record<string, boolean>>({
     steps: true, connections: true, risks: true, regulations: true,
-    incidents: true, imports: true, mfq: true,
+    incidents: true, imports: true, mfq: true, raci: true,
   });
 
   const toggleSection = (key: string) =>
     setOpenSections(prev => ({ ...prev, [key]: !prev[key] }));
 
   const reload = useCallback(async () => {
-    const [s, c, r, ctrl, reg, inc, imp, mfq] = await Promise.all([
+    const [s, c, r, ctrl, reg, inc, imp, mfq, raci] = await Promise.all([
       fetchSteps(processId), fetchStepConnections(processId),
       fetchRisks(processId), fetchAllControls(),
       fetchRegulations(processId), fetchIncidents(processId),
       fetchMainframeImports(processId), fetchMFQuestions(processId),
+      fetchStepRaci(processId),
     ]);
     setSteps(s);
     setConnections(c);
@@ -75,6 +78,7 @@ export default function ProcessEditTab({ processId }: ProcessEditTabProps) {
     setIncidents(inc);
     setImports(imp);
     setMfQuestions(mfq);
+    setRaciEntries(raci);
   }, [processId]);
 
   useEffect(() => { reload(); }, [reload]);
@@ -140,6 +144,10 @@ export default function ProcessEditTab({ processId }: ProcessEditTabProps) {
                     <span className="text-sm flex-1 truncate font-medium">{step.label}</span>
                     {step.description && <span className="text-xs text-muted-foreground truncate max-w-[200px]">{step.description}</span>}
                     <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                      <Button variant="ghost" size="icon" className="h-6 w-6" title="Add RACI"
+                        onClick={() => { setContextStepId(step.id); setAddDialog('raci'); }}>
+                        <Users className="h-3 w-3 text-cyan-500" />
+                      </Button>
                       <Button variant="ghost" size="icon" className="h-6 w-6" title="Add Risk"
                         onClick={() => { setContextStepId(step.id); setAddDialog('risk'); }}>
                         <ShieldAlert className="h-3 w-3 text-orange-500" />
@@ -400,6 +408,40 @@ export default function ProcessEditTab({ processId }: ProcessEditTabProps) {
         </Card>
       </Collapsible>
 
+      {/* RACI Matrix */}
+      <Collapsible open={openSections.raci} onOpenChange={() => toggleSection('raci')}>
+        <Card>
+          <CardHeader className="py-2 px-4">
+            <SectionHeader icon={Users} title="RACI Matrix" count={raciEntries.length} sectionKey="raci" />
+          </CardHeader>
+          <CollapsibleContent>
+            <CardContent className="p-0">
+              <div className="divide-y">
+                {raciEntries.length === 0 && <p className="text-xs text-muted-foreground text-center py-6">No RACI assignments. Hover a step and click the people icon to add.</p>}
+                {raciEntries.map(raci => (
+                  <div key={raci.id} className="px-4 py-2.5 flex items-center gap-3 hover:bg-muted/30 group">
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm font-medium">{raci.role_name}</p>
+                      <div className="flex gap-2 mt-1 flex-wrap">
+                        <Badge variant="outline" className="text-[9px]">Step: {stepMap[raci.step_id] || '—'}</Badge>
+                        {raci.responsible && <Badge className="text-[9px] border-0 bg-emerald-100 text-emerald-700">R: {raci.responsible}</Badge>}
+                        {raci.accountable && <Badge className="text-[9px] border-0 bg-blue-100 text-blue-700">A: {raci.accountable}</Badge>}
+                        {raci.consulted && <Badge className="text-[9px] border-0 bg-amber-100 text-amber-700">C: {raci.consulted}</Badge>}
+                        {raci.informed && <Badge className="text-[9px] border-0 bg-purple-100 text-purple-700">I: {raci.informed}</Badge>}
+                      </div>
+                    </div>
+                    <Button variant="ghost" size="icon" className="h-6 w-6 opacity-0 group-hover:opacity-100 text-muted-foreground hover:text-destructive"
+                      onClick={() => deleteStepRaci(raci.id).then(reload)}>
+                      <Trash2 className="h-3 w-3" />
+                    </Button>
+                  </div>
+                ))}
+              </div>
+            </CardContent>
+          </CollapsibleContent>
+        </Card>
+      </Collapsible>
+
       {/* Add Dialogs */}
       {addDialog === 'step' && (
         <AddStepDialog processId={processId} onClose={() => setAddDialog(null)} onRefresh={reload} />
@@ -424,6 +466,9 @@ export default function ProcessEditTab({ processId }: ProcessEditTabProps) {
       )}
       {addDialog === 'mfq' && (
         <AddMFQuestionDialog processId={processId} onClose={() => setAddDialog(null)} onRefresh={reload} />
+      )}
+      {addDialog === 'raci' && contextStepId && (
+        <AddRaciDialog processId={processId} stepId={contextStepId} onClose={() => { setAddDialog(null); setContextStepId(null); }} onRefresh={reload} />
       )}
     </div>
   );
@@ -650,6 +695,45 @@ function AddMFQuestionDialog({ processId, onClose, onRefresh }: { processId: str
         <div className="grid gap-3 py-2">
           <div className="grid gap-1.5"><Label>Question *</Label><Textarea value={question} onChange={e => setQuestion(e.target.value)} /></div>
           <div className="grid gap-1.5"><Label>Category</Label><Input value={category} onChange={e => setCategory(e.target.value)} /></div>
+        </div>
+        <DialogFooter><Button variant="outline" onClick={onClose}>Cancel</Button><Button onClick={submit}>Add</Button></DialogFooter>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
+function AddRaciDialog({ processId, stepId, onClose, onRefresh }: { processId: string; stepId: string; onClose: () => void; onRefresh: () => void }) {
+  const [roleName, setRoleName] = useState('');
+  const [responsible, setResponsible] = useState('');
+  const [accountable, setAccountable] = useState('');
+  const [consulted, setConsulted] = useState('');
+  const [informed, setInformed] = useState('');
+  const submit = async () => {
+    if (!roleName.trim()) return;
+    await insertStepRaci({
+      process_id: processId, step_id: stepId, role_name: roleName.trim(),
+      responsible: responsible || null, accountable: accountable || null,
+      consulted: consulted || null, informed: informed || null,
+    });
+    toast({ title: 'RACI entry added' }); onRefresh(); onClose();
+  };
+  return (
+    <Dialog open onOpenChange={onClose}>
+      <DialogContent className="sm:max-w-md">
+        <DialogHeader>
+          <DialogTitle>Add RACI Assignment</DialogTitle>
+          <DialogDescription>Define who is Responsible, Accountable, Consulted, and Informed for this step.</DialogDescription>
+        </DialogHeader>
+        <div className="grid gap-3 py-2">
+          <div className="grid gap-1.5"><Label>Role / Function Name *</Label><Input value={roleName} onChange={e => setRoleName(e.target.value)} placeholder="e.g. Finance Manager, IT Operations" /></div>
+          <div className="grid grid-cols-2 gap-3">
+            <div className="grid gap-1.5"><Label>Responsible</Label><Input value={responsible} onChange={e => setResponsible(e.target.value)} placeholder="Person / team" /></div>
+            <div className="grid gap-1.5"><Label>Accountable</Label><Input value={accountable} onChange={e => setAccountable(e.target.value)} placeholder="Person / team" /></div>
+          </div>
+          <div className="grid grid-cols-2 gap-3">
+            <div className="grid gap-1.5"><Label>Consulted</Label><Input value={consulted} onChange={e => setConsulted(e.target.value)} placeholder="Person / team" /></div>
+            <div className="grid gap-1.5"><Label>Informed</Label><Input value={informed} onChange={e => setInformed(e.target.value)} placeholder="Person / team" /></div>
+          </div>
         </div>
         <DialogFooter><Button variant="outline" onClick={onClose}>Cancel</Button><Button onClick={submit}>Add</Button></DialogFooter>
       </DialogContent>

@@ -312,3 +312,40 @@ export async function updateRegulation(id: string, r: Partial<Regulation>) {
   const { error } = await supabase.from('regulations').update(r).eq('id', id);
   if (error) throw error;
 }
+
+// ---- RACI ----
+
+export interface StepRaci {
+  id: string;
+  step_id: string;
+  process_id: string;
+  role_name: string;
+  responsible: string | null;
+  accountable: string | null;
+  consulted: string | null;
+  informed: string | null;
+  created_at: string;
+}
+
+export async function fetchStepRaci(processId?: string) {
+  let q = supabase.from('step_raci').select('*').order('created_at');
+  if (processId) q = q.eq('process_id', processId);
+  const { data } = await q;
+  return (data || []) as StepRaci[];
+}
+
+export async function insertStepRaci(r: Partial<StepRaci>) {
+  const { data, error } = await supabase.from('step_raci').insert(r as any).select().single();
+  if (error) throw error;
+  return data as StepRaci;
+}
+
+export async function updateStepRaci(id: string, r: Partial<StepRaci>) {
+  const { error } = await supabase.from('step_raci').update(r).eq('id', id);
+  if (error) throw error;
+}
+
+export async function deleteStepRaci(id: string) {
+  const { error } = await supabase.from('step_raci').delete().eq('id', id);
+  if (error) throw error;
+}
