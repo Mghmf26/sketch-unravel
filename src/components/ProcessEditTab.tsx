@@ -131,7 +131,7 @@ export default function ProcessEditTab({ processId }: ProcessEditTabProps) {
       <Collapsible open={openSections.steps} onOpenChange={() => toggleSection('steps')}>
         <Card>
           <CardHeader className="py-2 px-4">
-            <SectionHeader icon={Pencil} title="Process Steps" count={steps.length} sectionKey="steps"
+            <SectionHeader icon={Pencil} title="Steps" count={steps.length} sectionKey="steps"
               onAdd={() => setAddDialog('step')} />
           </CardHeader>
           <CollapsibleContent>
@@ -140,7 +140,7 @@ export default function ProcessEditTab({ processId }: ProcessEditTabProps) {
                 {steps.length === 0 && <p className="text-xs text-muted-foreground text-center py-6">No steps defined</p>}
                 {steps.map(step => (
                   <div key={step.id} className="px-4 py-2.5 flex items-center gap-3 hover:bg-muted/30 group">
-                    <Badge variant="outline" className="text-[9px] uppercase font-bold shrink-0 w-24 justify-center">{step.type}</Badge>
+                    <Badge variant="outline" className="text-[9px] uppercase font-bold shrink-0 w-28 justify-center">{step.type === 'in-scope' ? 'STEP' : step.type === 'interface' ? 'PROCESS INTERFACE' : step.type.toUpperCase()}</Badge>
                     <span className="text-sm flex-1 truncate font-medium">{step.label}</span>
                     {step.description && <span className="text-xs text-muted-foreground truncate max-w-[200px]">{step.description}</span>}
                     <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
@@ -488,13 +488,13 @@ function AddStepDialog({ processId, onClose, onRefresh }: { processId: string; o
   return (
     <Dialog open onOpenChange={onClose}>
       <DialogContent className="sm:max-w-md">
-        <DialogHeader><DialogTitle>Add Process Step</DialogTitle></DialogHeader>
+        <DialogHeader><DialogTitle>Add Step</DialogTitle></DialogHeader>
         <div className="grid gap-3 py-2">
           <div className="grid gap-1.5"><Label>Label *</Label><Input value={label} onChange={e => setLabel(e.target.value)} placeholder="e.g. Validate Payment" /></div>
           <div className="grid gap-1.5">
             <Label>Type</Label>
             <Select value={type} onValueChange={setType}><SelectTrigger><SelectValue /></SelectTrigger><SelectContent>
-              <SelectItem value="in-scope">In-Scope</SelectItem><SelectItem value="interface">Interface</SelectItem>
+              <SelectItem value="in-scope">Step (In-Scope)</SelectItem><SelectItem value="interface">Process Interface</SelectItem>
               <SelectItem value="event">Event</SelectItem><SelectItem value="decision">Decision</SelectItem>
               <SelectItem value="xor">XOR</SelectItem><SelectItem value="start-end">Start/End</SelectItem>
               <SelectItem value="storage">Storage</SelectItem><SelectItem value="delay">Delay</SelectItem>

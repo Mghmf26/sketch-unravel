@@ -118,7 +118,7 @@ export default function BusinessProcesses() {
       <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
         {[
           { label: 'Total Processes', value: processes.length, icon: Network, color: 'text-primary' },
-          { label: 'Process Steps', value: totalSteps, icon: Layers, color: 'text-primary' },
+          { label: 'Steps', value: totalSteps, icon: Layers, color: 'text-primary' },
           { label: 'Active Risks', value: totalRisks, icon: AlertTriangle, color: 'text-destructive' },
           { label: 'Open Incidents', value: totalIncidents, icon: AlertCircle, color: 'text-orange-600' },
           { label: 'Regulations', value: totalRegulations, icon: Scale, color: 'text-primary' },
