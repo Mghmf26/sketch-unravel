@@ -178,11 +178,31 @@ export default function UploadExtract() {
   };
 
   const handleMethodSelect = (m: MethodChoice) => {
-    if (m === 'manual') {
-      navigate('/data-entry');
+    setMethodChoice(m);
+  };
+
+  const handleManualCreate = async () => {
+    if (!manualName.trim()) {
+      toast({ title: 'Process name required', variant: 'destructive' });
       return;
     }
-    setMethodChoice(m);
+    setLoading(true);
+    try {
+      const process = await insertProcess({
+        process_name: manualName.trim(),
+        client_id: manualClient || null,
+        owner: manualOwner.trim() || null,
+        department: manualDept.trim() || null,
+        description: manualDesc.trim() || null,
+      } as any);
+      toast({ title: 'Process created', description: 'You can now add steps, risks, controls, and more.' });
+      navigate(`/process-view/${process.id}?tab=edit`);
+    } catch (err: any) {
+      console.error(err);
+      toast({ title: 'Failed to create process', description: err.message, variant: 'destructive' });
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
