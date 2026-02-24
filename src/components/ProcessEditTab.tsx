@@ -408,6 +408,40 @@ export default function ProcessEditTab({ processId }: ProcessEditTabProps) {
         </Card>
       </Collapsible>
 
+      {/* RACI Matrix */}
+      <Collapsible open={openSections.raci} onOpenChange={() => toggleSection('raci')}>
+        <Card>
+          <CardHeader className="py-2 px-4">
+            <SectionHeader icon={Users} title="RACI Matrix" count={raciEntries.length} sectionKey="raci" />
+          </CardHeader>
+          <CollapsibleContent>
+            <CardContent className="p-0">
+              <div className="divide-y">
+                {raciEntries.length === 0 && <p className="text-xs text-muted-foreground text-center py-6">No RACI assignments. Hover a step and click the people icon to add.</p>}
+                {raciEntries.map(raci => (
+                  <div key={raci.id} className="px-4 py-2.5 flex items-center gap-3 hover:bg-muted/30 group">
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm font-medium">{raci.role_name}</p>
+                      <div className="flex gap-2 mt-1 flex-wrap">
+                        <Badge variant="outline" className="text-[9px]">Step: {stepMap[raci.step_id] || '—'}</Badge>
+                        {raci.responsible && <Badge className="text-[9px] border-0 bg-emerald-100 text-emerald-700">R: {raci.responsible}</Badge>}
+                        {raci.accountable && <Badge className="text-[9px] border-0 bg-blue-100 text-blue-700">A: {raci.accountable}</Badge>}
+                        {raci.consulted && <Badge className="text-[9px] border-0 bg-amber-100 text-amber-700">C: {raci.consulted}</Badge>}
+                        {raci.informed && <Badge className="text-[9px] border-0 bg-purple-100 text-purple-700">I: {raci.informed}</Badge>}
+                      </div>
+                    </div>
+                    <Button variant="ghost" size="icon" className="h-6 w-6 opacity-0 group-hover:opacity-100 text-muted-foreground hover:text-destructive"
+                      onClick={() => deleteStepRaci(raci.id).then(reload)}>
+                      <Trash2 className="h-3 w-3" />
+                    </Button>
+                  </div>
+                ))}
+              </div>
+            </CardContent>
+          </CollapsibleContent>
+        </Card>
+      </Collapsible>
+
       {/* Add Dialogs */}
       {addDialog === 'step' && (
         <AddStepDialog processId={processId} onClose={() => setAddDialog(null)} onRefresh={reload} />
@@ -432,6 +466,9 @@ export default function ProcessEditTab({ processId }: ProcessEditTabProps) {
       )}
       {addDialog === 'mfq' && (
         <AddMFQuestionDialog processId={processId} onClose={() => setAddDialog(null)} onRefresh={reload} />
+      )}
+      {addDialog === 'raci' && contextStepId && (
+        <AddRaciDialog processId={processId} stepId={contextStepId} onClose={() => { setAddDialog(null); setContextStepId(null); }} onRefresh={reload} />
       )}
     </div>
   );
