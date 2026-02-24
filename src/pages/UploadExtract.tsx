@@ -10,7 +10,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { toast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 import { extractWithOCR } from '@/lib/ocr-extract';
-import { insertProcess, fetchClients, type Client } from '@/lib/api';
+import { insertProcess, insertStep, fetchClients, type Client } from '@/lib/api';
 import ExtractionResultsEditor from '@/components/ExtractionResultsEditor';
 import DiagramCanvasEditor from '@/components/DiagramCanvasEditor';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
