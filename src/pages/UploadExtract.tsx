@@ -220,9 +220,11 @@ export default function UploadExtract() {
             <p className="text-xs text-muted-foreground">
               {!methodChoice
                 ? 'Choose how you want to create your business process'
-                : methodChoice === 'ai'
-                  ? 'Upload a diagram image for AI-powered extraction'
-                  : 'Upload a diagram image for OCR-based extraction'}
+                : methodChoice === 'manual'
+                  ? 'Create a process from scratch — add steps, risks, controls & more'
+                  : methodChoice === 'ai'
+                    ? 'Upload a diagram image for AI-powered extraction'
+                    : 'Upload a diagram image for OCR-based extraction'}
             </p>
           </div>
         </div>
@@ -293,6 +295,53 @@ export default function UploadExtract() {
             </Card>
           </div>
         )}
+
+        {/* Manual Build Form */}
+        {methodChoice === 'manual' && (
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-lg">Create New Process</CardTitle>
+              <CardDescription className="text-xs">
+                Fill in the process details below. After creating, you'll be taken to the Edit Data view where you can add steps, risks, controls, regulations, incidents, and RACI.
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label>Process Name *</Label>
+                  <Input value={manualName} onChange={e => setManualName(e.target.value)} placeholder="e.g., Fund Allocation Process" />
+                </div>
+                <div className="space-y-2">
+                  <Label>Client</Label>
+                  <Select value={manualClient} onValueChange={setManualClient}>
+                    <SelectTrigger><SelectValue placeholder="Select client (optional)" /></SelectTrigger>
+                    <SelectContent>
+                      {clients.map(c => <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>)}
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="space-y-2">
+                  <Label>Owner</Label>
+                  <Input value={manualOwner} onChange={e => setManualOwner(e.target.value)} placeholder="e.g., John Smith" />
+                </div>
+                <div className="space-y-2">
+                  <Label>Department</Label>
+                  <Input value={manualDept} onChange={e => setManualDept(e.target.value)} placeholder="e.g., Treasury Operations" />
+                </div>
+              </div>
+              <div className="space-y-2">
+                <Label>Description</Label>
+                <Textarea value={manualDesc} onChange={e => setManualDesc(e.target.value)} placeholder="Describe the business process..." className="min-h-[80px]" />
+              </div>
+              <div className="flex justify-end pt-2">
+                <Button onClick={handleManualCreate} disabled={loading || !manualName.trim()} size="lg">
+                  {loading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <PenLine className="mr-2 h-4 w-4" />}
+                  Create & Start Building
+                  <ChevronRight className="ml-1 h-4 w-4" />
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
 
         {/* Step 2: Image upload (for AI or OCR) */}
         {methodChoice && !extractedData && (
