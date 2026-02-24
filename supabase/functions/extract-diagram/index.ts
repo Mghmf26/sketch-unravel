@@ -34,12 +34,14 @@ Your task: Extract EVERY SINGLE node and EVERY SINGLE connection (arrow) from th
 ## NODE TYPES — Color & Shape Guide
 
 1. **"in-scope"** (GREEN rounded rectangles)
-   - Main business process steps of the CURRENT business process
+   - These are STEPS — the actual process steps of the CURRENT business process
    - GREEN filled background with text labels inside
    - Often have a process ID displayed ABOVE or NEAR the shape (e.g., "CP-060-020")
 
 2. **"interface"** (WHITE pentagon/chevron/arrow-shaped boxes)
-   - Interfaces to OTHER business processes
+   - These are PROCESS INTERFACES — they represent OTHER business processes that interact with this one
+   - Some are INPUTS (arrows flow FROM them INTO steps) — typically on the LEFT side
+   - Some are OUTPUTS (arrows flow FROM steps INTO them) — typically on the RIGHT side
    - WHITE or very light colored with a distinctive pointed/folded edge (pentagon or chevron shape)
    - Have IDs like "CP-010", "CP-030", "CP-050"
    - The SAME interface ID can appear multiple times. If so, give each a unique ID (e.g., "CP-050-left", "CP-050-right")

@@ -147,7 +147,7 @@ export default function DiagramCanvasEditor({ nodes: epcNodes, connections: epcC
   const addNode = useCallback((type: NodeType) => {
     const id = crypto.randomUUID();
     const labels: Record<NodeType, string> = {
-      'in-scope': 'New Process Step', 'interface': 'New Interface', 'event': 'New Event', 'xor': 'XOR',
+      'in-scope': 'New Step', 'interface': 'New Process Interface', 'event': 'New Event', 'xor': 'XOR',
       'start-end': 'Start', 'decision': 'Decision?', 'storage': 'Storage', 'delay': 'Delay', 'document': 'Document',
     };
     const newNode: EPCNode = { id, label: labels[type], type, description: '' };
@@ -219,10 +219,10 @@ export default function DiagramCanvasEditor({ nodes: epcNodes, connections: epcC
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end" className="w-52">
               <DropdownMenuItem onClick={() => addNode('in-scope')}>
-                <span className="w-2.5 h-2.5 rounded-sm bg-emerald-400 mr-2" /> Process Step
+                <span className="w-2.5 h-2.5 rounded-sm bg-emerald-400 mr-2" /> Step
               </DropdownMenuItem>
               <DropdownMenuItem onClick={() => addNode('interface')}>
-                <span className="w-2.5 h-2.5 rounded-sm bg-slate-300 mr-2" /> Interface
+                <span className="w-2.5 h-2.5 rounded-sm bg-slate-300 mr-2" /> Process Interface
               </DropdownMenuItem>
               <DropdownMenuItem onClick={() => addNode('event')}>
                 <span className="w-2.5 h-2.5 rounded-sm bg-pink-400 mr-2" /> Event
