@@ -21,6 +21,8 @@ import type { EPCNode, EPCConnection, NodeType } from '@/types/epc';
 export default function ProcessView() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  const defaultTab = searchParams.get('tab') === 'edit' ? 'edit' : 'image';
   const [process, setProcess] = useState<BusinessProcess | null>(null);
   const [steps, setSteps] = useState<ProcessStep[]>([]);
   const [connections, setConnections] = useState<StepConnection[]>([]);
