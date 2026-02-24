@@ -15,6 +15,9 @@ import {
   BarChart3,
   PieChart,
   Brain,
+  TrendingUp,
+  Server,
+  Microscope,
 } from 'lucide-react';
 import { NavLink } from '@/components/NavLink';
 import { useLocation } from 'react-router-dom';
@@ -59,11 +62,20 @@ const menuGroups: MenuGroup[] = [
     ],
   },
   {
-    title: 'Mainframe Layer',
+    title: 'Mainframe Ecosystem',
     icon: Cpu,
     children: [
-      { title: 'Mainframe Imports', url: '/imports', icon: Database },
+      { title: 'MF Data Sources', url: '/imports', icon: Database },
       { title: 'Processing Analysis', url: '/processing-analysis', icon: BarChart3 },
+    ],
+  },
+  {
+    title: 'Analysis',
+    icon: Microscope,
+    children: [
+      { title: 'Business Scenario Analysis', url: '/business-scenario-analysis', icon: TrendingUp },
+      { title: 'Mainframe Scenario Analysis', url: '/mainframe-scenario-analysis', icon: Server },
+      { title: 'Mainframe AI Analysis', url: '/mainframe-ai-analysis', icon: Brain },
     ],
   },
   {
@@ -72,6 +84,7 @@ const menuGroups: MenuGroup[] = [
     children: [
       { title: 'Visual Analytics', url: '/analytics', icon: BarChart3 },
       { title: 'AI Reports', url: '/ai-reports', icon: Brain },
+      { title: 'Client Reports', url: '/client-reports', icon: FileText },
     ],
   },
 ];

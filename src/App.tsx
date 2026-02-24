@@ -26,6 +26,10 @@ import ResetPassword from "./pages/ResetPassword";
 import Profile from "./pages/Profile";
 import AdminDashboard from "./pages/AdminDashboard";
 import ProcessView from "./pages/ProcessView";
+import BusinessScenarioAnalysis from "./pages/BusinessScenarioAnalysis";
+import MainframeScenarioAnalysis from "./pages/MainframeScenarioAnalysis";
+import MainframeAIAnalysis from "./pages/MainframeAIAnalysis";
+import ClientReports from "./pages/ClientReports";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -72,6 +76,10 @@ const App = () => (
             <Route path="/processing-analysis" element={<ProtectedRoute><ProcessingAnalysis /></ProtectedRoute>} />
             <Route path="/analytics" element={<ProtectedRoute><VisualAnalytics /></ProtectedRoute>} />
             <Route path="/ai-reports" element={<ProtectedRoute><AIReports /></ProtectedRoute>} />
+            <Route path="/business-scenario-analysis" element={<ProtectedRoute><BusinessScenarioAnalysis /></ProtectedRoute>} />
+            <Route path="/mainframe-scenario-analysis" element={<ProtectedRoute><MainframeScenarioAnalysis /></ProtectedRoute>} />
+            <Route path="/mainframe-ai-analysis" element={<ProtectedRoute><MainframeAIAnalysis /></ProtectedRoute>} />
+            <Route path="/client-reports" element={<ProtectedRoute><ClientReports /></ProtectedRoute>} />
             <Route path="/new" element={<ProtectedRoute><DataEntry /></ProtectedRoute>} />
             <Route path="/upload" element={<ProtectedRoute><UploadExtract /></ProtectedRoute>} />
             <Route path="/edit/:id" element={<ProtectedRoute><DataEntry /></ProtectedRoute>} />

@@ -2,7 +2,8 @@ import { useNavigate } from 'react-router-dom';
 import { useEffect, useState } from 'react';
 import {
   Users, Network, AlertTriangle, AlertCircle, UserPlus, PlusCircle, Database, Scale,
-  ShieldAlert, Shield, TrendingUp, ArrowUpRight, Activity, BarChart3, Zap,
+  ShieldAlert, Shield, TrendingUp, ArrowUpRight, Activity, BarChart3, Zap, Brain,
+  ClipboardCheck, Search as SearchIcon, Briefcase,
 } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -15,6 +16,9 @@ import {
   type BusinessProcess, type Client, type Risk, type Control, type Incident, type Regulation,
 } from '@/lib/api';
 
+const MF_AI_POTENTIAL_LEVELS = ['very low', 'low', 'medium', 'high', 'very high'] as const;
+const ENGAGEMENT_MODES = ['audit', 'assurance', 'advisory'] as const;
+
 export default function Dashboard() {
   const navigate = useNavigate();
   const { profile } = useAuth();
@@ -25,6 +29,7 @@ export default function Dashboard() {
   const [controls, setControls] = useState<Control[]>([]);
   const [regulations, setRegulations] = useState<Regulation[]>([]);
   const [importCount, setImportCount] = useState(0);
+  const [activeMode, setActiveMode] = useState<string>('audit');
 
   useEffect(() => {
     Promise.all([
@@ -37,11 +42,29 @@ export default function Dashboard() {
   }, []);
 
   const displayName = profile?.display_name || 'User';
-  const openIncidents = incidents.filter(inc => inc.status === 'open' || inc.status === 'investigating');
-  const highRisks = risks.filter(r => r.impact === 'high' || r.likelihood === 'high');
-  const compliantRegs = regulations.filter(r => r.compliance_status === 'compliant');
-  const complianceRate = regulations.length > 0 ? Math.round((compliantRegs.length / regulations.length) * 100) : 0;
-  const controlCoverage = risks.length > 0 ? Math.round((risks.filter(r => controls.some(c => c.risk_id === r.id)).length / risks.length) * 100) : 0;
+
+  // Filter clients by active mode
+  const modeClients = clients.filter(c => (c as any).engagement_mode === activeMode || (!((c as any).engagement_mode) && activeMode === 'audit'));
+  const modeClientIds = new Set(modeClients.map(c => c.id));
+  const modeProcesses = processes.filter(p => p.client_id && modeClientIds.has(p.client_id));
+  const modeProcessIds = new Set(modeProcesses.map(p => p.id));
+
+  const filteredRisks = risks.filter(r => modeProcessIds.has(r.process_id));
+  const filteredIncidents = incidents.filter(i => modeProcessIds.has(i.process_id));
+  const filteredRegulations = regulations.filter(r => modeProcessIds.has(r.process_id));
+  const filteredControls = controls.filter(c => filteredRisks.some(r => r.id === c.risk_id));
+
+  const openIncidents = filteredIncidents.filter(inc => inc.status === 'open' || inc.status === 'investigating');
+  const highRisks = filteredRisks.filter(r => r.impact === 'high' || r.likelihood === 'high');
+  const compliantRegs = filteredRegulations.filter(r => r.compliance_status === 'compliant');
+  const complianceRate = filteredRegulations.length > 0 ? Math.round((compliantRegs.length / filteredRegulations.length) * 100) : 0;
+  const controlCoverage = filteredRisks.length > 0 ? Math.round((filteredRisks.filter(r => filteredControls.some(c => c.risk_id === r.id)).length / filteredRisks.length) * 100) : 0;
+
+  // MF AI Potential distribution
+  const potentialCounts = MF_AI_POTENTIAL_LEVELS.map(level => ({
+    level,
+    count: processes.filter(p => ((p as any).mf_ai_potential || 'medium') === level).length,
+  }));
 
   const greeting = getGreeting();
 
@@ -71,11 +94,39 @@ export default function Dashboard() {
         </div>
       </div>
 
+      {/* Analysis Mode Selector */}
+      <div className="space-y-3">
+        <h2 className="text-sm font-semibold text-foreground tracking-wide uppercase">Engagement Mode</h2>
+        <div className="flex gap-3">
+          {ENGAGEMENT_MODES.map(mode => (
+            <Button
+              key={mode}
+              variant={activeMode === mode ? 'default' : 'outline'}
+              onClick={() => setActiveMode(mode)}
+              className={`capitalize gap-2 ${activeMode === mode ? 'shadow-lg shadow-primary/20' : ''}`}
+            >
+              {mode === 'audit' && <ClipboardCheck className="h-4 w-4" />}
+              {mode === 'assurance' && <Shield className="h-4 w-4" />}
+              {mode === 'advisory' && <Briefcase className="h-4 w-4" />}
+              {mode}
+              <Badge variant="secondary" className="ml-1 text-[10px] px-1.5 py-0">
+                {modeClients.length === clients.filter(c => (c as any).engagement_mode === mode || (!((c as any).engagement_mode) && mode === 'audit')).length
+                  ? clients.filter(c => (c as any).engagement_mode === mode || (!((c as any).engagement_mode) && mode === 'audit')).length
+                  : 0}
+              </Badge>
+            </Button>
+          ))}
+        </div>
+        <p className="text-xs text-muted-foreground">
+          Showing data for <strong className="text-foreground">{modeClients.length}</strong> {activeMode} client{modeClients.length !== 1 ? 's' : ''} · {modeProcesses.length} processes
+        </p>
+      </div>
+
       {/* Key Metrics Row */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
         <MetricCard
           label="Total Risks"
-          value={risks.length}
+          value={filteredRisks.length}
           subValue={`${highRisks.length} high severity`}
           icon={ShieldAlert}
           trend={highRisks.length > 0 ? 'warning' : 'good'}
@@ -83,7 +134,7 @@ export default function Dashboard() {
         />
         <MetricCard
           label="Controls"
-          value={controls.length}
+          value={filteredControls.length}
           subValue={`${controlCoverage}% coverage`}
           icon={Shield}
           trend={controlCoverage >= 80 ? 'good' : controlCoverage >= 50 ? 'neutral' : 'warning'}
@@ -92,7 +143,7 @@ export default function Dashboard() {
         <MetricCard
           label="Compliance"
           value={`${complianceRate}%`}
-          subValue={`${compliantRegs.length}/${regulations.length} compliant`}
+          subValue={`${compliantRegs.length}/${filteredRegulations.length} compliant`}
           icon={Scale}
           trend={complianceRate >= 80 ? 'good' : complianceRate >= 50 ? 'neutral' : 'warning'}
           onClick={() => navigate('/regulations')}
@@ -100,7 +151,7 @@ export default function Dashboard() {
         <MetricCard
           label="Open Incidents"
           value={openIncidents.length}
-          subValue={`${incidents.length} total`}
+          subValue={`${filteredIncidents.length} total`}
           icon={AlertCircle}
           trend={openIncidents.length === 0 ? 'good' : openIncidents.length <= 3 ? 'neutral' : 'warning'}
           onClick={() => navigate('/incidents')}
@@ -114,9 +165,9 @@ export default function Dashboard() {
           <h2 className="text-sm font-semibold text-foreground tracking-wide uppercase">Quick Actions</h2>
           <div className="space-y-2">
             {[
-              { label: 'Add Risk', desc: 'Register a new risk scenario', icon: ShieldAlert, path: '/risks', color: 'text-destructive' },
               { label: 'Add Client', desc: 'Register a new engagement', icon: UserPlus, path: '/clients', color: 'text-primary' },
               { label: 'Add Process', desc: 'Create or extract a process', icon: PlusCircle, path: '/upload', color: 'text-primary' },
+              { label: 'Add Risk', desc: 'Register a new risk scenario', icon: ShieldAlert, path: '/risks', color: 'text-destructive' },
               { label: 'Import Data', desc: 'Connect mainframe sources', icon: Database, path: '/imports', color: 'text-primary' },
               { label: 'View Analytics', desc: 'Visual insights & charts', icon: BarChart3, path: '/analytics', color: 'text-primary' },
             ].map(a => (
@@ -136,9 +187,9 @@ export default function Dashboard() {
           </div>
         </div>
 
-        {/* Risk & Compliance Breakdown */}
+        {/* Industry Risk & Compliance Breakdown */}
         <div className="lg:col-span-2 space-y-4">
-          <h2 className="text-sm font-semibold text-foreground tracking-wide uppercase">Risk & Compliance Overview</h2>
+          <h2 className="text-sm font-semibold text-foreground tracking-wide uppercase">Industry Risk & Compliance Overview</h2>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             {/* Risk Severity Distribution */}
@@ -150,9 +201,9 @@ export default function Dashboard() {
                 </CardTitle>
               </CardHeader>
               <CardContent className="space-y-3">
-                <SeverityBar label="High" count={risks.filter(r => r.impact === 'high' || r.likelihood === 'high').length} total={risks.length} color="bg-destructive" />
-                <SeverityBar label="Medium" count={risks.filter(r => r.impact === 'medium' && r.likelihood !== 'high').length} total={risks.length} color="bg-yellow-500" />
-                <SeverityBar label="Low" count={risks.filter(r => r.impact === 'low' && r.likelihood === 'low').length} total={risks.length} color="bg-primary" />
+                <SeverityBar label="High" count={filteredRisks.filter(r => r.impact === 'high' || r.likelihood === 'high').length} total={filteredRisks.length} color="bg-destructive" />
+                <SeverityBar label="Medium" count={filteredRisks.filter(r => r.impact === 'medium' && r.likelihood !== 'high').length} total={filteredRisks.length} color="bg-yellow-500" />
+                <SeverityBar label="Low" count={filteredRisks.filter(r => r.impact === 'low' && r.likelihood === 'low').length} total={filteredRisks.length} color="bg-primary" />
               </CardContent>
             </Card>
 
@@ -165,9 +216,9 @@ export default function Dashboard() {
                 </CardTitle>
               </CardHeader>
               <CardContent className="space-y-3">
-                <SeverityBar label="Preventive" count={controls.filter(c => c.type === 'preventive').length} total={controls.length} color="bg-primary" />
-                <SeverityBar label="Detective" count={controls.filter(c => c.type === 'detective').length} total={controls.length} color="bg-yellow-500" />
-                <SeverityBar label="Corrective" count={controls.filter(c => c.type === 'corrective').length} total={controls.length} color="bg-blue-500" />
+                <SeverityBar label="Preventive" count={filteredControls.filter(c => c.type === 'preventive').length} total={filteredControls.length} color="bg-primary" />
+                <SeverityBar label="Detective" count={filteredControls.filter(c => c.type === 'detective').length} total={filteredControls.length} color="bg-yellow-500" />
+                <SeverityBar label="Corrective" count={filteredControls.filter(c => c.type === 'corrective').length} total={filteredControls.length} color="bg-blue-500" />
               </CardContent>
             </Card>
 
@@ -182,12 +233,12 @@ export default function Dashboard() {
               <CardContent>
                 <div className="flex items-end gap-3">
                   <span className={`text-4xl font-bold ${complianceRate >= 80 ? 'text-primary' : complianceRate >= 50 ? 'text-yellow-600' : 'text-destructive'}`}>{complianceRate}%</span>
-                  <span className="text-xs text-muted-foreground mb-1">{compliantRegs.length} of {regulations.length}</span>
+                  <span className="text-xs text-muted-foreground mb-1">{compliantRegs.length} of {filteredRegulations.length}</span>
                 </div>
                 <Progress value={complianceRate} className="mt-3 h-2" />
                 <div className="flex justify-between mt-2">
-                  <span className="text-[10px] text-muted-foreground">{regulations.filter(r => r.compliance_status === 'non-compliant').length} non-compliant</span>
-                  <span className="text-[10px] text-muted-foreground">{regulations.filter(r => r.compliance_status === 'partial').length} partial</span>
+                  <span className="text-[10px] text-muted-foreground">{filteredRegulations.filter(r => r.compliance_status === 'non-compliant').length} non-compliant</span>
+                  <span className="text-[10px] text-muted-foreground">{filteredRegulations.filter(r => r.compliance_status === 'partial').length} partial</span>
                 </div>
               </CardContent>
             </Card>
@@ -207,8 +258,8 @@ export default function Dashboard() {
                 </div>
                 <Progress value={controlCoverage} className="mt-3 h-2" />
                 <div className="flex justify-between mt-2">
-                  <span className="text-[10px] text-muted-foreground">{risks.filter(r => !controls.some(c => c.risk_id === r.id)).length} unmitigated</span>
-                  <span className="text-[10px] text-muted-foreground">{controls.length} controls total</span>
+                  <span className="text-[10px] text-muted-foreground">{filteredRisks.filter(r => !filteredControls.some(c => c.risk_id === r.id)).length} unmitigated</span>
+                  <span className="text-[10px] text-muted-foreground">{filteredControls.length} controls total</span>
                 </div>
               </CardContent>
             </Card>
@@ -216,14 +267,50 @@ export default function Dashboard() {
         </div>
       </div>
 
-      {/* Recent Processes */}
+      {/* Mainframe AI Potential Overview */}
       <div>
-        <h2 className="text-sm font-semibold text-foreground tracking-wide uppercase mb-3">Recent Processes</h2>
+        <h2 className="text-sm font-semibold text-foreground tracking-wide uppercase mb-3">Mainframe AI Potential Overview</h2>
+        <Card className="border shadow-sm">
+          <CardContent className="p-6">
+            <div className="flex items-center gap-3 mb-5">
+              <div className="h-10 w-10 rounded-xl bg-primary/10 flex items-center justify-center">
+                <Brain className="h-5 w-5 text-primary" />
+              </div>
+              <div>
+                <p className="text-sm font-semibold text-foreground">MF AI Potential Distribution</p>
+                <p className="text-xs text-muted-foreground">AI-determined potential across all business processes</p>
+              </div>
+            </div>
+            <div className="grid grid-cols-5 gap-3">
+              {potentialCounts.map(({ level, count }) => {
+                const colorMap: Record<string, string> = {
+                  'very low': 'bg-muted text-muted-foreground',
+                  'low': 'bg-blue-500/10 text-blue-600',
+                  'medium': 'bg-yellow-500/10 text-yellow-600',
+                  'high': 'bg-primary/10 text-primary',
+                  'very high': 'bg-green-500/10 text-green-600',
+                };
+                return (
+                  <div key={level} className={`rounded-xl p-4 text-center ${colorMap[level]}`}>
+                    <p className="text-2xl font-bold">{count}</p>
+                    <p className="text-[10px] font-semibold uppercase tracking-wider mt-1 capitalize">{level}</p>
+                  </div>
+                );
+              })}
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+
+      {/* Recent Added Processes */}
+      <div>
+        <h2 className="text-sm font-semibold text-foreground tracking-wide uppercase mb-3">Recent Added Processes</h2>
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
           {processes.slice(0, 6).map(p => {
             const pRisks = risks.filter(r => r.process_id === p.id);
             const pControls = controls.filter(c => pRisks.some(r => r.id === c.risk_id));
             const pRegs = regulations.filter(r => r.process_id === p.id);
+            const potential = (p as any).mf_ai_potential || 'medium';
             return (
               <Card key={p.id} className="group cursor-pointer border hover:border-primary/40 shadow-none hover:shadow-md transition-all duration-300" onClick={() => navigate(`/process-view/${p.id}`)}>
                 <CardContent className="p-5">
@@ -238,6 +325,7 @@ export default function Dashboard() {
                     <Badge variant="outline" className="text-[9px] px-2 py-0.5">{pRisks.length} risks</Badge>
                     <Badge variant="outline" className="text-[9px] px-2 py-0.5">{pControls.length} controls</Badge>
                     <Badge variant="outline" className="text-[9px] px-2 py-0.5">{pRegs.length} regs</Badge>
+                    <Badge variant="outline" className="text-[9px] px-2 py-0.5 capitalize">{potential} MF AI</Badge>
                   </div>
                 </CardContent>
               </Card>
