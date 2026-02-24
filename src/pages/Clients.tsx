@@ -150,14 +150,14 @@ export default function Clients() {
     };
 
     if (editingClient) {
-      const { error } = await supabase.from('clients').update(payload).eq('id', editingClient.id);
+      const { error } = await supabase.from('clients').update(payload as any).eq('id', editingClient.id);
       if (error) {
         toast({ title: 'Update failed', description: error.message, variant: 'destructive' });
       } else {
         toast({ title: 'Client updated' });
       }
     } else {
-      const { error } = await supabase.from('clients').insert(payload);
+      const { error } = await supabase.from('clients').insert(payload as any);
       if (error) {
         toast({ title: 'Failed to add client', description: error.message, variant: 'destructive' });
       } else {
