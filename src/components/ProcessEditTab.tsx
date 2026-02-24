@@ -144,6 +144,10 @@ export default function ProcessEditTab({ processId }: ProcessEditTabProps) {
                     <span className="text-sm flex-1 truncate font-medium">{step.label}</span>
                     {step.description && <span className="text-xs text-muted-foreground truncate max-w-[200px]">{step.description}</span>}
                     <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                      <Button variant="ghost" size="icon" className="h-6 w-6" title="Add RACI"
+                        onClick={() => { setContextStepId(step.id); setAddDialog('raci'); }}>
+                        <Users className="h-3 w-3 text-cyan-500" />
+                      </Button>
                       <Button variant="ghost" size="icon" className="h-6 w-6" title="Add Risk"
                         onClick={() => { setContextStepId(step.id); setAddDialog('risk'); }}>
                         <ShieldAlert className="h-3 w-3 text-orange-500" />
