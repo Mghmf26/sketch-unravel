@@ -453,6 +453,7 @@ export default function DiagramCanvasEditor({
           incidents={incidents}
           defaultTab={detailTab}
           onClose={() => setSelectedNodeId(null)}
+          onDataChanged={onDataChanged}
         />
       )}
     </div>
