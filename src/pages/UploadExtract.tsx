@@ -342,9 +342,10 @@ export default function UploadExtract() {
               </div>
             </CardContent>
           </Card>
+        )}
 
         {/* Step 2: Image upload (for AI or OCR) */}
-        {methodChoice && !extractedData && (
+        {methodChoice && methodChoice !== 'manual' && !extractedData && (
           <>
             <Card className="overflow-hidden">
               <CardContent className="p-0">
