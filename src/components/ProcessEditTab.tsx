@@ -338,11 +338,15 @@ export default function ProcessEditTab({ processId }: ProcessEditTabProps) {
                           </div>
 
                           {/* Risks & Controls */}
-                          {stepRisks.length > 0 && (
                             <div className="space-y-2">
-                              <div className="flex items-center gap-1.5">
-                                <ShieldAlert className="h-3 w-3 text-orange-500" />
-                                <span className="text-[11px] font-semibold text-orange-700">Risks ({stepRisks.length})</span>
+                              <div className="flex items-center gap-1.5 justify-between">
+                                <div className="flex items-center gap-1.5">
+                                  <ShieldAlert className="h-3 w-3 text-orange-500" />
+                                  <span className="text-[11px] font-semibold text-orange-700">Risks ({stepRisks.length})</span>
+                                </div>
+                                <Button variant="ghost" size="sm" className="h-5 text-[10px] text-orange-600" onClick={() => { setContextStepId(step.id); setAddDialog('risk'); }}>
+                                  <Plus className="h-3 w-3 mr-0.5" /> Add
+                                </Button>
                               </div>
                               {stepRisks.map(risk => {
                                 const ctrls = getRiskControls(risk.id);
@@ -396,14 +400,19 @@ export default function ProcessEditTab({ processId }: ProcessEditTabProps) {
                                 );
                               })}
                             </div>
-                          )}
+                              {stepRisks.length === 0 && <p className="text-[10px] text-muted-foreground italic ml-4">No risks</p>}
+                            </div>
 
                           {/* Regulations */}
-                          {stepRegs.length > 0 && (
                             <div className="space-y-2">
-                              <div className="flex items-center gap-1.5">
-                                <BookOpen className="h-3 w-3 text-purple-500" />
-                                <span className="text-[11px] font-semibold text-purple-700">Regulations ({stepRegs.length})</span>
+                              <div className="flex items-center gap-1.5 justify-between">
+                                <div className="flex items-center gap-1.5">
+                                  <BookOpen className="h-3 w-3 text-purple-500" />
+                                  <span className="text-[11px] font-semibold text-purple-700">Regulations ({stepRegs.length})</span>
+                                </div>
+                                <Button variant="ghost" size="sm" className="h-5 text-[10px] text-purple-600" onClick={() => { setContextStepId(step.id); setAddDialog('regulation'); }}>
+                                  <Plus className="h-3 w-3 mr-0.5" /> Add
+                                </Button>
                               </div>
                               {stepRegs.map(reg => (
                                 <div key={reg.id} className="ml-4 pl-3 border-l-2 border-purple-200 flex items-center gap-2 group/reg py-1">
@@ -420,15 +429,19 @@ export default function ProcessEditTab({ processId }: ProcessEditTabProps) {
                                   </Button>
                                 </div>
                               ))}
+                              {stepRegs.length === 0 && <p className="text-[10px] text-muted-foreground italic ml-4">No regulations</p>}
                             </div>
-                          )}
 
                           {/* Incidents */}
-                          {stepIncs.length > 0 && (
                             <div className="space-y-2">
-                              <div className="flex items-center gap-1.5">
-                                <AlertTriangle className="h-3 w-3 text-red-500" />
-                                <span className="text-[11px] font-semibold text-red-700">Incidents ({stepIncs.length})</span>
+                              <div className="flex items-center gap-1.5 justify-between">
+                                <div className="flex items-center gap-1.5">
+                                  <AlertTriangle className="h-3 w-3 text-red-500" />
+                                  <span className="text-[11px] font-semibold text-red-700">Incidents ({stepIncs.length})</span>
+                                </div>
+                                <Button variant="ghost" size="sm" className="h-5 text-[10px] text-red-600" onClick={() => { setContextStepId(step.id); setAddDialog('incident'); }}>
+                                  <Plus className="h-3 w-3 mr-0.5" /> Add
+                                </Button>
                               </div>
                               {stepIncs.map(inc => (
                                 <div key={inc.id} className="ml-4 pl-3 border-l-2 border-red-200 flex items-center gap-2 group/inc py-1">
@@ -447,15 +460,19 @@ export default function ProcessEditTab({ processId }: ProcessEditTabProps) {
                                   </Button>
                                 </div>
                               ))}
+                              {stepIncs.length === 0 && <p className="text-[10px] text-muted-foreground italic ml-4">No incidents</p>}
                             </div>
-                          )}
 
                           {/* RACI */}
-                          {stepRaci.length > 0 && (
                             <div className="space-y-2">
-                              <div className="flex items-center gap-1.5">
-                                <Users className="h-3 w-3 text-cyan-500" />
-                                <span className="text-[11px] font-semibold text-cyan-700">RACI ({stepRaci.length})</span>
+                              <div className="flex items-center gap-1.5 justify-between">
+                                <div className="flex items-center gap-1.5">
+                                  <Users className="h-3 w-3 text-cyan-500" />
+                                  <span className="text-[11px] font-semibold text-cyan-700">RACI ({stepRaci.length})</span>
+                                </div>
+                                <Button variant="ghost" size="sm" className="h-5 text-[10px] text-cyan-600" onClick={() => { setContextStepId(step.id); setAddDialog('raci'); }}>
+                                  <Plus className="h-3 w-3 mr-0.5" /> Add
+                                </Button>
                               </div>
                               {stepRaci.map(raci => (
                                 <div key={raci.id} className="ml-4 pl-3 border-l-2 border-cyan-200 py-1 group/raci">
@@ -475,13 +492,8 @@ export default function ProcessEditTab({ processId }: ProcessEditTabProps) {
                                   </div>
                                 </div>
                               ))}
+                              {stepRaci.length === 0 && <p className="text-[10px] text-muted-foreground italic ml-4">No RACI assignments</p>}
                             </div>
-                          )}
-
-                          {/* Empty state */}
-                          {relCount === 0 && (
-                            <p className="text-xs text-muted-foreground italic">No risks, regulations, incidents, or RACI assigned. Use the buttons above to add.</p>
-                          )}
                         </div>
                       )}
                     </div>
