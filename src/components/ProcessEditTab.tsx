@@ -35,7 +35,7 @@ interface ProcessEditTabProps {
   processId: string;
 }
 
-type AddDialog = 'step' | 'risk' | 'control' | 'regulation' | 'incident' | 'import' | 'mfq' | 'connection' | null;
+type AddDialog = 'step' | 'risk' | 'control' | 'regulation' | 'incident' | 'import' | 'mfq' | 'connection' | 'raci' | null;
 
 export default function ProcessEditTab({ processId }: ProcessEditTabProps) {
   const [steps, setSteps] = useState<ProcessStep[]>([]);
@@ -46,6 +46,7 @@ export default function ProcessEditTab({ processId }: ProcessEditTabProps) {
   const [incidents, setIncidents] = useState<Incident[]>([]);
   const [imports, setImports] = useState<MainframeImport[]>([]);
   const [mfQuestions, setMfQuestions] = useState<MFQuestion[]>([]);
+  const [raciEntries, setRaciEntries] = useState<StepRaci[]>([]);
   const [addDialog, setAddDialog] = useState<AddDialog>(null);
   const [contextStepId, setContextStepId] = useState<string | null>(null);
   const [contextRiskId, setContextRiskId] = useState<string | null>(null);
@@ -53,18 +54,19 @@ export default function ProcessEditTab({ processId }: ProcessEditTabProps) {
   // Collapsible sections
   const [openSections, setOpenSections] = useState<Record<string, boolean>>({
     steps: true, connections: true, risks: true, regulations: true,
-    incidents: true, imports: true, mfq: true,
+    incidents: true, imports: true, mfq: true, raci: true,
   });
 
   const toggleSection = (key: string) =>
     setOpenSections(prev => ({ ...prev, [key]: !prev[key] }));
 
   const reload = useCallback(async () => {
-    const [s, c, r, ctrl, reg, inc, imp, mfq] = await Promise.all([
+    const [s, c, r, ctrl, reg, inc, imp, mfq, raci] = await Promise.all([
       fetchSteps(processId), fetchStepConnections(processId),
       fetchRisks(processId), fetchAllControls(),
       fetchRegulations(processId), fetchIncidents(processId),
       fetchMainframeImports(processId), fetchMFQuestions(processId),
+      fetchStepRaci(processId),
     ]);
     setSteps(s);
     setConnections(c);
@@ -76,6 +78,7 @@ export default function ProcessEditTab({ processId }: ProcessEditTabProps) {
     setIncidents(inc);
     setImports(imp);
     setMfQuestions(mfq);
+    setRaciEntries(raci);
   }, [processId]);
 
   useEffect(() => { reload(); }, [reload]);
