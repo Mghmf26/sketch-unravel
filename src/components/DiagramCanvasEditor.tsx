@@ -114,7 +114,7 @@ function toFlowElements(
 export default function DiagramCanvasEditor({
   nodes: initialNodes, connections: initialConnections,
   risks = [], controls = [], regulations = [], incidents = [],
-  onChange
+  onChange, onDataChanged
 }: DiagramCanvasEditorProps) {
   // Local working state (not saved until user clicks Save)
   const [workingNodes, setWorkingNodes] = useState<EPCNode[]>(initialNodes);
