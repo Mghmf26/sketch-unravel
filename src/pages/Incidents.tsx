@@ -134,7 +134,7 @@ function AddIncidentDialog({ processes, steps, onClose, onRefresh }: { processes
   const [desc, setDesc] = useState('');
   const [severity, setSeverity] = useState('medium');
 
-  const filteredSteps = steps.filter(s => s.process_id === processId);
+  const filteredSteps = steps.filter(s => s.process_id === processId && s.type === 'in-scope');
 
   const add = async () => {
     if (!title.trim() || !stepId || !processId) { toast({ title: 'Fill all required fields', variant: 'destructive' }); return; }

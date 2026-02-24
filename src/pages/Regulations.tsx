@@ -210,7 +210,7 @@ function RegulationDialog({ mode, regulation, processes, steps, onClose, onRefre
   const [authority, setAuthority] = useState(regulation?.authority || '');
   const [compliance, setCompliance] = useState(regulation?.compliance_status || 'compliant');
 
-  const filteredSteps = steps.filter(s => s.process_id === processId);
+  const filteredSteps = steps.filter(s => s.process_id === processId && s.type === 'in-scope');
 
   const save = async () => {
     if (!name.trim() || !stepId || !processId) { toast({ title: 'Fill all required fields', variant: 'destructive' }); return; }

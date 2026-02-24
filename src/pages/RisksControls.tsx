@@ -224,7 +224,7 @@ function RiskDialog({ mode, risk, processes, steps, onClose, onRefresh }: {
   const [likelihood, setLikelihood] = useState(risk?.likelihood || 'medium');
   const [impact, setImpact] = useState(risk?.impact || 'medium');
 
-  const filteredSteps = steps.filter(s => s.process_id === processId);
+  const filteredSteps = steps.filter(s => s.process_id === processId && s.type === 'in-scope');
 
   const save = async () => {
     if (!desc.trim() || !stepId || !processId) { toast({ title: 'Fill all required fields', variant: 'destructive' }); return; }
