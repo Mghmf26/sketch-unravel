@@ -138,7 +138,7 @@ export default function RisksControls() {
               <SelectTrigger className="w-[180px]"><SelectValue placeholder="All Steps" /></SelectTrigger>
               <SelectContent>
                 <SelectItem value="all">All Steps</SelectItem>
-                {steps.filter(s => filterProcess === 'all' || s.process_id === filterProcess).map(s => <SelectItem key={s.id} value={s.id}>{s.label}</SelectItem>)}
+                {steps.filter(s => (filterProcess === 'all' || s.process_id === filterProcess) && s.type === 'in-scope').map(s => <SelectItem key={s.id} value={s.id}>{s.label}</SelectItem>)}
               </SelectContent>
             </Select>
             <Select value={filterSeverity} onValueChange={setFilterSeverity}>
@@ -224,7 +224,7 @@ function RiskDialog({ mode, risk, processes, steps, onClose, onRefresh }: {
   const [likelihood, setLikelihood] = useState(risk?.likelihood || 'medium');
   const [impact, setImpact] = useState(risk?.impact || 'medium');
 
-  const filteredSteps = steps.filter(s => s.process_id === processId);
+  const filteredSteps = steps.filter(s => s.process_id === processId && s.type === 'in-scope');
 
   const save = async () => {
     if (!desc.trim() || !stepId || !processId) { toast({ title: 'Fill all required fields', variant: 'destructive' }); return; }
