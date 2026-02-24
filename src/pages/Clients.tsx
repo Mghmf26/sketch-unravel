@@ -387,6 +387,17 @@ export default function Clients() {
                 </Select>
               </div>
             </div>
+            <div className="grid gap-1.5">
+              <Label>Engagement Mode</Label>
+              <Select value={form.engagement_mode} onValueChange={(v) => setForm({ ...form, engagement_mode: v })}>
+                <SelectTrigger><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="audit">Audit</SelectItem>
+                  <SelectItem value="assurance">Assurance</SelectItem>
+                  <SelectItem value="advisory">Advisory</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
             <div className="grid grid-cols-2 gap-4">
               <div className="grid gap-1.5">
                 <Label htmlFor="contact_person">Contact Person</Label>
