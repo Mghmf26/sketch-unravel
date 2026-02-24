@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import {
   Plus, Trash2, ArrowRight, ShieldAlert, Shield, BookOpen,
-  AlertTriangle, Database, HelpCircle, ChevronDown, ChevronRight, Pencil
+  AlertTriangle, Database, HelpCircle, ChevronDown, ChevronRight, Pencil, Users
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -17,7 +17,7 @@ import { toast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 import {
   fetchSteps, fetchStepConnections, fetchRisks, fetchControls, fetchAllControls,
-  fetchRegulations, fetchIncidents, fetchMainframeImports, fetchMFQuestions,
+  fetchRegulations, fetchIncidents, fetchMainframeImports, fetchMFQuestions, fetchStepRaci,
   insertStep, deleteStep, updateStep,
   insertStepConnection, deleteStepConnection,
   insertRisk, deleteRisk,
@@ -26,8 +26,9 @@ import {
   insertIncident, deleteIncident, updateIncident,
   insertMainframeImport, deleteMainframeImport,
   insertMFQuestion, deleteMFQuestion,
+  insertStepRaci, deleteStepRaci,
   type ProcessStep, type StepConnection, type Risk, type Control,
-  type Regulation, type Incident, type MainframeImport, type MFQuestion,
+  type Regulation, type Incident, type MainframeImport, type MFQuestion, type StepRaci,
 } from '@/lib/api';
 
 interface ProcessEditTabProps {
