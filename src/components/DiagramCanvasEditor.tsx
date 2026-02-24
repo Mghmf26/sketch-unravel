@@ -33,6 +33,7 @@ interface DiagramCanvasEditorProps {
   regulations?: Regulation[];
   incidents?: Incident[];
   onChange: (nodes: EPCNode[], connections: EPCConnection[]) => void;
+  onDataChanged?: () => void;
 }
 
 const nodeTypes = { epc: EditableEPCNode };
