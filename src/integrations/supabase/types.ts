@@ -22,6 +22,7 @@ export type Database = {
           description: string | null
           id: string
           image_url: string | null
+          mf_ai_potential: string | null
           owner: string | null
           process_name: string
           updated_at: string
@@ -33,6 +34,7 @@ export type Database = {
           description?: string | null
           id?: string
           image_url?: string | null
+          mf_ai_potential?: string | null
           owner?: string | null
           process_name: string
           updated_at?: string
@@ -44,6 +46,7 @@ export type Database = {
           description?: string | null
           id?: string
           image_url?: string | null
+          mf_ai_potential?: string | null
           owner?: string | null
           process_name?: string
           updated_at?: string
@@ -65,6 +68,7 @@ export type Database = {
           contact_person: string | null
           contact_phone: string | null
           created_at: string
+          engagement_mode: string | null
           id: string
           industry: string | null
           name: string
@@ -78,6 +82,7 @@ export type Database = {
           contact_person?: string | null
           contact_phone?: string | null
           created_at?: string
+          engagement_mode?: string | null
           id?: string
           industry?: string | null
           name: string
@@ -91,6 +96,7 @@ export type Database = {
           contact_person?: string | null
           contact_phone?: string | null
           created_at?: string
+          engagement_mode?: string | null
           id?: string
           industry?: string | null
           name?: string
@@ -143,6 +149,9 @@ export type Database = {
           created_at: string
           date: string | null
           description: string | null
+          erm_category: string | null
+          erm_notes: string | null
+          financial_impact: string | null
           id: string
           process_id: string
           severity: string | null
@@ -154,6 +163,9 @@ export type Database = {
           created_at?: string
           date?: string | null
           description?: string | null
+          erm_category?: string | null
+          erm_notes?: string | null
+          financial_impact?: string | null
           id?: string
           process_id: string
           severity?: string | null
@@ -165,6 +177,9 @@ export type Database = {
           created_at?: string
           date?: string | null
           description?: string | null
+          erm_category?: string | null
+          erm_notes?: string | null
+          financial_impact?: string | null
           id?: string
           process_id?: string
           severity?: string | null
@@ -491,6 +506,57 @@ export type Database = {
           {
             foreignKeyName: "step_connections_target_step_id_fkey"
             columns: ["target_step_id"]
+            isOneToOne: false
+            referencedRelation: "process_steps"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      step_raci: {
+        Row: {
+          accountable: string | null
+          consulted: string | null
+          created_at: string
+          id: string
+          informed: string | null
+          process_id: string
+          responsible: string | null
+          role_name: string
+          step_id: string
+        }
+        Insert: {
+          accountable?: string | null
+          consulted?: string | null
+          created_at?: string
+          id?: string
+          informed?: string | null
+          process_id: string
+          responsible?: string | null
+          role_name: string
+          step_id: string
+        }
+        Update: {
+          accountable?: string | null
+          consulted?: string | null
+          created_at?: string
+          id?: string
+          informed?: string | null
+          process_id?: string
+          responsible?: string | null
+          role_name?: string
+          step_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "step_raci_process_id_fkey"
+            columns: ["process_id"]
+            isOneToOne: false
+            referencedRelation: "business_processes"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "step_raci_step_id_fkey"
+            columns: ["step_id"]
             isOneToOne: false
             referencedRelation: "process_steps"
             referencedColumns: ["id"]
