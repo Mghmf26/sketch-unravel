@@ -10,9 +10,11 @@ import DiagramCanvasEditor from '@/components/DiagramCanvasEditor';
 import ProcessEditTab from '@/components/ProcessEditTab';
 import {
   fetchProcesses, fetchSteps, fetchStepConnections,
+  fetchRisks, fetchAllControls, fetchRegulations, fetchIncidents,
   updateProcess, updateStep, insertStep,
   insertStepConnection,
-  type BusinessProcess, type ProcessStep, type StepConnection
+  type BusinessProcess, type ProcessStep, type StepConnection,
+  type Risk, type Control, type Regulation, type Incident,
 } from '@/lib/api';
 import type { EPCNode, EPCConnection, NodeType } from '@/types/epc';
 
