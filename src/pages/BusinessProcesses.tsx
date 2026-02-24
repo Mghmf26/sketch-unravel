@@ -180,7 +180,7 @@ export default function BusinessProcesses() {
                 <TableHead className="font-bold text-[11px] text-foreground/70 tracking-wider uppercase py-3 text-center">Controls</TableHead>
                 <TableHead className="font-bold text-[11px] text-foreground/70 tracking-wider uppercase py-3 text-center">Incidents</TableHead>
                 <TableHead className="font-bold text-[11px] text-foreground/70 tracking-wider uppercase py-3 text-center">Regs.</TableHead>
-                <TableHead className="font-bold text-[11px] text-foreground/70 tracking-wider uppercase py-3 text-center">AI Score</TableHead>
+                <TableHead className="font-bold text-[11px] text-foreground/70 tracking-wider uppercase py-3 text-center">MF AI Potential</TableHead>
                 <TableHead className="font-bold text-[11px] text-foreground/70 tracking-wider uppercase py-3 text-right">Actions</TableHead>
               </TableRow>
             </TableHeader>

@@ -68,6 +68,7 @@ const emptyForm = {
   address: '',
   notes: '',
   status: 'active',
+  engagement_mode: 'audit',
 };
 
 const industries = [
@@ -125,6 +126,7 @@ export default function Clients() {
       address: c.address || '',
       notes: c.notes || '',
       status: c.status,
+      engagement_mode: (c as any).engagement_mode || 'audit',
     });
     setDialogOpen(true);
   };
@@ -135,7 +137,7 @@ export default function Clients() {
       return;
     }
     setSaving(true);
-    const payload = {
+    const payload: Record<string, any> = {
       name: form.name.trim(),
       industry: form.industry || null,
       contact_person: form.contact_person || null,
@@ -144,17 +146,18 @@ export default function Clients() {
       address: form.address || null,
       notes: form.notes || null,
       status: form.status,
+      engagement_mode: form.engagement_mode,
     };
 
     if (editingClient) {
-      const { error } = await supabase.from('clients').update(payload).eq('id', editingClient.id);
+      const { error } = await supabase.from('clients').update(payload as any).eq('id', editingClient.id);
       if (error) {
         toast({ title: 'Update failed', description: error.message, variant: 'destructive' });
       } else {
         toast({ title: 'Client updated' });
       }
     } else {
-      const { error } = await supabase.from('clients').insert(payload);
+      const { error } = await supabase.from('clients').insert(payload as any);
       if (error) {
         toast({ title: 'Failed to add client', description: error.message, variant: 'destructive' });
       } else {
@@ -278,6 +281,12 @@ export default function Clients() {
                   </div>
                   <div className="flex items-center gap-2">
                     <Badge
+                      variant="outline"
+                      className="text-[10px] capitalize mr-1"
+                    >
+                      {(client as any).engagement_mode || 'audit'}
+                    </Badge>
+                    <Badge
                       variant={client.status === 'active' ? 'default' : 'secondary'}
                       className={client.status === 'active' ? 'bg-primary/15 text-primary border-0 text-[10px]' : 'text-[10px]'}
                     >
@@ -377,6 +386,17 @@ export default function Clients() {
                   </SelectContent>
                 </Select>
               </div>
+            </div>
+            <div className="grid gap-1.5">
+              <Label>Engagement Mode</Label>
+              <Select value={form.engagement_mode} onValueChange={(v) => setForm({ ...form, engagement_mode: v })}>
+                <SelectTrigger><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="audit">Audit</SelectItem>
+                  <SelectItem value="assurance">Assurance</SelectItem>
+                  <SelectItem value="advisory">Advisory</SelectItem>
+                </SelectContent>
+              </Select>
             </div>
             <div className="grid grid-cols-2 gap-4">
               <div className="grid gap-1.5">
