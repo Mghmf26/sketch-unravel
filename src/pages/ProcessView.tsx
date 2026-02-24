@@ -34,11 +34,17 @@ export default function ProcessView() {
   const loadData = async () => {
     if (!id) return;
     try {
-      const [allP, s, c] = await Promise.all([
-        fetchProcesses(), fetchSteps(id), fetchStepConnections(id)
+      const [allP, s, c, r, ctrl, reg, inc] = await Promise.all([
+        fetchProcesses(), fetchSteps(id), fetchStepConnections(id),
+        fetchRisks(id), fetchAllControls(), fetchRegulations(id), fetchIncidents(id),
       ]);
       const p = allP.find(x => x.id === id);
-      if (p) { setProcess(p); setSteps(s); setConnections(c); }
+      if (p) {
+        setProcess(p); setSteps(s); setConnections(c);
+        const riskIds = new Set(r.map(x => x.id));
+        setRisks(r); setControls(ctrl.filter(x => riskIds.has(x.risk_id)));
+        setRegulations(reg); setIncidents(inc);
+      }
     } catch (err) {
       console.error(err);
       toast({ title: 'Error loading process', variant: 'destructive' });
