@@ -24,8 +24,11 @@ export default function ProcessView() {
   const [process, setProcess] = useState<BusinessProcess | null>(null);
   const [steps, setSteps] = useState<ProcessStep[]>([]);
   const [connections, setConnections] = useState<StepConnection[]>([]);
+  const [risks, setRisks] = useState<Risk[]>([]);
+  const [controls, setControls] = useState<Control[]>([]);
+  const [regulations, setRegulations] = useState<Regulation[]>([]);
+  const [incidents, setIncidents] = useState<Incident[]>([]);
   const [loading, setLoading] = useState(true);
-  const [uploading, setUploading] = useState(false);
 
   const loadData = async () => {
     if (!id) return;
