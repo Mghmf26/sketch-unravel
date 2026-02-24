@@ -29,6 +29,7 @@ export default function ProcessView() {
   const [regulations, setRegulations] = useState<Regulation[]>([]);
   const [incidents, setIncidents] = useState<Incident[]>([]);
   const [loading, setLoading] = useState(true);
+  const [uploading, setUploading] = useState(false);
 
   const loadData = async () => {
     if (!id) return;
