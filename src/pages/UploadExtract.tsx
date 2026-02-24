@@ -35,6 +35,18 @@ export default function UploadExtract() {
   const [loading, setLoading] = useState(false);
   const [progress, setProgress] = useState('');
   const [extractedData, setExtractedData] = useState<ExtractionData | null>(null);
+  const [clients, setClients] = useState<Client[]>([]);
+
+  // Manual build form state
+  const [manualName, setManualName] = useState('');
+  const [manualClient, setManualClient] = useState('');
+  const [manualOwner, setManualOwner] = useState('');
+  const [manualDept, setManualDept] = useState('');
+  const [manualDesc, setManualDesc] = useState('');
+
+  useEffect(() => {
+    fetchClients().then(setClients);
+  }, []);
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
