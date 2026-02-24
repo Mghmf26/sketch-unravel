@@ -118,7 +118,7 @@ export default function BusinessProcesses() {
       <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
         {[
           { label: 'Total Processes', value: processes.length, icon: Network, color: 'text-primary' },
-          { label: 'Process Steps', value: totalSteps, icon: Layers, color: 'text-primary' },
+          { label: 'Steps', value: totalSteps, icon: Layers, color: 'text-primary' },
           { label: 'Active Risks', value: totalRisks, icon: AlertTriangle, color: 'text-destructive' },
           { label: 'Open Incidents', value: totalIncidents, icon: AlertCircle, color: 'text-orange-600' },
           { label: 'Regulations', value: totalRegulations, icon: Scale, color: 'text-primary' },
@@ -393,7 +393,7 @@ function RisksDialog({ process, steps, risks, controls, onClose, onRefresh }: { 
   return (
     <Dialog open onOpenChange={onClose}>
       <DialogContent className="sm:max-w-2xl max-h-[85vh] overflow-y-auto">
-        <DialogHeader><DialogTitle>Risks & Controls — {process.process_name}</DialogTitle><DialogDescription>Each risk is linked to a process step. Each risk can have multiple controls.</DialogDescription></DialogHeader>
+        <DialogHeader><DialogTitle>Risks & Controls — {process.process_name}</DialogTitle><DialogDescription>Each risk is linked to a step. Each risk can have multiple controls.</DialogDescription></DialogHeader>
         <div className="space-y-3">
           {risks.map(r => (
             <div key={r.id} className="p-3 border rounded-lg bg-muted/30">
@@ -473,7 +473,7 @@ function IncidentsDialog({ process, steps, items, onClose, onRefresh }: { proces
   return (
     <Dialog open onOpenChange={onClose}>
       <DialogContent className="sm:max-w-lg max-h-[80vh] overflow-y-auto">
-        <DialogHeader><DialogTitle>Incidents — {process.process_name}</DialogTitle><DialogDescription>Link incidents to specific process steps.</DialogDescription></DialogHeader>
+        <DialogHeader><DialogTitle>Incidents — {process.process_name}</DialogTitle><DialogDescription>Link incidents to specific steps.</DialogDescription></DialogHeader>
         <div className="space-y-3">
           {items.map(i => (
             <div key={i.id} className="flex items-start gap-3 p-3 border rounded-lg bg-muted/30">
@@ -527,7 +527,7 @@ function RegulationsDialog({ process, steps, items, onClose, onRefresh }: { proc
   return (
     <Dialog open onOpenChange={onClose}>
       <DialogContent className="sm:max-w-lg max-h-[80vh] overflow-y-auto">
-        <DialogHeader><DialogTitle>Regulations — {process.process_name}</DialogTitle><DialogDescription>Link regulatory requirements to process steps.</DialogDescription></DialogHeader>
+        <DialogHeader><DialogTitle>Regulations — {process.process_name}</DialogTitle><DialogDescription>Link regulatory requirements to steps.</DialogDescription></DialogHeader>
         <div className="space-y-3">
           {items.map(r => (
             <div key={r.id} className="flex items-start gap-3 p-3 border rounded-lg bg-muted/30">
