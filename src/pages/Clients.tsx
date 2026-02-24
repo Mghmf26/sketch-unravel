@@ -68,6 +68,7 @@ const emptyForm = {
   address: '',
   notes: '',
   status: 'active',
+  engagement_mode: 'audit',
 };
 
 const industries = [
@@ -125,6 +126,7 @@ export default function Clients() {
       address: c.address || '',
       notes: c.notes || '',
       status: c.status,
+      engagement_mode: (c as any).engagement_mode || 'audit',
     });
     setDialogOpen(true);
   };
@@ -135,7 +137,7 @@ export default function Clients() {
       return;
     }
     setSaving(true);
-    const payload = {
+    const payload: Record<string, any> = {
       name: form.name.trim(),
       industry: form.industry || null,
       contact_person: form.contact_person || null,
@@ -144,6 +146,7 @@ export default function Clients() {
       address: form.address || null,
       notes: form.notes || null,
       status: form.status,
+      engagement_mode: form.engagement_mode,
     };
 
     if (editingClient) {
@@ -277,6 +280,12 @@ export default function Clients() {
                     </div>
                   </div>
                   <div className="flex items-center gap-2">
+                    <Badge
+                      variant="outline"
+                      className="text-[10px] capitalize mr-1"
+                    >
+                      {(client as any).engagement_mode || 'audit'}
+                    </Badge>
                     <Badge
                       variant={client.status === 'active' ? 'default' : 'secondary'}
                       className={client.status === 'active' ? 'bg-primary/15 text-primary border-0 text-[10px]' : 'text-[10px]'}
