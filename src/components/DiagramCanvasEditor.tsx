@@ -15,7 +15,7 @@ import {
   type NodeChange,
 } from '@xyflow/react';
 import '@xyflow/react/dist/style.css';
-import { Plus, LayoutGrid, Save, Undo2, Redo2, History, ChevronRight } from 'lucide-react';
+import { Plus, LayoutGrid, Save, Undo2, Redo2, History, ChevronRight, Info } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { ScrollArea } from '@/components/ui/scroll-area';
@@ -133,6 +133,7 @@ export default function DiagramCanvasEditor({
   ]);
   const [historyIndex, setHistoryIndex] = useState(0);
   const [showHistory, setShowHistory] = useState(false);
+  const [showLegend, setShowLegend] = useState(false);
 
   const pushHistory = useCallback((desc: string, nodes: EPCNode[], conns: EPCConnection[]) => {
     setHistory(prev => {
@@ -337,6 +338,44 @@ export default function DiagramCanvasEditor({
               return '#94a3b8';
             }}
           />
+
+          {/* Top-left: Legend */}
+          <Panel position="top-left">
+            <div className="relative">
+              <Button
+                size="sm"
+                variant={showLegend ? "default" : "secondary"}
+                className="shadow-md"
+                onClick={() => setShowLegend(v => !v)}
+              >
+                <Info className="h-3.5 w-3.5 mr-1" /> Legend
+              </Button>
+              {showLegend && (
+                <div className="absolute top-10 left-0 w-56 bg-background border rounded-lg shadow-xl z-50 p-3 space-y-1.5">
+                  <p className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider mb-2">Node Types</p>
+                  {[
+                    { color: 'bg-emerald-500', shape: 'rounded-sm', label: 'Step', desc: 'Process activity' },
+                    { color: 'bg-slate-400', shape: 'rounded-sm', label: 'Process Interface', desc: 'External process' },
+                    { color: 'bg-pink-500', shape: 'rounded-sm', label: 'Event', desc: 'Trigger or outcome' },
+                    { color: 'bg-blue-500', shape: 'rounded-full', label: 'XOR Gateway', desc: 'Exclusive branch' },
+                    { color: 'bg-green-500', shape: 'rounded-full', label: 'Start / End', desc: 'Flow boundary' },
+                    { color: 'bg-orange-500', shape: 'rotate-45', label: 'Decision', desc: 'Yes/No branch' },
+                    { color: 'bg-yellow-500', shape: 'rounded-sm', label: 'Storage', desc: 'Data store' },
+                    { color: 'bg-red-500', shape: 'rounded-r-full', label: 'Delay / Wait', desc: 'Wait period' },
+                    { color: 'bg-violet-500', shape: 'rounded-sm', label: 'Document', desc: 'Document artifact' },
+                  ].map(item => (
+                    <div key={item.label} className="flex items-center gap-2.5">
+                      <span className={`w-3 h-3 shrink-0 ${item.color} ${item.shape}`} />
+                      <div className="min-w-0">
+                        <span className="text-xs font-medium text-foreground">{item.label}</span>
+                        <span className="text-[10px] text-muted-foreground ml-1.5">{item.desc}</span>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          </Panel>
 
           {/* Top-right: Add Node + Layout + Save + Undo/Redo + History */}
           <Panel position="top-right" className="flex gap-2 items-center">
