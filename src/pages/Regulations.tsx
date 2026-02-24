@@ -128,7 +128,7 @@ export default function Regulations() {
               <SelectTrigger className="w-[180px]"><SelectValue placeholder="All Steps" /></SelectTrigger>
               <SelectContent>
                 <SelectItem value="all">All Steps</SelectItem>
-                {steps.filter(s => filterProcess === 'all' || s.process_id === filterProcess).map(s => <SelectItem key={s.id} value={s.id}>{s.label}</SelectItem>)}
+                {steps.filter(s => (filterProcess === 'all' || s.process_id === filterProcess) && s.type === 'in-scope').map(s => <SelectItem key={s.id} value={s.id}>{s.label}</SelectItem>)}
               </SelectContent>
             </Select>
             <Select value={filterStatus} onValueChange={setFilterStatus}>
