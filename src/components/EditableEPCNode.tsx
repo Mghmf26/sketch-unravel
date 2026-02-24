@@ -74,7 +74,7 @@ const STYLE_MAP: Record<NodeType, {
 };
 
 const TYPE_LABELS: Record<NodeType, string> = {
-  'in-scope': 'Process', 'interface': 'Interface', 'event': 'Event', 'xor': 'XOR',
+  'in-scope': 'Step', 'interface': 'Process Interface', 'event': 'Event', 'xor': 'XOR',
   'start-end': 'Start/End', 'decision': 'Decision', 'storage': 'Storage', 'delay': 'Delay', 'document': 'Document',
 };
 

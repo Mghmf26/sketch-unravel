@@ -147,7 +147,7 @@ export default function DiagramCanvasEditor({ nodes: epcNodes, connections: epcC
   const addNode = useCallback((type: NodeType) => {
     const id = crypto.randomUUID();
     const labels: Record<NodeType, string> = {
-      'in-scope': 'New Process Step', 'interface': 'New Interface', 'event': 'New Event', 'xor': 'XOR',
+      'in-scope': 'New Step', 'interface': 'New Process Interface', 'event': 'New Event', 'xor': 'XOR',
       'start-end': 'Start', 'decision': 'Decision?', 'storage': 'Storage', 'delay': 'Delay', 'document': 'Document',
     };
     const newNode: EPCNode = { id, label: labels[type], type, description: '' };
