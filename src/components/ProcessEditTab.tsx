@@ -348,6 +348,7 @@ export default function ProcessEditTab({ processId }: ProcessEditTabProps) {
                           </div>
 
                           {/* Risks & Controls */}
+                          {canAccessModule('risks') && (
                             <div className="space-y-2">
                               <div className="flex items-center gap-1.5 justify-between">
                                 <div className="flex items-center gap-1.5">
@@ -411,8 +412,11 @@ export default function ProcessEditTab({ processId }: ProcessEditTabProps) {
                               })}
                               {stepRisks.length === 0 && <p className="text-[10px] text-muted-foreground italic ml-4">No risks</p>}
                             </div>
+                            </div>
+                          )}
 
                           {/* Regulations */}
+                          {canAccessModule('regulations') && (
                             <div className="space-y-2">
                               <div className="flex items-center gap-1.5 justify-between">
                                 <div className="flex items-center gap-1.5">
@@ -440,8 +444,11 @@ export default function ProcessEditTab({ processId }: ProcessEditTabProps) {
                               ))}
                               {stepRegs.length === 0 && <p className="text-[10px] text-muted-foreground italic ml-4">No regulations</p>}
                             </div>
+                            </div>
+                          )}
 
                           {/* Incidents */}
+                          {canAccessModule('incidents') && (
                             <div className="space-y-2">
                               <div className="flex items-center gap-1.5 justify-between">
                                 <div className="flex items-center gap-1.5">
@@ -471,8 +478,11 @@ export default function ProcessEditTab({ processId }: ProcessEditTabProps) {
                               ))}
                               {stepIncs.length === 0 && <p className="text-[10px] text-muted-foreground italic ml-4">No incidents</p>}
                             </div>
+                            </div>
+                          )}
 
                           {/* RACI */}
+                          {canAccessModule('raci') && (
                             <div className="space-y-2">
                               <div className="flex items-center gap-1.5 justify-between">
                                 <div className="flex items-center gap-1.5">
@@ -503,8 +513,9 @@ export default function ProcessEditTab({ processId }: ProcessEditTabProps) {
                               ))}
                               {stepRaci.length === 0 && <p className="text-[10px] text-muted-foreground italic ml-4">No RACI assignments</p>}
                             </div>
+                            </div>
+                          )}
                         </div>
-                      )}
                     </div>
                   );
                 })}
