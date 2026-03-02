@@ -34,19 +34,19 @@ import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
 
-function ProtectedRoute({ children }: { children: React.ReactNode }) {
+const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
   const { user, loading } = useAuth();
   if (loading) return null;
   if (!user) return <Navigate to="/auth" replace />;
   return <AppLayout>{children}</AppLayout>;
-}
+};
 
-function PublicOnly({ children }: { children: React.ReactNode }) {
+const PublicOnly = ({ children }: { children: React.ReactNode }) => {
   const { user, loading } = useAuth();
   if (loading) return null;
   if (user) return <Navigate to="/" replace />;
   return <>{children}</>;
-}
+};
 
 const App = () => (
   <QueryClientProvider client={queryClient}>
