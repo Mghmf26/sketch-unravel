@@ -1,6 +1,6 @@
 import { createContext, useContext, useEffect, useState, ReactNode } from 'react';
 import { supabase } from '@/integrations/supabase/client';
-import type { User, Session } from '@supabase/supabase-js';
+import type { User, Session, AuthenticatorAssuranceLevels } from '@supabase/supabase-js';
 
 interface Profile {
   id: string;
@@ -17,8 +17,13 @@ interface AuthContextType {
   profile: Profile | null;
   role: string | null;
   loading: boolean;
+  mfaEnabled: boolean;
+  mfaVerified: boolean;
+  currentLevel: AuthenticatorAssuranceLevels | null;
+  nextLevel: AuthenticatorAssuranceLevels | null;
   signOut: () => Promise<void>;
   refreshProfile: () => Promise<void>;
+  refreshMFA: () => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -29,6 +34,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [profile, setProfile] = useState<Profile | null>(null);
   const [role, setRole] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
+  const [mfaEnabled, setMfaEnabled] = useState(false);
+  const [mfaVerified, setMfaVerified] = useState(false);
+  const [currentLevel, setCurrentLevel] = useState<AuthenticatorAssuranceLevels | null>(null);
+  const [nextLevel, setNextLevel] = useState<AuthenticatorAssuranceLevels | null>(null);
 
   const fetchProfileAndRole = async (userId: string) => {
     const [{ data: p }, { data: roles }] = await Promise.all([
@@ -36,10 +45,20 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       supabase.from('user_roles').select('role').eq('user_id', userId),
     ]);
     setProfile(p as Profile | null);
-    // Prioritize admin role if user has multiple roles
     const roleList = (roles || []) as { role: string }[];
     const isAdmin = roleList.some(r => r.role === 'admin');
     setRole(isAdmin ? 'admin' : (roleList[0]?.role ?? 'user'));
+  };
+
+  const refreshMFA = async () => {
+    const { data, error } = await supabase.auth.mfa.getAuthenticatorAssuranceLevel();
+    if (error || !data) return;
+    setCurrentLevel(data.currentLevel);
+    setNextLevel(data.nextLevel);
+    // User has MFA enrolled if nextLevel is aal2
+    setMfaEnabled(data.nextLevel === 'aal2');
+    // User has verified MFA this session if currentLevel is aal2
+    setMfaVerified(data.currentLevel === 'aal2');
   };
 
   const refreshProfile = async () => {
@@ -56,12 +75,16 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       if (sess?.user) {
         setTimeout(() => {
           fetchProfileAndRole(sess.user.id);
-          // Update last_sign_in
+          refreshMFA();
           supabase.from('profiles').update({ last_sign_in: new Date().toISOString() }).eq('user_id', sess.user.id).then(() => {});
         }, 0);
       } else {
         setProfile(null);
         setRole(null);
+        setMfaEnabled(false);
+        setMfaVerified(false);
+        setCurrentLevel(null);
+        setNextLevel(null);
       }
     });
 
@@ -72,6 +95,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       setUser(sess?.user ?? null);
       if (sess?.user) {
         await fetchProfileAndRole(sess.user.id);
+        await refreshMFA();
       }
       setLoading(false);
     };
@@ -90,10 +114,16 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setSession(null);
     setProfile(null);
     setRole(null);
+    setMfaEnabled(false);
+    setMfaVerified(false);
   };
 
   return (
-    <AuthContext.Provider value={{ user, session, profile, role, loading, signOut, refreshProfile }}>
+    <AuthContext.Provider value={{
+      user, session, profile, role, loading,
+      mfaEnabled, mfaVerified, currentLevel, nextLevel,
+      signOut, refreshProfile, refreshMFA,
+    }}>
       {children}
     </AuthContext.Provider>
   );

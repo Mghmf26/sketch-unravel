@@ -30,14 +30,27 @@ import BusinessScenarioAnalysis from "./pages/BusinessScenarioAnalysis";
 import MainframeScenarioAnalysis from "./pages/MainframeScenarioAnalysis";
 import MainframeAIAnalysis from "./pages/MainframeAIAnalysis";
 import ClientReports from "./pages/ClientReports";
+import EnrollMFA from "./pages/EnrollMFA";
+import VerifyMFA from "./pages/VerifyMFA";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
 
 const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
-  const { user, loading } = useAuth();
+  const { user, loading, mfaEnabled, mfaVerified, refreshMFA } = useAuth();
   if (loading) return null;
   if (!user) return <Navigate to="/auth" replace />;
+
+  // If user has MFA enrolled but hasn't verified this session → verify
+  if (mfaEnabled && !mfaVerified) {
+    return <VerifyMFA onVerified={() => refreshMFA()} />;
+  }
+
+  // If user hasn't enrolled MFA yet → enroll
+  if (!mfaEnabled) {
+    return <EnrollMFA onEnrolled={() => refreshMFA()} />;
+  }
+
   return <AppLayout>{children}</AppLayout>;
 };
 
