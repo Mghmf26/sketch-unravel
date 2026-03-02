@@ -68,7 +68,7 @@ const emptyForm = {
   address: '',
   notes: '',
   status: 'active',
-  engagement_mode: 'audit',
+  engagement_mode: 'external_audit',
 };
 
 const industries = [
@@ -284,7 +284,7 @@ export default function Clients() {
                       variant="outline"
                       className="text-[10px] capitalize mr-1"
                     >
-                      {(client as any).engagement_mode || 'audit'}
+                      {((client as any).engagement_mode || 'external audit').replace(/_/g, ' ')}
                     </Badge>
                     <Badge
                       variant={client.status === 'active' ? 'default' : 'secondary'}
@@ -392,7 +392,8 @@ export default function Clients() {
               <Select value={form.engagement_mode} onValueChange={(v) => setForm({ ...form, engagement_mode: v })}>
                 <SelectTrigger><SelectValue /></SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="audit">Audit</SelectItem>
+                  <SelectItem value="external_audit">External Audit</SelectItem>
+                  <SelectItem value="internal_audit">Internal Audit</SelectItem>
                   <SelectItem value="assurance">Assurance</SelectItem>
                   <SelectItem value="advisory">Advisory</SelectItem>
                 </SelectContent>

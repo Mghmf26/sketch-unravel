@@ -1,10 +1,13 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { ArrowLeft, Brain, Sparkles, TrendingUp, ShieldAlert, DollarSign, Lightbulb, Loader2 } from 'lucide-react';
+import { ArrowLeft, Brain, Sparkles, TrendingUp, ShieldAlert, DollarSign, Lightbulb, Loader2, Filter } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Checkbox } from '@/components/ui/checkbox';
+import { Label } from '@/components/ui/label';
 import {
   fetchProcesses, fetchClients, fetchRisks, fetchAllControls, fetchIncidents, fetchRegulations, fetchMFQuestions, fetchMainframeImports,
   type BusinessProcess, type Risk, type Control, type Incident, type Regulation, type MFQuestion, type MainframeImport, type Client,
@@ -20,26 +23,68 @@ interface InsightSection {
 
 export default function AIReports() {
   const navigate = useNavigate();
-  const [processes, setProcesses] = useState<BusinessProcess[]>([]);
+  const [allProcesses, setAllProcesses] = useState<BusinessProcess[]>([]);
   const [clients, setClients] = useState<Client[]>([]);
-  const [risks, setRisks] = useState<Risk[]>([]);
-  const [controls, setControls] = useState<Control[]>([]);
-  const [incidents, setIncidents] = useState<Incident[]>([]);
-  const [regulations, setRegulations] = useState<Regulation[]>([]);
-  const [mfQuestions, setMfQuestions] = useState<MFQuestion[]>([]);
-  const [mfImports, setMfImports] = useState<MainframeImport[]>([]);
+  const [allRisks, setAllRisks] = useState<Risk[]>([]);
+  const [allControls, setAllControls] = useState<Control[]>([]);
+  const [allIncidents, setAllIncidents] = useState<Incident[]>([]);
+  const [allRegulations, setAllRegulations] = useState<Regulation[]>([]);
+  const [allMfQuestions, setAllMfQuestions] = useState<MFQuestion[]>([]);
+  const [allMfImports, setAllMfImports] = useState<MainframeImport[]>([]);
   const [generating, setGenerating] = useState(false);
   const [report, setReport] = useState<InsightSection[] | null>(null);
+
+  // Filters
+  const [selectedClientId, setSelectedClientId] = useState<string>('all');
+  const [selectedProcessIds, setSelectedProcessIds] = useState<string[]>([]);
 
   useEffect(() => {
     Promise.all([
       fetchProcesses(), fetchClients(), fetchRisks(), fetchAllControls(),
       fetchIncidents(), fetchRegulations(), fetchMFQuestions(), fetchMainframeImports(),
     ]).then(([p, c, r, ctrl, i, reg, mfq, mfi]) => {
-      setProcesses(p); setClients(c); setRisks(r); setControls(ctrl);
-      setIncidents(i); setRegulations(reg); setMfQuestions(mfq); setMfImports(mfi);
+      setAllProcesses(p); setClients(c); setAllRisks(r); setAllControls(ctrl);
+      setAllIncidents(i); setAllRegulations(reg); setAllMfQuestions(mfq); setAllMfImports(mfi);
     });
   }, []);
+
+  // Processes filtered by client
+  const clientProcesses = useMemo(() => {
+    if (selectedClientId === 'all') return allProcesses;
+    return allProcesses.filter(p => p.client_id === selectedClientId);
+  }, [allProcesses, selectedClientId]);
+
+  // Reset process selection when client changes
+  useEffect(() => {
+    setSelectedProcessIds([]);
+    setReport(null);
+  }, [selectedClientId]);
+
+  const toggleProcess = (id: string) => {
+    setSelectedProcessIds(prev =>
+      prev.includes(id) ? prev.filter(x => x !== id) : [...prev, id]
+    );
+  };
+
+  const selectAllProcesses = () => {
+    if (selectedProcessIds.length === clientProcesses.length) {
+      setSelectedProcessIds([]);
+    } else {
+      setSelectedProcessIds(clientProcesses.map(p => p.id));
+    }
+  };
+
+  // Scoped data based on selected processes
+  const scopedProcessIds = selectedProcessIds.length > 0 ? selectedProcessIds : clientProcesses.map(p => p.id);
+  const processes = allProcesses.filter(p => scopedProcessIds.includes(p.id));
+  const risks = allRisks.filter(r => scopedProcessIds.includes(r.process_id));
+  const incidents = allIncidents.filter(i => scopedProcessIds.includes(i.process_id));
+  const regulations = allRegulations.filter(r => scopedProcessIds.includes(r.process_id));
+  const mfQuestions = allMfQuestions.filter(q => scopedProcessIds.includes(q.process_id));
+  const mfImports = allMfImports.filter(m => scopedProcessIds.includes(m.process_id));
+  // Controls are linked via risks
+  const riskIds = new Set(risks.map(r => r.id));
+  const controls = allControls.filter(c => riskIds.has(c.risk_id));
 
   const highRisks = risks.filter(r => r.likelihood === 'high' || r.impact === 'high').length;
   const criticalIncidents = incidents.filter(i => i.severity === 'critical' || i.severity === 'high').length;
@@ -135,6 +180,59 @@ export default function AIReports() {
         </div>
       </div>
 
+      {/* Filter Section */}
+      <Card className="border shadow-sm">
+        <CardContent className="p-5 space-y-4">
+          <div className="flex items-center gap-2 mb-1">
+            <Filter className="h-4 w-4 text-primary" />
+            <h3 className="text-sm font-semibold text-foreground">Scope Selection</h3>
+          </div>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="space-y-1.5">
+              <Label className="text-xs text-muted-foreground">Client</Label>
+              <Select value={selectedClientId} onValueChange={setSelectedClientId}>
+                <SelectTrigger><SelectValue placeholder="All clients" /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All Clients</SelectItem>
+                  {clients.map(c => (
+                    <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="space-y-1.5">
+              <div className="flex items-center justify-between">
+                <Label className="text-xs text-muted-foreground">Business Processes</Label>
+                {clientProcesses.length > 0 && (
+                  <button onClick={selectAllProcesses} className="text-[10px] text-primary hover:underline">
+                    {selectedProcessIds.length === clientProcesses.length ? 'Deselect all' : 'Select all'}
+                  </button>
+                )}
+              </div>
+              {clientProcesses.length === 0 ? (
+                <p className="text-xs text-muted-foreground italic py-2">No processes found{selectedClientId !== 'all' ? ' for this client' : ''}</p>
+              ) : (
+                <div className="max-h-32 overflow-y-auto border rounded-md p-2 space-y-1.5 bg-background">
+                  {clientProcesses.map(p => (
+                    <label key={p.id} className="flex items-center gap-2 cursor-pointer hover:bg-accent/50 rounded px-1 py-0.5">
+                      <Checkbox
+                        checked={selectedProcessIds.includes(p.id)}
+                        onCheckedChange={() => toggleProcess(p.id)}
+                      />
+                      <span className="text-xs text-foreground truncate">{p.process_name}</span>
+                    </label>
+                  ))}
+                </div>
+              )}
+              {selectedProcessIds.length === 0 && clientProcesses.length > 0 && (
+                <p className="text-[10px] text-muted-foreground">No selection = all processes included</p>
+              )}
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Data Context + Generate */}
       <Card className="border border-dashed border-primary/40 shadow-none">
         <CardContent className="p-5">
           <div className="flex items-start gap-4">
@@ -142,10 +240,9 @@ export default function AIReports() {
               <Sparkles className="h-5 w-5 text-primary" />
             </div>
             <div className="flex-1">
-              <h3 className="text-sm font-semibold text-foreground">Data Context for Analysis</h3>
-              <p className="text-xs text-muted-foreground mt-1">All relational data is analyzed to generate actionable insights.</p>
+              <h3 className="text-sm font-semibold text-foreground">Scoped Data for Analysis</h3>
+              <p className="text-xs text-muted-foreground mt-1">Analysis will run on the following scoped data.</p>
               <div className="flex flex-wrap gap-2 mt-3">
-                <Badge variant="secondary" className="text-xs">{clients.length} Client(s)</Badge>
                 <Badge variant="secondary" className="text-xs">{processes.length} Process(es)</Badge>
                 <Badge variant="secondary" className="text-xs">{risks.length} Risk(s)</Badge>
                 <Badge variant="secondary" className="text-xs">{controls.length} Control(s)</Badge>
@@ -155,7 +252,7 @@ export default function AIReports() {
                 <Badge variant="secondary" className="text-xs">{mfImports.length} MF Import(s)</Badge>
               </div>
             </div>
-            <Button onClick={generateReport} disabled={generating} className="flex-shrink-0">
+            <Button onClick={generateReport} disabled={generating || processes.length === 0} className="flex-shrink-0">
               {generating ? <><Loader2 className="h-4 w-4 mr-2 animate-spin" /> Analyzing…</> : <><Brain className="h-4 w-4 mr-2" /> Generate Report</>}
             </Button>
           </div>
@@ -209,7 +306,7 @@ export default function AIReports() {
           </div>
           <h3 className="text-lg font-semibold text-foreground">Ready to Analyze</h3>
           <p className="text-sm text-muted-foreground text-center max-w-md">
-            Click "Generate Report" to run AI analysis of all your business processes, risks, controls, mainframe data, and compliance status.
+            Select a client and business processes above, then click "Generate Report" to run AI analysis on the scoped data.
           </p>
         </div>
       )}
