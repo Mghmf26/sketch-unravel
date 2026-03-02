@@ -648,6 +648,36 @@ export type Database = {
           },
         ]
       }
+      user_permissions: {
+        Row: {
+          allowed_modules: string[]
+          allowed_pages: string[]
+          created_at: string
+          excluded_process_ids: string[]
+          id: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          allowed_modules?: string[]
+          allowed_pages?: string[]
+          created_at?: string
+          excluded_process_ids?: string[]
+          id?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          allowed_modules?: string[]
+          allowed_pages?: string[]
+          created_at?: string
+          excluded_process_ids?: string[]
+          id?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       user_roles: {
         Row: {
           id: string
@@ -686,6 +716,7 @@ export type Database = {
         }
         Returns: boolean
       }
+      is_participant: { Args: { _user_id: string }; Returns: boolean }
     }
     Enums: {
       app_role:
