@@ -1,6 +1,8 @@
 import { useEffect, useState, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { ArrowLeft, Brain, Sparkles, TrendingUp, ShieldAlert, DollarSign, Lightbulb, Loader2, Filter } from 'lucide-react';
+import { supabase } from '@/integrations/supabase/client';
+import { toast } from '@/hooks/use-toast';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -90,80 +92,35 @@ export default function AIReports() {
   const criticalIncidents = incidents.filter(i => i.severity === 'critical' || i.severity === 'high').length;
   const nonCompliant = regulations.filter(r => r.compliance_status === 'non-compliant').length;
 
-  const generateReport = () => {
+  const generateReport = async () => {
     setGenerating(true);
-    setTimeout(() => {
-      const sections: InsightSection[] = [
-        {
-          title: 'Cost Reduction Opportunities',
-          icon: DollarSign,
-          badge: 'HIGH IMPACT',
-          badgeVariant: 'default',
-          items: [
-            processes.length > 0
-              ? `Consolidate ${processes.length} business processes: identify overlapping mainframe batch jobs and merge redundant data operations to reduce CPU consumption by 15-25%.`
-              : 'No processes detected yet. Add business processes to unlock cost reduction analysis.',
-            risks.length > 3
-              ? `${highRisks} high-risk scenarios detected. Automated RACF policy enforcement could reduce manual audit effort by 40%, saving 200+ man-hours annually.`
-              : 'Add risk scenarios to processes to identify control automation opportunities.',
-            mfImports.length > 0
-              ? `${mfImports.length} mainframe data sources mapped. Consolidating redundant data feeds could reduce I/O costs and batch processing windows.`
-              : 'Map mainframe data sources to unlock data pipeline optimization insights.',
-            controls.length > 0
-              ? `${controls.length} controls tracked across ${risks.length} risks. Automating detective controls (log analysis, reconciliation) could save significant operational overhead.`
-              : 'Add controls to risk scenarios for control effectiveness analysis.',
-          ],
-        },
-        {
-          title: 'Revenue & Value Optimization',
-          icon: TrendingUp,
-          badge: 'STRATEGIC',
-          badgeVariant: 'secondary',
-          items: [
-            `With ${clients.length} client(s) and ${processes.length} process(es), there's opportunity to offer process-as-a-service models.`,
-            'Implement real-time mainframe data streaming (MQ/Kafka bridge) to reduce order-to-cash cycle time by 2-3 days.',
-            regulations.length > 0
-              ? `${regulations.length} regulatory requirements tracked. Proactive compliance reporting can be a value-add service for clients.`
-              : 'Track regulations per process to identify compliance-as-a-service opportunities.',
-            'Leverage mainframe transaction logs for predictive analytics: optimize batch scheduling to improve SLA performance by 15-30%.',
-          ],
-        },
-        {
-          title: 'Risk Mitigation & Control Gaps',
-          icon: ShieldAlert,
-          badge: criticalIncidents > 0 ? 'CRITICAL' : 'MODERATE',
-          badgeVariant: criticalIncidents > 0 ? 'destructive' : 'outline',
-          items: [
-            highRisks > 0
-              ? `⚠️ ${highRisks} high-severity risks require immediate attention. Priority: review RACF dataset rules, enforce SoD, implement maker-checker controls.`
-              : 'No high-severity risks detected. Continue monitoring.',
-            criticalIncidents > 0
-              ? `🔴 ${criticalIncidents} critical/high incidents open. Implement automated batch job failure detection with 30-minute response SLAs.`
-              : 'No critical incidents. Maintain proactive monitoring.',
-            nonCompliant > 0
-              ? `${nonCompliant} non-compliant regulation(s). Map control gaps to mainframe data objects and implement compensating controls.`
-              : 'All tracked regulations show compliance. Schedule quarterly re-assessments.',
-            'Cross-process risk correlation: analyze shared mainframe datasets to identify single points of failure with cascading impact.',
-          ],
-        },
-        {
-          title: 'AI-Recommended Next Steps',
-          icon: Lightbulb,
-          badge: 'ACTIONABLE',
-          badgeVariant: 'outline',
-          items: [
-            processes.length < 3
-              ? 'Priority: Add 3-5 core business processes with full risk scenario mapping for comprehensive analysis.'
-              : `With ${processes.length} processes mapped: (1) complete risk coverage, (2) map mainframe data dependencies, (3) link all regulations to steps.`,
-            'Implement automated change detection on mainframe configuration datasets — trigger alerts on unauthorized modifications.',
-            'Build a process-to-data dependency matrix: for each process, catalog every mainframe data object it reads/writes.',
-            'Schedule quarterly AI re-analysis as data grows for increasingly precise insights.',
-          ],
-        },
-      ];
+    try {
+      const { data, error } = await supabase.functions.invoke('generate-ai-report', {
+        body: { processes, risks, controls, incidents, regulations, mfImports: mfImports, mfQuestions: mfQuestions },
+      });
+
+      if (error) throw error;
+      if (data?.error) throw new Error(data.error);
+
+      const iconMap: Record<string, React.ElementType> = {
+        'Cost Reduction Opportunities': DollarSign,
+        'Revenue & Value Optimization': TrendingUp,
+        'Risk Mitigation & Control Gaps': ShieldAlert,
+        'AI-Recommended Next Steps': Lightbulb,
+      };
+
+      const sections: InsightSection[] = (data.sections || []).map((s: any) => ({
+        ...s,
+        icon: iconMap[s.title] || Brain,
+      }));
+
       setReport(sections);
+    } catch (err: any) {
+      console.error('AI report error:', err);
+      toast({ title: 'Report generation failed', description: err.message || 'Please try again.', variant: 'destructive' });
+    } finally {
       setGenerating(false);
-    }, 2500);
+    }
   };
 
   return (
