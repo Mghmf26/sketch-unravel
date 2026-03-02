@@ -4,6 +4,7 @@ import {
   AlertTriangle, Database, HelpCircle, ChevronDown, ChevronRight, Pencil, Users,
   Check, X, Save
 } from 'lucide-react';
+import { usePermissions } from '@/hooks/usePermissions';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -133,6 +134,7 @@ function TypeBadge({ type }: { type: string }) {
 }
 
 export default function ProcessEditTab({ processId }: ProcessEditTabProps) {
+  const { canAccessModule } = usePermissions();
   const [steps, setSteps] = useState<ProcessStep[]>([]);
   const [connections, setConnections] = useState<StepConnection[]>([]);
   const [risks, setRisks] = useState<Risk[]>([]);
