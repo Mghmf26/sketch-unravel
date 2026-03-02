@@ -510,9 +510,9 @@ export default function ProcessEditTab({ processId }: ProcessEditTabProps) {
                               ))}
                               {stepRaci.length === 0 && <p className="text-[10px] text-muted-foreground italic ml-4">No RACI assignments</p>}
                             </div>
-                            </div>
                           )}
                         </div>
+                      )}
                     </div>
                   );
                 })}
