@@ -36,8 +36,8 @@ import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
 
-const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
-  const { user, loading, mfaEnabled, mfaVerified, refreshMFA } = useAuth();
+const ProtectedRoute = ({ children, pageSlug }: { children: React.ReactNode; pageSlug?: string }) => {
+  const { user, loading, role, mfaEnabled, mfaVerified, refreshMFA } = useAuth();
   if (loading) return null;
   if (!user) return <Navigate to="/auth" replace />;
 
@@ -51,7 +51,12 @@ const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
     return <EnrollMFA onEnrolled={() => refreshMFA()} />;
   }
 
-  return <AppLayout>{children}</AppLayout>;
+  return <AppLayout>{pageSlug ? <PageGate pageSlug={pageSlug}>{children}</PageGate> : children}</AppLayout>;
+};
+
+const PageGate = ({ children, pageSlug }: { children: React.ReactNode; pageSlug: string }) => {
+  const { usePermissions: _ } = require('@/hooks/usePermissions');
+  return <>{children}</>;
 };
 
 const PublicOnly = ({ children }: { children: React.ReactNode }) => {
