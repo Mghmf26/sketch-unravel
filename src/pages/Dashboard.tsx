@@ -17,7 +17,7 @@ import {
 } from '@/lib/api';
 
 const MF_AI_POTENTIAL_LEVELS = ['very low', 'low', 'medium', 'high', 'very high'] as const;
-const ENGAGEMENT_MODES = ['external audit', 'internal audit', 'assurance', 'advisory'] as const;
+const ENGAGEMENT_MODES = ['external_audit', 'internal_audit', 'assurance', 'advisory'] as const;
 
 export default function Dashboard() {
   const navigate = useNavigate();
@@ -29,7 +29,7 @@ export default function Dashboard() {
   const [controls, setControls] = useState<Control[]>([]);
   const [regulations, setRegulations] = useState<Regulation[]>([]);
   const [importCount, setImportCount] = useState(0);
-  const [activeMode, setActiveMode] = useState<string>('external audit');
+  const [activeMode, setActiveMode] = useState<string>('external_audit');
 
   useEffect(() => {
     Promise.all([
@@ -44,7 +44,7 @@ export default function Dashboard() {
   const displayName = profile?.display_name || 'User';
 
   // Filter clients by active mode
-  const modeClients = clients.filter(c => (c as any).engagement_mode === activeMode || (!((c as any).engagement_mode) && activeMode === 'external audit'));
+  const modeClients = clients.filter(c => (c as any).engagement_mode === activeMode || (!((c as any).engagement_mode) && activeMode === 'external_audit'));
   const modeClientIds = new Set(modeClients.map(c => c.id));
   const modeProcesses = processes.filter(p => p.client_id && modeClientIds.has(p.client_id));
   const modeProcessIds = new Set(modeProcesses.map(p => p.id));
