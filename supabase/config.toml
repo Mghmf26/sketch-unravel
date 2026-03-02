@@ -2,3 +2,6 @@ project_id = "pzeeowoegyberkdibtkb"
 
 [functions.extract-diagram]
 verify_jwt = false
+
+[functions.invite-user]
+verify_jwt = false
