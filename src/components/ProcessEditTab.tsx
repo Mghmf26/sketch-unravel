@@ -4,6 +4,7 @@ import {
   AlertTriangle, Database, HelpCircle, ChevronDown, ChevronRight, Pencil, Users,
   Check, X, Save
 } from 'lucide-react';
+import { usePermissions } from '@/hooks/usePermissions';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -133,6 +134,7 @@ function TypeBadge({ type }: { type: string }) {
 }
 
 export default function ProcessEditTab({ processId }: ProcessEditTabProps) {
+  const { canAccessModule } = usePermissions();
   const [steps, setSteps] = useState<ProcessStep[]>([]);
   const [connections, setConnections] = useState<StepConnection[]>([]);
   const [risks, setRisks] = useState<Risk[]>([]);
@@ -295,22 +297,30 @@ export default function ProcessEditTab({ processId }: ProcessEditTabProps) {
                           <Badge variant="secondary" className="text-[9px] h-5">{relCount} relations</Badge>
                         )}
                         <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity" onClick={e => e.stopPropagation()}>
+                          {canAccessModule('risks') && (
                           <Button variant="ghost" size="icon" className="h-6 w-6" title="Add Risk"
                             onClick={() => { setContextStepId(step.id); setAddDialog('risk'); }}>
                             <ShieldAlert className="h-3 w-3 text-orange-500" />
                           </Button>
+                          )}
+                          {canAccessModule('regulations') && (
                           <Button variant="ghost" size="icon" className="h-6 w-6" title="Add Regulation"
                             onClick={() => { setContextStepId(step.id); setAddDialog('regulation'); }}>
                             <BookOpen className="h-3 w-3 text-purple-500" />
                           </Button>
+                          )}
+                          {canAccessModule('incidents') && (
                           <Button variant="ghost" size="icon" className="h-6 w-6" title="Add Incident"
                             onClick={() => { setContextStepId(step.id); setAddDialog('incident'); }}>
                             <AlertTriangle className="h-3 w-3 text-red-500" />
                           </Button>
+                          )}
+                          {canAccessModule('raci') && (
                           <Button variant="ghost" size="icon" className="h-6 w-6" title="Add RACI"
                             onClick={() => { setContextStepId(step.id); setAddDialog('raci'); }}>
                             <Users className="h-3 w-3 text-cyan-500" />
                           </Button>
+                          )}
                           <Button variant="ghost" size="icon" className="h-6 w-6 text-muted-foreground hover:text-destructive"
                             onClick={() => { if (confirm('Delete this step?')) deleteStep(step.id).then(reload); }}>
                             <Trash2 className="h-3 w-3" />
@@ -338,6 +348,7 @@ export default function ProcessEditTab({ processId }: ProcessEditTabProps) {
                           </div>
 
                           {/* Risks & Controls */}
+                          {canAccessModule('risks') && (
                             <div className="space-y-2">
                               <div className="flex items-center gap-1.5 justify-between">
                                 <div className="flex items-center gap-1.5">
@@ -401,8 +412,10 @@ export default function ProcessEditTab({ processId }: ProcessEditTabProps) {
                               })}
                               {stepRisks.length === 0 && <p className="text-[10px] text-muted-foreground italic ml-4">No risks</p>}
                             </div>
+                          )}
 
                           {/* Regulations */}
+                          {canAccessModule('regulations') && (
                             <div className="space-y-2">
                               <div className="flex items-center gap-1.5 justify-between">
                                 <div className="flex items-center gap-1.5">
@@ -430,8 +443,10 @@ export default function ProcessEditTab({ processId }: ProcessEditTabProps) {
                               ))}
                               {stepRegs.length === 0 && <p className="text-[10px] text-muted-foreground italic ml-4">No regulations</p>}
                             </div>
+                          )}
 
                           {/* Incidents */}
+                          {canAccessModule('incidents') && (
                             <div className="space-y-2">
                               <div className="flex items-center gap-1.5 justify-between">
                                 <div className="flex items-center gap-1.5">
@@ -461,8 +476,10 @@ export default function ProcessEditTab({ processId }: ProcessEditTabProps) {
                               ))}
                               {stepIncs.length === 0 && <p className="text-[10px] text-muted-foreground italic ml-4">No incidents</p>}
                             </div>
+                          )}
 
                           {/* RACI */}
+                          {canAccessModule('raci') && (
                             <div className="space-y-2">
                               <div className="flex items-center gap-1.5 justify-between">
                                 <div className="flex items-center gap-1.5">
@@ -493,6 +510,7 @@ export default function ProcessEditTab({ processId }: ProcessEditTabProps) {
                               ))}
                               {stepRaci.length === 0 && <p className="text-[10px] text-muted-foreground italic ml-4">No RACI assignments</p>}
                             </div>
+                          )}
                         </div>
                       )}
                     </div>

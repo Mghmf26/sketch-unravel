@@ -4,6 +4,7 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { AuthProvider, useAuth } from "@/contexts/AuthContext";
+import { usePermissions } from "@/hooks/usePermissions";
 import AppLayout from "@/components/AppLayout";
 import Dashboard from "./pages/Dashboard";
 import BusinessProcesses from "./pages/BusinessProcesses";
@@ -36,19 +37,30 @@ import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
 
-const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
-  const { user, loading, mfaEnabled, mfaVerified, refreshMFA } = useAuth();
+const ProtectedRoute = ({ children, pageSlug }: { children: React.ReactNode; pageSlug?: string }) => {
+  const { user, loading, role, mfaEnabled, mfaVerified, refreshMFA } = useAuth();
+  const { canAccessPage } = usePermissions();
   if (loading) return null;
   if (!user) return <Navigate to="/auth" replace />;
 
-  // If user has MFA enrolled but hasn't verified this session → verify
   if (mfaEnabled && !mfaVerified) {
     return <VerifyMFA onVerified={() => refreshMFA()} />;
   }
 
-  // If user hasn't enrolled MFA yet → enroll
   if (!mfaEnabled) {
     return <EnrollMFA onEnrolled={() => refreshMFA()} />;
+  }
+
+  // Page-level permission check for participants
+  if (pageSlug && !canAccessPage(pageSlug)) {
+    return (
+      <AppLayout>
+        <div className="p-8 text-center">
+          <h2 className="text-lg font-semibold">Access Restricted</h2>
+          <p className="text-sm text-muted-foreground mt-1">You don't have permission to access this page.</p>
+        </div>
+      </AppLayout>
+    );
   }
 
   return <AppLayout>{children}</AppLayout>;
@@ -60,6 +72,7 @@ const PublicOnly = ({ children }: { children: React.ReactNode }) => {
   if (user) return <Navigate to="/" replace />;
   return <>{children}</>;
 };
+
 
 const App = () => (
   <QueryClientProvider client={queryClient}>
@@ -75,29 +88,29 @@ const App = () => (
             <Route path="/reset-password" element={<ResetPassword />} />
 
             {/* Protected routes */}
-            <Route path="/" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
+            <Route path="/" element={<ProtectedRoute pageSlug="dashboard"><Dashboard /></ProtectedRoute>} />
             <Route path="/admin" element={<ProtectedRoute><AdminDashboard /></ProtectedRoute>} />
             <Route path="/profile" element={<ProtectedRoute><Profile /></ProtectedRoute>} />
-            <Route path="/clients" element={<ProtectedRoute><Clients /></ProtectedRoute>} />
-            <Route path="/processes" element={<ProtectedRoute><BusinessProcesses /></ProtectedRoute>} />
-            <Route path="/process-details" element={<ProtectedRoute><ProcessDetails /></ProtectedRoute>} />
-            <Route path="/risks" element={<ProtectedRoute><RisksControls /></ProtectedRoute>} />
-            <Route path="/controls" element={<ProtectedRoute><Controls /></ProtectedRoute>} />
-            <Route path="/regulations" element={<ProtectedRoute><Regulations /></ProtectedRoute>} />
-            <Route path="/incidents" element={<ProtectedRoute><Incidents /></ProtectedRoute>} />
-            <Route path="/imports" element={<ProtectedRoute><MainframeImports /></ProtectedRoute>} />
-            <Route path="/processing-analysis" element={<ProtectedRoute><ProcessingAnalysis /></ProtectedRoute>} />
-            <Route path="/analytics" element={<ProtectedRoute><VisualAnalytics /></ProtectedRoute>} />
-            <Route path="/ai-reports" element={<ProtectedRoute><AIReports /></ProtectedRoute>} />
-            <Route path="/business-scenario-analysis" element={<ProtectedRoute><BusinessScenarioAnalysis /></ProtectedRoute>} />
-            <Route path="/mainframe-scenario-analysis" element={<ProtectedRoute><MainframeScenarioAnalysis /></ProtectedRoute>} />
-            <Route path="/mainframe-ai-analysis" element={<ProtectedRoute><MainframeAIAnalysis /></ProtectedRoute>} />
-            <Route path="/client-reports" element={<ProtectedRoute><ClientReports /></ProtectedRoute>} />
-            <Route path="/new" element={<ProtectedRoute><DataEntry /></ProtectedRoute>} />
-            <Route path="/upload" element={<ProtectedRoute><UploadExtract /></ProtectedRoute>} />
-            <Route path="/edit/:id" element={<ProtectedRoute><DataEntry /></ProtectedRoute>} />
+            <Route path="/clients" element={<ProtectedRoute pageSlug="clients"><Clients /></ProtectedRoute>} />
+            <Route path="/processes" element={<ProtectedRoute pageSlug="processes"><BusinessProcesses /></ProtectedRoute>} />
+            <Route path="/process-details" element={<ProtectedRoute pageSlug="processes"><ProcessDetails /></ProtectedRoute>} />
+            <Route path="/risks" element={<ProtectedRoute pageSlug="risks-controls"><RisksControls /></ProtectedRoute>} />
+            <Route path="/controls" element={<ProtectedRoute pageSlug="controls"><Controls /></ProtectedRoute>} />
+            <Route path="/regulations" element={<ProtectedRoute pageSlug="regulations"><Regulations /></ProtectedRoute>} />
+            <Route path="/incidents" element={<ProtectedRoute pageSlug="incidents"><Incidents /></ProtectedRoute>} />
+            <Route path="/imports" element={<ProtectedRoute pageSlug="mainframe-imports"><MainframeImports /></ProtectedRoute>} />
+            <Route path="/processing-analysis" element={<ProtectedRoute pageSlug="mainframe-imports"><ProcessingAnalysis /></ProtectedRoute>} />
+            <Route path="/analytics" element={<ProtectedRoute pageSlug="visual-analytics"><VisualAnalytics /></ProtectedRoute>} />
+            <Route path="/ai-reports" element={<ProtectedRoute pageSlug="ai-reports"><AIReports /></ProtectedRoute>} />
+            <Route path="/business-scenario-analysis" element={<ProtectedRoute pageSlug="analysis"><BusinessScenarioAnalysis /></ProtectedRoute>} />
+            <Route path="/mainframe-scenario-analysis" element={<ProtectedRoute pageSlug="analysis"><MainframeScenarioAnalysis /></ProtectedRoute>} />
+            <Route path="/mainframe-ai-analysis" element={<ProtectedRoute pageSlug="analysis"><MainframeAIAnalysis /></ProtectedRoute>} />
+            <Route path="/client-reports" element={<ProtectedRoute pageSlug="client-reports"><ClientReports /></ProtectedRoute>} />
+            <Route path="/new" element={<ProtectedRoute pageSlug="data-entry"><DataEntry /></ProtectedRoute>} />
+            <Route path="/upload" element={<ProtectedRoute pageSlug="upload"><UploadExtract /></ProtectedRoute>} />
+            <Route path="/edit/:id" element={<ProtectedRoute pageSlug="data-entry"><DataEntry /></ProtectedRoute>} />
             <Route path="/view/:id" element={<DiagramViewer />} />
-            <Route path="/process-view/:id" element={<ProtectedRoute><ProcessView /></ProtectedRoute>} />
+            <Route path="/process-view/:id" element={<ProtectedRoute pageSlug="processes"><ProcessView /></ProtectedRoute>} />
             <Route path="*" element={<NotFound />} />
           </Routes>
         </AuthProvider>
