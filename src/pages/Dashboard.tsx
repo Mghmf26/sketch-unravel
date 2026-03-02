@@ -105,14 +105,13 @@ export default function Dashboard() {
               onClick={() => setActiveMode(mode)}
               className={`capitalize gap-2 ${activeMode === mode ? 'shadow-lg shadow-primary/20' : ''}`}
             >
-              {(mode === 'external audit' || mode === 'internal audit') && <ClipboardCheck className="h-4 w-4" />}
+              {(mode === 'external_audit' || mode === 'internal_audit') && <ClipboardCheck className="h-4 w-4" />}
               {mode === 'assurance' && <Shield className="h-4 w-4" />}
               {mode === 'advisory' && <Briefcase className="h-4 w-4" />}
-              {mode}
+              {mode.replace(/_/g, ' ')}
               <Badge variant="secondary" className="ml-1 text-[10px] px-1.5 py-0">
-                {modeClients.length === clients.filter(c => (c as any).engagement_mode === mode || (!((c as any).engagement_mode) && mode === 'external audit')).length
-                  ? clients.filter(c => (c as any).engagement_mode === mode || (!((c as any).engagement_mode) && mode === 'external audit')).length
-                  : 0}
+                {clients.filter(c => (c as any).engagement_mode === mode || (!((c as any).engagement_mode) && mode === 'external_audit')).length}
+              </Badge>
               </Badge>
             </Button>
           ))}
