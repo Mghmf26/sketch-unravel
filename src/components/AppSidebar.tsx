@@ -31,6 +31,8 @@ import {
   SidebarMenuItem,
   useSidebar,
 } from '@/components/ui/sidebar';
+import { useAuth } from '@/contexts/AuthContext';
+import { usePermissions } from '@/hooks/usePermissions';
 import mfAiLogo from '@/assets/mf-ai-logo.png';
 
 interface MenuGroup {
