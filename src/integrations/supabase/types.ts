@@ -61,6 +61,38 @@ export type Database = {
           },
         ]
       }
+      client_assignments: {
+        Row: {
+          assigned_by: string | null
+          client_id: string
+          created_at: string
+          id: string
+          user_id: string
+        }
+        Insert: {
+          assigned_by?: string | null
+          client_id: string
+          created_at?: string
+          id?: string
+          user_id: string
+        }
+        Update: {
+          assigned_by?: string | null
+          client_id?: string
+          created_at?: string
+          id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "client_assignments_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       clients: {
         Row: {
           address: string | null
@@ -200,6 +232,53 @@ export type Database = {
             columns: ["step_id"]
             isOneToOne: false
             referencedRelation: "process_steps"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      invitations: {
+        Row: {
+          accepted_at: string | null
+          client_id: string | null
+          created_at: string
+          email: string
+          expires_at: string
+          id: string
+          invited_by: string | null
+          role: Database["public"]["Enums"]["app_role"]
+          status: string
+          token: string
+        }
+        Insert: {
+          accepted_at?: string | null
+          client_id?: string | null
+          created_at?: string
+          email: string
+          expires_at?: string
+          id?: string
+          invited_by?: string | null
+          role?: Database["public"]["Enums"]["app_role"]
+          status?: string
+          token?: string
+        }
+        Update: {
+          accepted_at?: string | null
+          client_id?: string | null
+          created_at?: string
+          email?: string
+          expires_at?: string
+          id?: string
+          invited_by?: string | null
+          role?: Database["public"]["Enums"]["app_role"]
+          status?: string
+          token?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "invitations_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "clients"
             referencedColumns: ["id"]
           },
         ]
@@ -348,6 +427,8 @@ export type Database = {
           display_name: string | null
           id: string
           job_title: string | null
+          last_sign_in: string | null
+          status: string
           updated_at: string
           user_id: string
         }
@@ -358,6 +439,8 @@ export type Database = {
           display_name?: string | null
           id?: string
           job_title?: string | null
+          last_sign_in?: string | null
+          status?: string
           updated_at?: string
           user_id: string
         }
@@ -368,6 +451,8 @@ export type Database = {
           display_name?: string | null
           id?: string
           job_title?: string | null
+          last_sign_in?: string | null
+          status?: string
           updated_at?: string
           user_id?: string
         }
