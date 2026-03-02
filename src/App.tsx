@@ -4,6 +4,7 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { AuthProvider, useAuth } from "@/contexts/AuthContext";
+import { usePermissions } from "@/hooks/usePermissions";
 import AppLayout from "@/components/AppLayout";
 import Dashboard from "./pages/Dashboard";
 import BusinessProcesses from "./pages/BusinessProcesses";
@@ -38,24 +39,37 @@ const queryClient = new QueryClient();
 
 const ProtectedRoute = ({ children, pageSlug }: { children: React.ReactNode; pageSlug?: string }) => {
   const { user, loading, role, mfaEnabled, mfaVerified, refreshMFA } = useAuth();
+  const { canAccessPage } = usePermissions();
   if (loading) return null;
   if (!user) return <Navigate to="/auth" replace />;
 
-  // If user has MFA enrolled but hasn't verified this session → verify
   if (mfaEnabled && !mfaVerified) {
     return <VerifyMFA onVerified={() => refreshMFA()} />;
   }
 
-  // If user hasn't enrolled MFA yet → enroll
   if (!mfaEnabled) {
     return <EnrollMFA onEnrolled={() => refreshMFA()} />;
   }
 
-  return <AppLayout>{pageSlug ? <PageGate pageSlug={pageSlug}>{children}</PageGate> : children}</AppLayout>;
+  // Page-level permission check for participants
+  if (pageSlug && !canAccessPage(pageSlug)) {
+    return (
+      <AppLayout>
+        <div className="p-8 text-center">
+          <h2 className="text-lg font-semibold">Access Restricted</h2>
+          <p className="text-sm text-muted-foreground mt-1">You don't have permission to access this page.</p>
+        </div>
+      </AppLayout>
+    );
+  }
+
+  return <AppLayout>{children}</AppLayout>;
 };
 
-const PageGate = ({ children, pageSlug }: { children: React.ReactNode; pageSlug: string }) => {
-  const { usePermissions: _ } = require('@/hooks/usePermissions');
+const PublicOnly = ({ children }: { children: React.ReactNode }) => {
+  const { user, loading } = useAuth();
+  if (loading) return null;
+  if (user) return <Navigate to="/" replace />;
   return <>{children}</>;
 };
 
