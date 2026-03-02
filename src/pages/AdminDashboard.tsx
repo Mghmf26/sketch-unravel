@@ -4,8 +4,9 @@ import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
 import {
   ArrowLeft, ShieldCheck, Users, Plus, UserX, UserCheck, Trash2, Mail,
-  Clock, Building2, ChevronDown, MoreHorizontal, Pause, Play, Eye
+  Clock, Building2, ChevronDown, MoreHorizontal, Pause, Play, Eye, Shield
 } from 'lucide-react';
+import UserPermissionsEditor from '@/components/UserPermissionsEditor';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
@@ -72,6 +73,7 @@ export default function AdminDashboard() {
   const [clients, setClients] = useState<Client[]>([]);
   const [showInviteDialog, setShowInviteDialog] = useState(false);
   const [showAssignDialog, setShowAssignDialog] = useState<string | null>(null);
+  const [showPermissionsDialog, setShowPermissionsDialog] = useState<UserRow | null>(null);
   const [inviteForm, setInviteForm] = useState({ email: '', display_name: '', role: 'team_participant', client_id: '', temp_password: 'TempPass123!' });
   const [inviting, setInviting] = useState(false);
 
@@ -329,6 +331,11 @@ export default function AdminDashboard() {
                               <Play className="mr-2 h-3.5 w-3.5" /> Activate User
                             </DropdownMenuItem>
                           )}
+                          {(u.role === 'team_participant' || u.role === 'client_participant') && (
+                            <DropdownMenuItem onClick={() => setShowPermissionsDialog(u)}>
+                              <Shield className="mr-2 h-3.5 w-3.5" /> Permissions
+                            </DropdownMenuItem>
+                          )}
                           <DropdownMenuItem onClick={() => handleAction('remove_user', u.user_id)} className="text-destructive focus:text-destructive">
                             <Trash2 className="mr-2 h-3.5 w-3.5" /> Remove User
                           </DropdownMenuItem>
@@ -448,6 +455,22 @@ export default function AdminDashboard() {
               </Button>
             ))}
           </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Permissions Dialog */}
+      <Dialog open={!!showPermissionsDialog} onOpenChange={() => setShowPermissionsDialog(null)}>
+        <DialogContent className="max-w-2xl max-h-[85vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>User Permissions</DialogTitle>
+          </DialogHeader>
+          {showPermissionsDialog && (
+            <UserPermissionsEditor
+              userId={showPermissionsDialog.user_id}
+              userName={showPermissionsDialog.display_name || showPermissionsDialog.email}
+              onSaved={() => setShowPermissionsDialog(null)}
+            />
+          )}
         </DialogContent>
       </Dialog>
     </div>
