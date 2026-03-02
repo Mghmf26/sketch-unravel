@@ -476,7 +476,6 @@ export default function ProcessEditTab({ processId }: ProcessEditTabProps) {
                               ))}
                               {stepIncs.length === 0 && <p className="text-[10px] text-muted-foreground italic ml-4">No incidents</p>}
                             </div>
-                            </div>
                           )}
 
                           {/* RACI */}
