@@ -9,32 +9,17 @@ import { Workflow, Loader2 } from 'lucide-react';
 
 export default function Auth() {
   const navigate = useNavigate();
-  const [isLogin, setIsLogin] = useState(true);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const [displayName, setDisplayName] = useState('');
   const [loading, setLoading] = useState(false);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
     try {
-      if (isLogin) {
-        const { error } = await supabase.auth.signInWithPassword({ email, password });
-        if (error) throw error;
-        navigate('/');
-      } else {
-        const { error } = await supabase.auth.signUp({
-          email,
-          password,
-          options: {
-            data: { display_name: displayName || email },
-            emailRedirectTo: window.location.origin,
-          },
-        });
-        if (error) throw error;
-        toast({ title: 'Check your email', description: 'We sent you a verification link to confirm your account.' });
-      }
+      const { error } = await supabase.auth.signInWithPassword({ email, password });
+      if (error) throw error;
+      navigate('/');
     } catch (err: any) {
       toast({ title: 'Error', description: err.message, variant: 'destructive' });
     } finally {
@@ -56,21 +41,14 @@ export default function Auth() {
             </div>
           </div>
           <div>
-            <CardTitle className="text-xl">{isLogin ? 'Sign In' : 'Create Account'}</CardTitle>
+            <CardTitle className="text-xl">Sign In</CardTitle>
             <CardDescription className="mt-1">
-              {isLogin ? 'Enter your credentials to access the platform' : 'Register to get started with MF AI Navigator'}
+              Enter your credentials to access the platform
             </CardDescription>
           </div>
         </CardHeader>
         <CardContent>
           <form onSubmit={handleSubmit} className="space-y-4">
-            {!isLogin && (
-              <Input
-                placeholder="Display Name"
-                value={displayName}
-                onChange={(e) => setDisplayName(e.target.value)}
-              />
-            )}
             <Input
               type="email"
               placeholder="Email"
@@ -88,29 +66,21 @@ export default function Auth() {
             />
             <Button type="submit" className="w-full" disabled={loading}>
               {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-              {isLogin ? 'Sign In' : 'Sign Up'}
+              Sign In
             </Button>
           </form>
           <div className="mt-4 text-center">
             <button
               type="button"
-              className="text-sm text-primary hover:underline"
-              onClick={() => setIsLogin(!isLogin)}
+              className="text-xs text-muted-foreground hover:underline"
+              onClick={() => navigate('/forgot-password')}
             >
-              {isLogin ? "Don't have an account? Sign up" : 'Already have an account? Sign in'}
+              Forgot your password?
             </button>
           </div>
-          {isLogin && (
-            <div className="mt-2 text-center">
-              <button
-                type="button"
-                className="text-xs text-muted-foreground hover:underline"
-                onClick={() => navigate('/forgot-password')}
-              >
-                Forgot your password?
-              </button>
-            </div>
-          )}
+          <p className="mt-4 text-xs text-center text-muted-foreground">
+            Access is by invitation only. Contact your administrator to request access.
+          </p>
         </CardContent>
       </Card>
     </div>

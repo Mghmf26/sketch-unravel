@@ -54,7 +54,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       setSession(sess);
       setUser(sess?.user ?? null);
       if (sess?.user) {
-        setTimeout(() => fetchProfileAndRole(sess.user.id), 0);
+        setTimeout(() => {
+          fetchProfileAndRole(sess.user.id);
+          // Update last_sign_in
+          supabase.from('profiles').update({ last_sign_in: new Date().toISOString() }).eq('user_id', sess.user.id).then(() => {});
+        }, 0);
       } else {
         setProfile(null);
         setRole(null);
