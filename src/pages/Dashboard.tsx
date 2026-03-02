@@ -112,12 +112,11 @@ export default function Dashboard() {
               <Badge variant="secondary" className="ml-1 text-[10px] px-1.5 py-0">
                 {clients.filter(c => (c as any).engagement_mode === mode || (!((c as any).engagement_mode) && mode === 'external_audit')).length}
               </Badge>
-              </Badge>
             </Button>
           ))}
         </div>
         <p className="text-xs text-muted-foreground">
-          Showing data for <strong className="text-foreground">{modeClients.length}</strong> {activeMode} client{modeClients.length !== 1 ? 's' : ''} · {modeProcesses.length} processes
+          Showing data for <strong className="text-foreground">{modeClients.length}</strong> {activeMode.replace(/_/g, ' ')} client{modeClients.length !== 1 ? 's' : ''} · {modeProcesses.length} processes
         </p>
       </div>
 
