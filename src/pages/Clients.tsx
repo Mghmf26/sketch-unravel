@@ -284,7 +284,7 @@ export default function Clients() {
                       variant="outline"
                       className="text-[10px] capitalize mr-1"
                     >
-                      {(client as any).engagement_mode || 'audit'}
+                      {((client as any).engagement_mode || 'external audit').replace(/_/g, ' ')}
                     </Badge>
                     <Badge
                       variant={client.status === 'active' ? 'default' : 'secondary'}
