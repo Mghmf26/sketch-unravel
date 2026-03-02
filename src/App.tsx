@@ -73,12 +73,6 @@ const PublicOnly = ({ children }: { children: React.ReactNode }) => {
   return <>{children}</>;
 };
 
-const PublicOnly = ({ children }: { children: React.ReactNode }) => {
-  const { user, loading } = useAuth();
-  if (loading) return null;
-  if (user) return <Navigate to="/" replace />;
-  return <>{children}</>;
-};
 
 const App = () => (
   <QueryClientProvider client={queryClient}>
