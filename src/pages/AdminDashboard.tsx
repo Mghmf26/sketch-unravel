@@ -422,7 +422,7 @@ export default function AdminDashboard() {
               <Select value={inviteForm.client_id} onValueChange={v => setInviteForm(f => ({ ...f, client_id: v }))}>
                 <SelectTrigger><SelectValue placeholder="No client" /></SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="">None</SelectItem>
+                  <SelectItem value="__none__">None</SelectItem>
                   {clients.map(c => <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>)}
                 </SelectContent>
               </Select>
