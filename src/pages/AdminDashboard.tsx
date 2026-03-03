@@ -419,7 +419,7 @@ export default function AdminDashboard() {
             </div>
             <div>
               <Label>Assign to Client (optional)</Label>
-              <Select value={inviteForm.client_id} onValueChange={v => setInviteForm(f => ({ ...f, client_id: v }))}>
+              <Select value={inviteForm.client_id || '__none__'} onValueChange={v => setInviteForm(f => ({ ...f, client_id: v === '__none__' ? '' : v }))}>
                 <SelectTrigger><SelectValue placeholder="No client" /></SelectTrigger>
                 <SelectContent>
                   <SelectItem value="__none__">None</SelectItem>
