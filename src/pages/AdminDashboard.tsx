@@ -7,6 +7,7 @@ import {
   Clock, Building2, ChevronDown, MoreHorizontal, Pause, Play, Eye, Shield
 } from 'lucide-react';
 import UserPermissionsEditor from '@/components/UserPermissionsEditor';
+import PageVisibilityEditor from '@/components/PageVisibilityEditor';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
