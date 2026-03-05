@@ -289,6 +289,12 @@ function EPCCustomNode({ data }: NodeProps) {
             ? INTERFACE_SUBTYPE_LABELS[d.interfaceSubtype] || INTERFACE_SUBTYPE_LABELS['default']
             : TYPE_LABELS[d.nodeType]}
         </span>
+        {d.stepType && STEP_TYPE_COLORS[d.stepType] && (
+          <span className="text-[8px] font-bold px-1.5 py-0.5 rounded border uppercase tracking-wide"
+            style={{ backgroundColor: STEP_TYPE_COLORS[d.stepType].bg, color: STEP_TYPE_COLORS[d.stepType].text, borderColor: STEP_TYPE_COLORS[d.stepType].border }}>
+            {d.stepType}
+          </span>
+        )}
       </div>
       <div className="relative flex items-center justify-center text-center"
         style={{
