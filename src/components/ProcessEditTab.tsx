@@ -2,7 +2,7 @@ import { useState, useEffect, useCallback } from 'react';
 import {
   Plus, Trash2, ArrowRight, ShieldAlert, ShieldCheck, Scale,
   AlertCircle, Database, HelpCircle, ChevronDown, ChevronRight, Pencil, Users,
-  Check, X, Save
+  Check, X, Save, Monitor
 } from 'lucide-react';
 import { usePermissions } from '@/hooks/usePermissions';
 import { Button } from '@/components/ui/button';
@@ -32,6 +32,7 @@ import {
   type ProcessStep, type StepConnection, type Risk, type Control,
   type Regulation, type Incident, type MainframeImport, type MFQuestion, type StepRaci,
 } from '@/lib/api';
+import { fetchStepApplications, insertStepApplication, updateStepApplication, deleteStepApplication, type StepApplication } from '@/lib/api-applications';
 
 interface ProcessEditTabProps {
   processId: string;
@@ -66,7 +67,7 @@ function getTypeStyle(type: string) {
   return typeColors[type] || typeColors['in-scope'];
 }
 
-type AddDialog = 'step' | 'risk' | 'control' | 'regulation' | 'incident' | 'import' | 'mfq' | 'connection' | 'raci' | null;
+type AddDialog = 'step' | 'risk' | 'control' | 'regulation' | 'incident' | 'import' | 'mfq' | 'connection' | 'raci' | 'application' | null;
 
 // Inline editable text field
 function InlineEdit({ value, onSave, className = '', multiline = false }: {
@@ -143,6 +144,7 @@ export default function ProcessEditTab({ processId }: ProcessEditTabProps) {
   const [incidents, setIncidents] = useState<Incident[]>([]);
   const [imports, setImports] = useState<MainframeImport[]>([]);
   const [mfQuestions, setMfQuestions] = useState<MFQuestion[]>([]);
+  const [applications, setApplications] = useState<StepApplication[]>([]);
   const [raciEntries, setRaciEntries] = useState<StepRaci[]>([]);
   const [addDialog, setAddDialog] = useState<AddDialog>(null);
   const [contextStepId, setContextStepId] = useState<string | null>(null);
@@ -169,12 +171,12 @@ export default function ProcessEditTab({ processId }: ProcessEditTabProps) {
   const collapseAllSteps = () => setExpandedSteps(new Set());
 
   const reload = useCallback(async () => {
-    const [s, c, r, ctrl, reg, inc, imp, mfq, raci] = await Promise.all([
+    const [s, c, r, ctrl, reg, inc, imp, mfq, raci, apps] = await Promise.all([
       fetchSteps(processId), fetchStepConnections(processId),
       fetchRisks(processId), fetchAllControls(),
       fetchRegulations(processId), fetchIncidents(processId),
       fetchMainframeImports(processId), fetchMFQuestions(processId),
-      fetchStepRaci(processId),
+      fetchStepRaci(processId), fetchStepApplications(processId),
     ]);
     setSteps(s);
     setConnections(c);
@@ -186,6 +188,7 @@ export default function ProcessEditTab({ processId }: ProcessEditTabProps) {
     setImports(imp);
     setMfQuestions(mfq);
     setRaciEntries(raci);
+    setApplications(apps);
   }, [processId]);
 
   useEffect(() => { reload(); }, [reload]);
@@ -219,6 +222,7 @@ export default function ProcessEditTab({ processId }: ProcessEditTabProps) {
   const getStepRegulations = (stepId: string) => regulations.filter(r => r.step_id === stepId);
   const getStepIncidents = (stepId: string) => incidents.filter(i => i.step_id === stepId);
   const getStepRaci = (stepId: string) => raciEntries.filter(r => r.step_id === stepId);
+  const getStepApps = (stepId: string) => applications.filter(a => a.step_id === stepId);
   const getRiskControls = (riskId: string) => controls.filter(c => c.risk_id === riskId);
 
   const countRelations = (stepId: string) => {
@@ -226,7 +230,8 @@ export default function ProcessEditTab({ processId }: ProcessEditTabProps) {
     const reg = getStepRegulations(stepId).length;
     const inc = getStepIncidents(stepId).length;
     const raci = getStepRaci(stepId).length;
-    return r + reg + inc + raci;
+    const apps = getStepApps(stepId).length;
+    return r + reg + inc + raci + apps;
   };
 
   return (
