@@ -1,16 +1,20 @@
 import { useState, useCallback } from 'react';
-import { X, ShieldAlert, Shield, BookOpen, AlertTriangle, Info, Pencil, Check } from 'lucide-react';
+import { X, ShieldAlert, ShieldCheck, Scale, AlertCircle, Info, Pencil, Check, Plus, Trash2, Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Separator } from '@/components/ui/separator';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog';
 import { toast } from '@/hooks/use-toast';
 import {
   updateStep, updateRisk, updateControl, updateRegulation, updateIncident,
+  insertRisk, insertControl, insertRegulation, insertIncident,
+  deleteRisk, deleteControl, deleteRegulation, deleteIncident,
   type Risk, type Control, type Regulation, type Incident,
 } from '@/lib/api';
 import type { EPCNode, NodeType } from '@/types/epc';
@@ -21,6 +25,7 @@ interface NodeDetailPanelProps {
   controls: Control[];
   regulations: Regulation[];
   incidents: Incident[];
+  processId?: string;
   defaultTab?: string;
   onClose: () => void;
   onDataChanged?: () => void;
@@ -69,18 +74,12 @@ function StatusBadge({ value }: { value: string }) {
   return <span className={`px-1.5 py-0.5 rounded text-[9px] font-bold uppercase ${colors[value] || 'bg-muted text-muted-foreground'}`}>{value}</span>;
 }
 
-// Inline editable field
 function EditableField({ label, value, onSave, multiline = false }: {
   label: string; value: string; onSave: (val: string) => void; multiline?: boolean;
 }) {
   const [editing, setEditing] = useState(false);
   const [text, setText] = useState(value);
-
-  const commit = () => {
-    setEditing(false);
-    if (text !== value) onSave(text);
-  };
-
+  const commit = () => { setEditing(false); if (text !== value) onSave(text); };
   if (!editing) {
     return (
       <div className="group">
@@ -95,7 +94,6 @@ function EditableField({ label, value, onSave, multiline = false }: {
       </div>
     );
   }
-
   return (
     <div>
       <span className="text-[10px] font-semibold text-muted-foreground uppercase">{label}</span>
@@ -114,7 +112,6 @@ function EditableField({ label, value, onSave, multiline = false }: {
   );
 }
 
-// Inline select
 function EditableSelect({ label, value, options, onSave }: {
   label: string; value: string; options: string[]; onSave: (val: string) => void;
 }) {
@@ -133,13 +130,28 @@ function EditableSelect({ label, value, options, onSave }: {
   );
 }
 
-export default function NodeDetailPanel({ node, risks, controls, regulations, incidents, defaultTab = 'overview', onClose, onDataChanged }: NodeDetailPanelProps) {
+type AddDialogType = 'risk' | 'control' | 'regulation' | 'incident' | null;
+
+export default function NodeDetailPanel({ node, risks, controls, regulations, incidents, processId, defaultTab = 'overview', onClose, onDataChanged }: NodeDetailPanelProps) {
   const tc = TYPE_COLORS[node.type] || TYPE_COLORS['in-scope'];
   const stepRisks = risks.filter(r => r.step_id === node.id);
   const stepRiskIds = new Set(stepRisks.map(r => r.id));
   const stepControls = controls.filter(c => stepRiskIds.has(c.risk_id));
   const stepRegulations = regulations.filter(r => r.step_id === node.id);
   const stepIncidents = incidents.filter(i => i.step_id === node.id);
+
+  const [addDialog, setAddDialog] = useState<AddDialogType>(null);
+  const [saving, setSaving] = useState(false);
+  const [contextRiskId, setContextRiskId] = useState<string | null>(null);
+
+  // Forms
+  const [riskForm, setRiskForm] = useState({ description: '', likelihood: 'medium', impact: 'medium' });
+  const [controlForm, setControlForm] = useState({ name: '', description: '', type: 'preventive', effectiveness: 'effective' });
+  const [regulationForm, setRegulationForm] = useState({ name: '', description: '', authority: '', compliance_status: 'partial' });
+  const [incidentForm, setIncidentForm] = useState({ title: '', description: '', severity: 'medium', status: 'open' });
+
+  // Derive processId from data if not provided
+  const derivedProcessId = processId || stepRisks[0]?.process_id || stepRegulations[0]?.process_id || stepIncidents[0]?.process_id || '';
 
   const saveField = useCallback(async (fn: () => Promise<void>, msg: string) => {
     try {
@@ -151,7 +163,72 @@ export default function NodeDetailPanel({ node, risks, controls, regulations, in
     }
   }, [onDataChanged]);
 
+  const handleAddRisk = async () => {
+    if (!riskForm.description.trim() || !derivedProcessId) return;
+    setSaving(true);
+    try {
+      await insertRisk({ step_id: node.id, process_id: derivedProcessId, description: riskForm.description.trim(), likelihood: riskForm.likelihood, impact: riskForm.impact });
+      toast({ title: 'Risk added' });
+      setAddDialog(null);
+      setRiskForm({ description: '', likelihood: 'medium', impact: 'medium' });
+      onDataChanged?.();
+    } catch { toast({ title: 'Failed to add risk', variant: 'destructive' }); }
+    setSaving(false);
+  };
+
+  const handleAddControl = async () => {
+    if (!controlForm.name.trim() || !contextRiskId) return;
+    setSaving(true);
+    try {
+      await insertControl({ risk_id: contextRiskId, name: controlForm.name.trim(), description: controlForm.description || null, type: controlForm.type, effectiveness: controlForm.effectiveness });
+      toast({ title: 'Control added' });
+      setAddDialog(null);
+      setControlForm({ name: '', description: '', type: 'preventive', effectiveness: 'effective' });
+      onDataChanged?.();
+    } catch { toast({ title: 'Failed to add control', variant: 'destructive' }); }
+    setSaving(false);
+  };
+
+  const handleAddRegulation = async () => {
+    if (!regulationForm.name.trim() || !derivedProcessId) return;
+    setSaving(true);
+    try {
+      await insertRegulation({ step_id: node.id, process_id: derivedProcessId, name: regulationForm.name.trim(), description: regulationForm.description || null, authority: regulationForm.authority || null, compliance_status: regulationForm.compliance_status });
+      toast({ title: 'Regulation added' });
+      setAddDialog(null);
+      setRegulationForm({ name: '', description: '', authority: '', compliance_status: 'partial' });
+      onDataChanged?.();
+    } catch { toast({ title: 'Failed to add regulation', variant: 'destructive' }); }
+    setSaving(false);
+  };
+
+  const handleAddIncident = async () => {
+    if (!incidentForm.title.trim() || !derivedProcessId) return;
+    setSaving(true);
+    try {
+      await insertIncident({ step_id: node.id, process_id: derivedProcessId, title: incidentForm.title.trim(), description: incidentForm.description || null, severity: incidentForm.severity, status: incidentForm.status });
+      toast({ title: 'Incident added' });
+      setAddDialog(null);
+      setIncidentForm({ title: '', description: '', severity: 'medium', status: 'open' });
+      onDataChanged?.();
+    } catch { toast({ title: 'Failed to add incident', variant: 'destructive' }); }
+    setSaving(false);
+  };
+
+  const handleDeleteItem = async (type: string, id: string) => {
+    if (!confirm(`Delete this ${type}?`)) return;
+    try {
+      if (type === 'risk') await deleteRisk(id);
+      else if (type === 'control') await deleteControl(id);
+      else if (type === 'regulation') await deleteRegulation(id);
+      else if (type === 'incident') await deleteIncident(id);
+      toast({ title: `${type.charAt(0).toUpperCase() + type.slice(1)} deleted` });
+      onDataChanged?.();
+    } catch { toast({ title: 'Delete failed', variant: 'destructive' }); }
+  };
+
   return (
+    <>
     <div className="w-[340px] bg-background border-l shadow-lg flex flex-col h-full overflow-hidden" style={{ borderTopColor: tc.border, borderTopWidth: 3 }}>
       {/* Header */}
       <div className="flex items-start gap-2 p-4 pb-2">
@@ -185,15 +262,15 @@ export default function NodeDetailPanel({ node, risks, controls, regulations, in
             {stepRisks.length > 0 && <Badge variant="secondary" className="ml-1 h-4 text-[8px] px-1">{stepRisks.length}</Badge>}
           </TabsTrigger>
           <TabsTrigger value="controls" className="text-[10px] h-6 px-2">
-            <Shield className="h-3 w-3 mr-1" /> Controls
+            <ShieldCheck className="h-3 w-3 mr-1" /> Ctrl
             {stepControls.length > 0 && <Badge variant="secondary" className="ml-1 h-4 text-[8px] px-1">{stepControls.length}</Badge>}
           </TabsTrigger>
           <TabsTrigger value="regulations" className="text-[10px] h-6 px-2">
-            <BookOpen className="h-3 w-3 mr-1" /> Reg
+            <Scale className="h-3 w-3 mr-1" /> Reg
             {stepRegulations.length > 0 && <Badge variant="secondary" className="ml-1 h-4 text-[8px] px-1">{stepRegulations.length}</Badge>}
           </TabsTrigger>
           <TabsTrigger value="incidents" className="text-[10px] h-6 px-2">
-            <AlertTriangle className="h-3 w-3 mr-1" /> Inc
+            <AlertCircle className="h-3 w-3 mr-1" /> Inc
             {stepIncidents.length > 0 && <Badge variant="secondary" className="ml-1 h-4 text-[8px] px-1">{stepIncidents.length}</Badge>}
           </TabsTrigger>
         </TabsList>
@@ -215,29 +292,40 @@ export default function NodeDetailPanel({ node, risks, controls, regulations, in
                 <span className="text-lg font-bold text-orange-700">{stepRisks.length}</span>
               </div>
               <div className="p-2 rounded-lg border bg-blue-50">
-                <div className="flex items-center gap-1 mb-0.5"><Shield className="h-3 w-3 text-blue-500" /><span className="text-[10px] font-semibold text-blue-700">Controls</span></div>
+                <div className="flex items-center gap-1 mb-0.5"><ShieldCheck className="h-3 w-3 text-blue-500" /><span className="text-[10px] font-semibold text-blue-700">Controls</span></div>
                 <span className="text-lg font-bold text-blue-700">{stepControls.length}</span>
               </div>
               <div className="p-2 rounded-lg border bg-purple-50">
-                <div className="flex items-center gap-1 mb-0.5"><BookOpen className="h-3 w-3 text-purple-500" /><span className="text-[10px] font-semibold text-purple-700">Regulations</span></div>
+                <div className="flex items-center gap-1 mb-0.5"><Scale className="h-3 w-3 text-purple-500" /><span className="text-[10px] font-semibold text-purple-700">Regulations</span></div>
                 <span className="text-lg font-bold text-purple-700">{stepRegulations.length}</span>
               </div>
               <div className="p-2 rounded-lg border bg-red-50">
-                <div className="flex items-center gap-1 mb-0.5"><AlertTriangle className="h-3 w-3 text-red-500" /><span className="text-[10px] font-semibold text-red-700">Incidents</span></div>
+                <div className="flex items-center gap-1 mb-0.5"><AlertCircle className="h-3 w-3 text-red-500" /><span className="text-[10px] font-semibold text-red-700">Incidents</span></div>
                 <span className="text-lg font-bold text-red-700">{stepIncidents.length}</span>
               </div>
             </div>
           </TabsContent>
 
           <TabsContent value="risks" className="mt-0 space-y-2">
+            <div className="flex items-center justify-between mb-1">
+              <span className="text-xs font-semibold text-muted-foreground">{stepRisks.length} Risk{stepRisks.length !== 1 ? 's' : ''}</span>
+              <Button size="sm" variant="ghost" className="h-6 text-xs gap-1" onClick={() => { setRiskForm({ description: '', likelihood: 'medium', impact: 'medium' }); setAddDialog('risk'); }}>
+                <Plus className="h-3 w-3" /> Add Risk
+              </Button>
+            </div>
             {stepRisks.length === 0 ? (
               <p className="text-xs text-muted-foreground text-center py-8">No risks linked to this step</p>
             ) : stepRisks.map(risk => {
               const riskControls = controls.filter(c => c.risk_id === risk.id);
               return (
-                <div key={risk.id} className="p-3 rounded-lg border bg-orange-50/50 space-y-2">
-                  <EditableField label="Risk Description" value={risk.description}
-                    onSave={val => saveField(() => updateRisk(risk.id, { description: val }), 'Risk updated')} />
+                <div key={risk.id} className="p-3 rounded-lg border bg-orange-50/50 space-y-2 group">
+                  <div className="flex items-start justify-between">
+                    <EditableField label="Risk Description" value={risk.description}
+                      onSave={val => saveField(() => updateRisk(risk.id, { description: val }), 'Risk updated')} />
+                    <Button variant="ghost" size="icon" className="h-5 w-5 opacity-0 group-hover:opacity-100 text-destructive" onClick={() => handleDeleteItem('risk', risk.id)}>
+                      <Trash2 className="h-3 w-3" />
+                    </Button>
+                  </div>
                   <div className="flex gap-3">
                     <EditableSelect label="Likelihood" value={risk.likelihood} options={['low', 'medium', 'high', 'critical']}
                       onSave={val => saveField(() => updateRisk(risk.id, { likelihood: val }), 'Likelihood updated')} />
@@ -248,14 +336,20 @@ export default function NodeDetailPanel({ node, risks, controls, regulations, in
                     <div className="pl-2 border-l-2 border-blue-200 space-y-1 mt-1">
                       <span className="text-[9px] font-semibold text-blue-600">Controls ({riskControls.length})</span>
                       {riskControls.map(ctrl => (
-                        <div key={ctrl.id} className="flex items-center gap-1.5 text-xs">
-                          <Shield className="h-3 w-3 text-blue-400" />
-                          <span className="font-medium">{ctrl.name}</span>
+                        <div key={ctrl.id} className="flex items-center gap-1.5 text-xs group/ctrl">
+                          <ShieldCheck className="h-3 w-3 text-blue-400" />
+                          <span className="font-medium flex-1">{ctrl.name}</span>
                           <StatusBadge value={ctrl.effectiveness || 'effective'} />
+                          <Button variant="ghost" size="icon" className="h-4 w-4 opacity-0 group-hover/ctrl:opacity-100 text-destructive" onClick={() => handleDeleteItem('control', ctrl.id)}>
+                            <Trash2 className="h-2.5 w-2.5" />
+                          </Button>
                         </div>
                       ))}
                     </div>
                   )}
+                  <Button size="sm" variant="ghost" className="h-5 text-[10px] text-blue-600 gap-1 px-1" onClick={() => { setContextRiskId(risk.id); setControlForm({ name: '', description: '', type: 'preventive', effectiveness: 'effective' }); setAddDialog('control'); }}>
+                    <Plus className="h-2.5 w-2.5" /> Add Control
+                  </Button>
                 </div>
               );
             })}
@@ -265,11 +359,14 @@ export default function NodeDetailPanel({ node, risks, controls, regulations, in
             {stepControls.length === 0 ? (
               <p className="text-xs text-muted-foreground text-center py-8">No controls linked to this step's risks</p>
             ) : stepControls.map(ctrl => (
-              <div key={ctrl.id} className="p-3 rounded-lg border bg-blue-50/50 space-y-1.5">
+              <div key={ctrl.id} className="p-3 rounded-lg border bg-blue-50/50 space-y-1.5 group">
                 <div className="flex items-center gap-2">
-                  <Shield className="h-3.5 w-3.5 text-blue-500" />
-                  <EditableField label="Name" value={ctrl.name}
-                    onSave={val => saveField(() => updateControl(ctrl.id, { name: val }), 'Control updated')} />
+                  <ShieldCheck className="h-3.5 w-3.5 text-blue-500" />
+                  <div className="flex-1"><EditableField label="Name" value={ctrl.name}
+                    onSave={val => saveField(() => updateControl(ctrl.id, { name: val }), 'Control updated')} /></div>
+                  <Button variant="ghost" size="icon" className="h-5 w-5 opacity-0 group-hover:opacity-100 text-destructive" onClick={() => handleDeleteItem('control', ctrl.id)}>
+                    <Trash2 className="h-3 w-3" />
+                  </Button>
                 </div>
                 {ctrl.description && <p className="text-xs text-muted-foreground">{ctrl.description}</p>}
                 <div className="flex gap-3">
@@ -283,14 +380,23 @@ export default function NodeDetailPanel({ node, risks, controls, regulations, in
           </TabsContent>
 
           <TabsContent value="regulations" className="mt-0 space-y-2">
+            <div className="flex items-center justify-between mb-1">
+              <span className="text-xs font-semibold text-muted-foreground">{stepRegulations.length} Regulation{stepRegulations.length !== 1 ? 's' : ''}</span>
+              <Button size="sm" variant="ghost" className="h-6 text-xs gap-1" onClick={() => { setRegulationForm({ name: '', description: '', authority: '', compliance_status: 'partial' }); setAddDialog('regulation'); }}>
+                <Plus className="h-3 w-3" /> Add Regulation
+              </Button>
+            </div>
             {stepRegulations.length === 0 ? (
               <p className="text-xs text-muted-foreground text-center py-8">No regulations linked to this step</p>
             ) : stepRegulations.map(reg => (
-              <div key={reg.id} className="p-3 rounded-lg border bg-purple-50/50 space-y-1.5">
+              <div key={reg.id} className="p-3 rounded-lg border bg-purple-50/50 space-y-1.5 group">
                 <div className="flex items-center gap-2">
-                  <BookOpen className="h-3.5 w-3.5 text-purple-500" />
-                  <EditableField label="Name" value={reg.name}
-                    onSave={val => saveField(() => updateRegulation(reg.id, { name: val }), 'Regulation updated')} />
+                  <Scale className="h-3.5 w-3.5 text-purple-500" />
+                  <div className="flex-1"><EditableField label="Name" value={reg.name}
+                    onSave={val => saveField(() => updateRegulation(reg.id, { name: val }), 'Regulation updated')} /></div>
+                  <Button variant="ghost" size="icon" className="h-5 w-5 opacity-0 group-hover:opacity-100 text-destructive" onClick={() => handleDeleteItem('regulation', reg.id)}>
+                    <Trash2 className="h-3 w-3" />
+                  </Button>
                 </div>
                 <EditableField label="Description" value={reg.description || ''} multiline
                   onSave={val => saveField(() => updateRegulation(reg.id, { description: val }), 'Description updated')} />
@@ -304,14 +410,23 @@ export default function NodeDetailPanel({ node, risks, controls, regulations, in
           </TabsContent>
 
           <TabsContent value="incidents" className="mt-0 space-y-2">
+            <div className="flex items-center justify-between mb-1">
+              <span className="text-xs font-semibold text-muted-foreground">{stepIncidents.length} Incident{stepIncidents.length !== 1 ? 's' : ''}</span>
+              <Button size="sm" variant="ghost" className="h-6 text-xs gap-1" onClick={() => { setIncidentForm({ title: '', description: '', severity: 'medium', status: 'open' }); setAddDialog('incident'); }}>
+                <Plus className="h-3 w-3" /> Add Incident
+              </Button>
+            </div>
             {stepIncidents.length === 0 ? (
               <p className="text-xs text-muted-foreground text-center py-8">No incidents linked to this step</p>
             ) : stepIncidents.map(inc => (
-              <div key={inc.id} className="p-3 rounded-lg border bg-red-50/50 space-y-1.5">
+              <div key={inc.id} className="p-3 rounded-lg border bg-red-50/50 space-y-1.5 group">
                 <div className="flex items-center gap-2">
-                  <AlertTriangle className="h-3.5 w-3.5 text-red-500" />
-                  <EditableField label="Title" value={inc.title}
-                    onSave={val => saveField(() => updateIncident(inc.id, { title: val }), 'Incident updated')} />
+                  <AlertCircle className="h-3.5 w-3.5 text-red-500" />
+                  <div className="flex-1"><EditableField label="Title" value={inc.title}
+                    onSave={val => saveField(() => updateIncident(inc.id, { title: val }), 'Incident updated')} /></div>
+                  <Button variant="ghost" size="icon" className="h-5 w-5 opacity-0 group-hover:opacity-100 text-destructive" onClick={() => handleDeleteItem('incident', inc.id)}>
+                    <Trash2 className="h-3 w-3" />
+                  </Button>
                 </div>
                 <EditableField label="Description" value={inc.description || ''} multiline
                   onSave={val => saveField(() => updateIncident(inc.id, { description: val }), 'Description updated')} />
@@ -327,5 +442,181 @@ export default function NodeDetailPanel({ node, risks, controls, regulations, in
         </ScrollArea>
       </Tabs>
     </div>
+
+    {/* Add Risk Dialog */}
+    <Dialog open={addDialog === 'risk'} onOpenChange={v => !v && setAddDialog(null)}>
+      <DialogContent className="sm:max-w-md">
+        <DialogHeader>
+          <DialogTitle className="flex items-center gap-2"><ShieldAlert className="h-5 w-5 text-orange-500" /> Add Risk</DialogTitle>
+          <DialogDescription>Add a risk scenario to this step.</DialogDescription>
+        </DialogHeader>
+        <div className="grid gap-3 py-2">
+          <div className="grid gap-1.5">
+            <Label>Description *</Label>
+            <Textarea value={riskForm.description} onChange={e => setRiskForm(f => ({ ...f, description: e.target.value }))} placeholder="Describe the risk..." />
+          </div>
+          <div className="grid grid-cols-2 gap-3">
+            <div className="grid gap-1.5">
+              <Label>Likelihood</Label>
+              <Select value={riskForm.likelihood} onValueChange={v => setRiskForm(f => ({ ...f, likelihood: v }))}>
+                <SelectTrigger><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  {['low', 'medium', 'high', 'critical'].map(o => <SelectItem key={o} value={o} className="capitalize">{o}</SelectItem>)}
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="grid gap-1.5">
+              <Label>Impact</Label>
+              <Select value={riskForm.impact} onValueChange={v => setRiskForm(f => ({ ...f, impact: v }))}>
+                <SelectTrigger><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  {['low', 'medium', 'high', 'critical'].map(o => <SelectItem key={o} value={o} className="capitalize">{o}</SelectItem>)}
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+        </div>
+        <DialogFooter>
+          <Button variant="outline" onClick={() => setAddDialog(null)}>Cancel</Button>
+          <Button onClick={handleAddRisk} disabled={saving || !riskForm.description.trim()}>
+            {saving && <Loader2 className="mr-2 h-4 w-4 animate-spin" />} Add Risk
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+
+    {/* Add Control Dialog */}
+    <Dialog open={addDialog === 'control'} onOpenChange={v => !v && setAddDialog(null)}>
+      <DialogContent className="sm:max-w-md">
+        <DialogHeader>
+          <DialogTitle className="flex items-center gap-2"><ShieldCheck className="h-5 w-5 text-blue-500" /> Add Control</DialogTitle>
+          <DialogDescription>Add a control measure for this risk.</DialogDescription>
+        </DialogHeader>
+        <div className="grid gap-3 py-2">
+          <div className="grid gap-1.5">
+            <Label>Control Name *</Label>
+            <Input value={controlForm.name} onChange={e => setControlForm(f => ({ ...f, name: e.target.value }))} placeholder="e.g. Access review policy" />
+          </div>
+          <div className="grid gap-1.5">
+            <Label>Description</Label>
+            <Textarea value={controlForm.description} onChange={e => setControlForm(f => ({ ...f, description: e.target.value }))} placeholder="Optional description..." />
+          </div>
+          <div className="grid grid-cols-2 gap-3">
+            <div className="grid gap-1.5">
+              <Label>Type</Label>
+              <Select value={controlForm.type} onValueChange={v => setControlForm(f => ({ ...f, type: v }))}>
+                <SelectTrigger><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  {['preventive', 'detective', 'corrective'].map(o => <SelectItem key={o} value={o} className="capitalize">{o}</SelectItem>)}
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="grid gap-1.5">
+              <Label>Effectiveness</Label>
+              <Select value={controlForm.effectiveness} onValueChange={v => setControlForm(f => ({ ...f, effectiveness: v }))}>
+                <SelectTrigger><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  {['effective', 'partially', 'ineffective'].map(o => <SelectItem key={o} value={o} className="capitalize">{o}</SelectItem>)}
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+        </div>
+        <DialogFooter>
+          <Button variant="outline" onClick={() => setAddDialog(null)}>Cancel</Button>
+          <Button onClick={handleAddControl} disabled={saving || !controlForm.name.trim()}>
+            {saving && <Loader2 className="mr-2 h-4 w-4 animate-spin" />} Add Control
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+
+    {/* Add Regulation Dialog */}
+    <Dialog open={addDialog === 'regulation'} onOpenChange={v => !v && setAddDialog(null)}>
+      <DialogContent className="sm:max-w-md">
+        <DialogHeader>
+          <DialogTitle className="flex items-center gap-2"><Scale className="h-5 w-5 text-purple-500" /> Add Regulation</DialogTitle>
+          <DialogDescription>Link a regulation to this step.</DialogDescription>
+        </DialogHeader>
+        <div className="grid gap-3 py-2">
+          <div className="grid gap-1.5">
+            <Label>Regulation Name *</Label>
+            <Input value={regulationForm.name} onChange={e => setRegulationForm(f => ({ ...f, name: e.target.value }))} placeholder="e.g. SOX Section 404" />
+          </div>
+          <div className="grid gap-1.5">
+            <Label>Description</Label>
+            <Textarea value={regulationForm.description} onChange={e => setRegulationForm(f => ({ ...f, description: e.target.value }))} placeholder="Optional description..." />
+          </div>
+          <div className="grid grid-cols-2 gap-3">
+            <div className="grid gap-1.5">
+              <Label>Authority</Label>
+              <Input value={regulationForm.authority} onChange={e => setRegulationForm(f => ({ ...f, authority: e.target.value }))} placeholder="e.g. SEC, BaFin" />
+            </div>
+            <div className="grid gap-1.5">
+              <Label>Compliance Status</Label>
+              <Select value={regulationForm.compliance_status} onValueChange={v => setRegulationForm(f => ({ ...f, compliance_status: v }))}>
+                <SelectTrigger><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  {['compliant', 'partial', 'non-compliant'].map(o => <SelectItem key={o} value={o} className="capitalize">{o}</SelectItem>)}
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+        </div>
+        <DialogFooter>
+          <Button variant="outline" onClick={() => setAddDialog(null)}>Cancel</Button>
+          <Button onClick={handleAddRegulation} disabled={saving || !regulationForm.name.trim()}>
+            {saving && <Loader2 className="mr-2 h-4 w-4 animate-spin" />} Add Regulation
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+
+    {/* Add Incident Dialog */}
+    <Dialog open={addDialog === 'incident'} onOpenChange={v => !v && setAddDialog(null)}>
+      <DialogContent className="sm:max-w-md">
+        <DialogHeader>
+          <DialogTitle className="flex items-center gap-2"><AlertCircle className="h-5 w-5 text-red-500" /> Add Incident</DialogTitle>
+          <DialogDescription>Report a new incident for this step.</DialogDescription>
+        </DialogHeader>
+        <div className="grid gap-3 py-2">
+          <div className="grid gap-1.5">
+            <Label>Title *</Label>
+            <Input value={incidentForm.title} onChange={e => setIncidentForm(f => ({ ...f, title: e.target.value }))} placeholder="Incident title..." />
+          </div>
+          <div className="grid gap-1.5">
+            <Label>Description</Label>
+            <Textarea value={incidentForm.description} onChange={e => setIncidentForm(f => ({ ...f, description: e.target.value }))} placeholder="What happened..." />
+          </div>
+          <div className="grid grid-cols-2 gap-3">
+            <div className="grid gap-1.5">
+              <Label>Severity</Label>
+              <Select value={incidentForm.severity} onValueChange={v => setIncidentForm(f => ({ ...f, severity: v }))}>
+                <SelectTrigger><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  {['low', 'medium', 'high', 'critical'].map(o => <SelectItem key={o} value={o} className="capitalize">{o}</SelectItem>)}
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="grid gap-1.5">
+              <Label>Status</Label>
+              <Select value={incidentForm.status} onValueChange={v => setIncidentForm(f => ({ ...f, status: v }))}>
+                <SelectTrigger><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  {['open', 'investigating', 'resolved', 'closed'].map(o => <SelectItem key={o} value={o} className="capitalize">{o}</SelectItem>)}
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+        </div>
+        <DialogFooter>
+          <Button variant="outline" onClick={() => setAddDialog(null)}>Cancel</Button>
+          <Button onClick={handleAddIncident} disabled={saving || !incidentForm.title.trim()}>
+            {saving && <Loader2 className="mr-2 h-4 w-4 animate-spin" />} Add Incident
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+    </>
   );
 }
