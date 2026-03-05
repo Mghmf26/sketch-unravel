@@ -16,6 +16,7 @@ import {
   type BusinessProcess, type ProcessStep, type StepConnection,
   type Risk, type Control, type Regulation, type Incident,
 } from '@/lib/api';
+import { fetchStepApplications, type StepApplication } from '@/lib/api-applications';
 import type { EPCNode, EPCConnection, NodeType } from '@/types/epc';
 
 export default function ProcessView() {
@@ -30,22 +31,24 @@ export default function ProcessView() {
   const [controls, setControls] = useState<Control[]>([]);
   const [regulations, setRegulations] = useState<Regulation[]>([]);
   const [incidents, setIncidents] = useState<Incident[]>([]);
+  const [applications, setApplications] = useState<StepApplication[]>([]);
   const [loading, setLoading] = useState(true);
   const [uploading, setUploading] = useState(false);
 
   const loadData = async () => {
     if (!id) return;
     try {
-      const [allP, s, c, r, ctrl, reg, inc] = await Promise.all([
+      const [allP, s, c, r, ctrl, reg, inc, apps] = await Promise.all([
         fetchProcesses(), fetchSteps(id), fetchStepConnections(id),
         fetchRisks(id), fetchAllControls(), fetchRegulations(id), fetchIncidents(id),
+        fetchStepApplications(id),
       ]);
       const p = allP.find(x => x.id === id);
       if (p) {
         setProcess(p); setSteps(s); setConnections(c);
         const riskIds = new Set(r.map(x => x.id));
         setRisks(r); setControls(ctrl.filter(x => riskIds.has(x.risk_id)));
-        setRegulations(reg); setIncidents(inc);
+        setRegulations(reg); setIncidents(inc); setApplications(apps);
       }
     } catch (err) {
       console.error(err);
@@ -103,7 +106,7 @@ export default function ProcessView() {
   if (loading) return <div className="p-8">Loading...</div>;
   if (!process) return <div className="p-8">Process not found</div>;
 
-  const epcNodes: EPCNode[] = steps.map(s => ({ id: s.id, label: s.label, type: s.type as NodeType, description: s.description || '' }));
+  const epcNodes: EPCNode[] = steps.map(s => ({ id: s.id, label: s.label, type: s.type as NodeType, description: s.description || '', interfaceSubtype: (s as any).interface_subtype || undefined }));
   const epcConns: EPCConnection[] = connections.map(c => ({ id: c.id, source: c.source_step_id, target: c.target_step_id, label: c.label || undefined }));
 
   return (
@@ -162,7 +165,7 @@ export default function ProcessView() {
         </TabsContent>
 
         <TabsContent value="diagram" className="mt-0">
-          <DiagramCanvasEditor nodes={epcNodes} connections={epcConns} risks={risks} controls={controls} regulations={regulations} incidents={incidents} processId={id} onChange={handleDiagramChange} onDataChanged={loadData} />
+          <DiagramCanvasEditor nodes={epcNodes} connections={epcConns} risks={risks} controls={controls} regulations={regulations} incidents={incidents} applications={applications} processId={id} onChange={handleDiagramChange} onDataChanged={loadData} />
         </TabsContent>
       </Tabs>
     </div>
