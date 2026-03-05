@@ -389,6 +389,135 @@ export type Database = {
           },
         ]
       }
+      mainframe_flow_connections: {
+        Row: {
+          connection_type: string | null
+          flow_id: string
+          id: string
+          label: string | null
+          source_node_id: string
+          target_node_id: string
+        }
+        Insert: {
+          connection_type?: string | null
+          flow_id: string
+          id?: string
+          label?: string | null
+          source_node_id: string
+          target_node_id: string
+        }
+        Update: {
+          connection_type?: string | null
+          flow_id?: string
+          id?: string
+          label?: string | null
+          source_node_id?: string
+          target_node_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "mainframe_flow_connections_flow_id_fkey"
+            columns: ["flow_id"]
+            isOneToOne: false
+            referencedRelation: "mainframe_flows"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "mainframe_flow_connections_source_node_id_fkey"
+            columns: ["source_node_id"]
+            isOneToOne: false
+            referencedRelation: "mainframe_flow_nodes"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "mainframe_flow_connections_target_node_id_fkey"
+            columns: ["target_node_id"]
+            isOneToOne: false
+            referencedRelation: "mainframe_flow_nodes"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      mainframe_flow_nodes: {
+        Row: {
+          created_at: string
+          description: string | null
+          flow_id: string
+          id: string
+          label: string
+          node_type: string
+        }
+        Insert: {
+          created_at?: string
+          description?: string | null
+          flow_id: string
+          id?: string
+          label: string
+          node_type?: string
+        }
+        Update: {
+          created_at?: string
+          description?: string | null
+          flow_id?: string
+          id?: string
+          label?: string
+          node_type?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "mainframe_flow_nodes_flow_id_fkey"
+            columns: ["flow_id"]
+            isOneToOne: false
+            referencedRelation: "mainframe_flows"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      mainframe_flows: {
+        Row: {
+          created_at: string
+          description: string | null
+          id: string
+          name: string
+          process_id: string
+          step_id: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          description?: string | null
+          id?: string
+          name?: string
+          process_id: string
+          step_id: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          description?: string | null
+          id?: string
+          name?: string
+          process_id?: string
+          step_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "mainframe_flows_process_id_fkey"
+            columns: ["process_id"]
+            isOneToOne: false
+            referencedRelation: "business_processes"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "mainframe_flows_step_id_fkey"
+            columns: ["step_id"]
+            isOneToOne: false
+            referencedRelation: "process_steps"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       mainframe_imports: {
         Row: {
           created_at: string
