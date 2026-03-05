@@ -397,6 +397,12 @@ export default function AdminDashboard() {
             </Table>
           </Card>
         </TabsContent>
+
+        {isRoot && (
+          <TabsContent value="page-visibility">
+            <PageVisibilityEditor />
+          </TabsContent>
+        )}
       </Tabs>
 
       {/* Invite Dialog */}
