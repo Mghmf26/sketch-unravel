@@ -317,6 +317,12 @@ export default function Clients() {
                 </div>
 
                 <div className="space-y-1.5 mt-4">
+                  {(client as any).wbs_code && (
+                    <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                      <Briefcase className="h-3 w-3 flex-shrink-0" />
+                      <span className="font-medium">WBS: {(client as any).wbs_code}</span>
+                    </div>
+                  )}
                   {client.contact_person && (
                     <div className="flex items-center gap-2 text-xs text-muted-foreground">
                       <Users className="h-3 w-3 flex-shrink-0" />
