@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import {
-  Plus, Trash2, ArrowRight, ShieldAlert, Shield, BookOpen,
-  AlertTriangle, Database, HelpCircle, ChevronDown, ChevronRight, Pencil, Users,
+  Plus, Trash2, ArrowRight, ShieldAlert, ShieldCheck, Scale,
+  AlertCircle, Database, HelpCircle, ChevronDown, ChevronRight, Pencil, Users,
   Check, X, Save
 } from 'lucide-react';
 import { usePermissions } from '@/hooks/usePermissions';
