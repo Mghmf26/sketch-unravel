@@ -38,8 +38,6 @@ function MFCustomNode({ data }: NodeProps) {
   return (
     <div className="flex flex-col items-center group">
       <div className="flex items-center gap-1.5 mb-1.5">
-        <span className="text-[9px] font-mono font-medium tracking-tight px-1.5 py-0.5 rounded-md"
-          style={{ color: meta.color, backgroundColor: meta.badgeBg }}>{d.nodeId.slice(0, 8)}</span>
         <span className="text-[9px] font-semibold px-2 py-0.5 rounded-full border"
           style={{ borderColor: meta.color, color: meta.color, backgroundColor: meta.badgeBg }}>
           {meta.label}
