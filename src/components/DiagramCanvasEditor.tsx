@@ -24,6 +24,7 @@ import NodeDetailPanel from '@/components/NodeDetailPanel';
 import { getLayoutedElements } from '@/lib/layout';
 import type { EPCNode, EPCConnection, NodeType } from '@/types/epc';
 import type { Risk, Control, Regulation, Incident } from '@/lib/api';
+import type { StepApplication } from '@/lib/api-applications';
 
 interface DiagramCanvasEditorProps {
   nodes: EPCNode[];
@@ -32,6 +33,7 @@ interface DiagramCanvasEditorProps {
   controls?: Control[];
   regulations?: Regulation[];
   incidents?: Incident[];
+  applications?: StepApplication[];
   processId?: string;
   onChange: (nodes: EPCNode[], connections: EPCConnection[]) => void;
   onDataChanged?: () => void;
@@ -78,6 +80,7 @@ function toFlowElements(
     const stepControls = controls.filter(c => stepRiskIds.has(c.risk_id));
     const stepRegulations = regulations.filter(r => r.step_id === n.id);
     const stepIncidents = incidents.filter(i => i.step_id === n.id);
+    const stepApps = applications.filter(a => a.step_id === n.id);
 
     return {
       id: n.id,
@@ -88,10 +91,12 @@ function toFlowElements(
         nodeType: n.type,
         nodeId: n.id,
         description: n.description || '',
+        interfaceSubtype: n.interfaceSubtype,
         riskCount: stepRisks.length,
         controlCount: stepControls.length,
         regulationCount: stepRegulations.length,
         incidentCount: stepIncidents.length,
+        appCount: stepApps.length,
         onDelete: callbacks.onDelete,
         onLabelChange: callbacks.onLabelChange,
         onTypeChange: callbacks.onTypeChange,

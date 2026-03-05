@@ -406,7 +406,7 @@ function EditableEPCNode({ id, data, selected }: NodeProps) {
                 onDoubleClick={() => edit.setEditing(true)}>{d.label}</span>
             )}
           </div>
-          <TypeBadge nodeType={d.nodeType} style={s} onCycleType={edit.cycleType} />
+          <TypeBadge nodeType={d.nodeType} interfaceSubtype={d.interfaceSubtype} style={s} onCycleType={edit.cycleType} />
         </div>
 
         {/* Divider */}
