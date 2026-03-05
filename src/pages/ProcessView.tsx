@@ -107,7 +107,7 @@ export default function ProcessView() {
   if (loading) return <div className="p-8">Loading...</div>;
   if (!process) return <div className="p-8">Process not found</div>;
 
-  const epcNodes: EPCNode[] = steps.map(s => ({ id: s.id, label: s.label, type: s.type as NodeType, description: s.description || '', interfaceSubtype: (s as any).interface_subtype || undefined }));
+  const epcNodes: EPCNode[] = steps.map(s => ({ id: s.id, label: s.label, type: s.type as NodeType, description: s.description || '', interfaceSubtype: (s as any).interface_subtype || undefined, stepType: (s as any).step_type || null }));
   const epcConns: EPCConnection[] = connections.map(c => ({ id: c.id, source: c.source_step_id, target: c.target_step_id, label: c.label || undefined }));
 
   return (
