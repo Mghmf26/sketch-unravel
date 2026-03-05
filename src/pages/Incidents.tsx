@@ -1,5 +1,18 @@
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useColumnSettings, type ColumnDef } from '@/hooks/useColumnSettings';
+import { ColumnSettingsDropdown } from '@/components/ColumnSettingsDropdown';
+
+const INCIDENT_COLUMNS: ColumnDef[] = [
+  { key: 'client', label: 'Client', defaultVisible: true, minWidth: 80 },
+  { key: 'process', label: 'Process', defaultVisible: true, minWidth: 100 },
+  { key: 'step', label: 'Step', defaultVisible: true, minWidth: 80 },
+  { key: 'title', label: 'Title', defaultVisible: true, minWidth: 120 },
+  { key: 'severity', label: 'Severity', defaultVisible: true, minWidth: 60 },
+  { key: 'status', label: 'Status', defaultVisible: true, minWidth: 60 },
+  { key: 'date', label: 'Date', defaultVisible: true, minWidth: 70 },
+  { key: 'actions', label: 'Actions', defaultVisible: true, minWidth: 60 },
+];
 import { ArrowLeft, AlertCircle, CheckCircle, Search as SearchIcon, Plus, Trash2, X } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';

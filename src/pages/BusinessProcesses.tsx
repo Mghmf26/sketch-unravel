@@ -2,6 +2,23 @@ import { useEffect, useState, useMemo, useCallback } from 'react';
 import { fetchStepApplications, type StepApplication } from '@/lib/api-applications';
 import { useNavigate } from 'react-router-dom';
 import { Eye, Trash2, Plus, Search, FileSpreadsheet, AlertTriangle, Scale, AlertCircle, Cpu, ShieldAlert, Link2, Network, Layers, ArrowUpRight, Filter, BarChart3, Monitor } from 'lucide-react';
+import { useColumnSettings, type ColumnDef } from '@/hooks/useColumnSettings';
+import { ColumnSettingsDropdown } from '@/components/ColumnSettingsDropdown';
+
+const BP_COLUMNS: ColumnDef[] = [
+  { key: 'name', label: 'Process Name', defaultVisible: true, minWidth: 150 },
+  { key: 'client', label: 'Client', defaultVisible: true, minWidth: 80 },
+  { key: 'owner', label: 'Owner', defaultVisible: true, minWidth: 80 },
+  { key: 'dept', label: 'Department', defaultVisible: true, minWidth: 80 },
+  { key: 'steps', label: 'Steps', defaultVisible: true, minWidth: 50 },
+  { key: 'risks', label: 'Risks', defaultVisible: true, minWidth: 50 },
+  { key: 'controls', label: 'Controls', defaultVisible: true, minWidth: 50 },
+  { key: 'incidents', label: 'Incidents', defaultVisible: true, minWidth: 50 },
+  { key: 'regs', label: 'Regulations', defaultVisible: true, minWidth: 50 },
+  { key: 'apps', label: 'Apps', defaultVisible: true, minWidth: 50 },
+  { key: 'mfai', label: 'MF AI Potential', defaultVisible: true, minWidth: 80 },
+  { key: 'actions', label: 'Actions', defaultVisible: true, minWidth: 80 },
+];
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
