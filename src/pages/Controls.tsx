@@ -165,6 +165,7 @@ export default function Controls() {
             <X className="h-3 w-3 mr-1" /> Clear
           </Button>
         )}
+        <ColumnSettingsDropdown {...colSettings} />
       </div>
 
       <Card className="border shadow-sm overflow-hidden">
@@ -178,19 +179,19 @@ export default function Controls() {
           <Table>
             <TableHeader>
               <TableRow className="bg-muted/20 hover:bg-muted/20">
-                <TableHead className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider py-2.5 px-3">Client</TableHead>
-                <TableHead className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider py-2.5 px-3">Process</TableHead>
-                <TableHead className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider py-2.5 px-3">Linked Risk</TableHead>
-                <TableHead className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider py-2.5 px-3">Control</TableHead>
-                <TableHead className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider py-2.5 px-3 text-center">Type</TableHead>
-                <TableHead className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider py-2.5 px-3 text-center">Effectiveness</TableHead>
-                <TableHead className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider py-2.5 px-3 text-right">Actions</TableHead>
+                {colSettings.isVisible('client') && <TableHead className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider py-2.5 px-3" style={{width: colSettings.getWidth('client')}}>Client</TableHead>}
+                {colSettings.isVisible('process') && <TableHead className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider py-2.5 px-3" style={{width: colSettings.getWidth('process')}}>Process</TableHead>}
+                {colSettings.isVisible('risk') && <TableHead className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider py-2.5 px-3" style={{width: colSettings.getWidth('risk')}}>Linked Risk</TableHead>}
+                {colSettings.isVisible('control') && <TableHead className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider py-2.5 px-3" style={{width: colSettings.getWidth('control')}}>Control</TableHead>}
+                {colSettings.isVisible('type') && <TableHead className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider py-2.5 px-3 text-center" style={{width: colSettings.getWidth('type')}}>Type</TableHead>}
+                {colSettings.isVisible('effectiveness') && <TableHead className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider py-2.5 px-3 text-center" style={{width: colSettings.getWidth('effectiveness')}}>Effectiveness</TableHead>}
+                {colSettings.isVisible('actions') && <TableHead className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider py-2.5 px-3 text-right" style={{width: colSettings.getWidth('actions')}}>Actions</TableHead>}
               </TableRow>
             </TableHeader>
             <TableBody>
               {filtered.length === 0 ? (
                 <TableRow>
-                  <TableCell colSpan={7} className="text-center py-16 text-sm text-muted-foreground">
+                  <TableCell colSpan={colSettings.visibleColumns.length} className="text-center py-16 text-sm text-muted-foreground">
                     {hasFilters ? 'No controls match the current filters.' : 'No controls defined yet.'}
                   </TableCell>
                 </TableRow>
@@ -200,23 +201,23 @@ export default function Controls() {
                   const proc = risk ? processMap[risk.process_id] : null;
                   return (
                     <TableRow key={c.id} className="group hover:bg-muted/30">
-                      <TableCell className="text-xs text-muted-foreground py-2.5 px-3 whitespace-nowrap">{proc?.client_id ? clientMap[proc.client_id] || '—' : '—'}</TableCell>
-                      <TableCell className="text-xs font-medium text-foreground py-2.5 px-3 whitespace-nowrap">{proc?.process_name || '—'}</TableCell>
-                      <TableCell className="text-xs text-muted-foreground py-2.5 px-3 max-w-[200px] truncate">{risk?.description || '—'}</TableCell>
-                      <TableCell className="py-2.5 px-3">
+                      {colSettings.isVisible('client') && <TableCell className="text-xs text-muted-foreground py-2.5 px-3 whitespace-nowrap">{proc?.client_id ? clientMap[proc.client_id] || '—' : '—'}</TableCell>}
+                      {colSettings.isVisible('process') && <TableCell className="text-xs font-medium text-foreground py-2.5 px-3 whitespace-nowrap">{proc?.process_name || '—'}</TableCell>}
+                      {colSettings.isVisible('risk') && <TableCell className="text-xs text-muted-foreground py-2.5 px-3 max-w-[200px] truncate">{risk?.description || '—'}</TableCell>}
+                      {colSettings.isVisible('control') && <TableCell className="py-2.5 px-3">
                         <div>
                           <p className="text-xs font-medium text-foreground">{c.name}</p>
                           {c.description && <p className="text-[10px] text-muted-foreground truncate max-w-[200px] mt-0.5">{c.description}</p>}
                         </div>
-                      </TableCell>
-                      <TableCell className="text-center py-2.5 px-3"><TypeBadge value={c.type} /></TableCell>
-                      <TableCell className="text-center py-2.5 px-3"><EffectivenessBadge value={c.effectiveness} /></TableCell>
-                      <TableCell className="text-right py-2.5 px-3">
+                      </TableCell>}
+                      {colSettings.isVisible('type') && <TableCell className="text-center py-2.5 px-3"><TypeBadge value={c.type} /></TableCell>}
+                      {colSettings.isVisible('effectiveness') && <TableCell className="text-center py-2.5 px-3"><EffectivenessBadge value={c.effectiveness} /></TableCell>}
+                      {colSettings.isVisible('actions') && <TableCell className="text-right py-2.5 px-3">
                         <div className="flex items-center justify-end gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity">
                           <Button variant="ghost" size="icon" className="h-6 w-6" onClick={() => setEditControl(c)}><Pencil className="h-3 w-3" /></Button>
                           <Button variant="ghost" size="icon" className="h-6 w-6 hover:text-destructive" onClick={async () => { await deleteControl(c.id); reload(); }}><Trash2 className="h-3 w-3" /></Button>
                         </div>
-                      </TableCell>
+                      </TableCell>}
                     </TableRow>
                   );
                 })
