@@ -109,17 +109,22 @@ export async function upsertRiskMatrix(
   matrixType: 'user-defined' | 'standard',
   name?: string,
   description?: string,
+  impactLevels?: string[],
+  frequencyLevels?: string[],
 ): Promise<RiskMatrix> {
-  // Check if matrix already exists
+  const payload: Record<string, unknown> = {
+    matrix_type: matrixType,
+    name: name || (matrixType === 'standard' ? 'Standard Risk Matrix' : 'Custom Risk Matrix'),
+    description: description || null,
+  };
+  if (impactLevels) payload.impact_levels = impactLevels;
+  if (frequencyLevels) payload.frequency_levels = frequencyLevels;
+
   const existing = await fetchRiskMatrix(processId);
   if (existing) {
     const { data, error } = await supabase
       .from('risk_matrices')
-      .update({
-        matrix_type: matrixType,
-        name: name || (matrixType === 'standard' ? 'Standard Risk Matrix' : 'Custom Risk Matrix'),
-        description: description || null,
-      })
+      .update(payload)
       .eq('id', existing.id)
       .select()
       .single();
@@ -129,12 +134,7 @@ export async function upsertRiskMatrix(
 
   const { data, error } = await supabase
     .from('risk_matrices')
-    .insert({
-      process_id: processId,
-      matrix_type: matrixType,
-      name: name || (matrixType === 'standard' ? 'Standard Risk Matrix' : 'Custom Risk Matrix'),
-      description: description || null,
-    })
+    .insert({ process_id: processId, ...payload } as any)
     .select()
     .single();
   if (error) throw error;
@@ -145,6 +145,48 @@ export async function deleteRiskMatrix(id: string) {
   const { error } = await supabase.from('risk_matrices').delete().eq('id', id);
   if (error) throw error;
 }
+
+export async function saveCellAcceptability(
+  matrixId: string,
+  impactLevel: string,
+  frequencyLevel: string,
+  acceptable: boolean,
+) {
+  const { error } = await supabase
+    .from('risk_matrix_cells')
+    .upsert(
+      { matrix_id: matrixId, impact_level: impactLevel, frequency_level: frequencyLevel, acceptable },
+      { onConflict: 'matrix_id,impact_level,frequency_level' }
+    );
+  if (error) throw error;
+}
+
+/** Apply a template's cells to a matrix. Falls back to ISO 31000 default. */
+export async function applyTemplateMatrix(matrixId: string, templateKey?: string) {
+  const template = STANDARD_TEMPLATES.find(t => t.key === templateKey) || STANDARD_TEMPLATES[0];
+
+  await supabase.from('risk_matrix_cells').delete().eq('matrix_id', matrixId);
+
+  const cells = [];
+  for (const impact of template.impactLevels) {
+    for (const freq of template.frequencyLevels) {
+      const acceptable = template.acceptableCells.some(
+        ([i, f]) => i === impact && f === freq
+      );
+      cells.push({
+        matrix_id: matrixId,
+        impact_level: impact,
+        frequency_level: freq,
+        acceptable,
+      });
+    }
+  }
+  const { error } = await supabase.from('risk_matrix_cells').insert(cells);
+  if (error) throw error;
+}
+
+/** @deprecated use applyTemplateMatrix */
+export const applyStandardMatrix = (matrixId: string) => applyTemplateMatrix(matrixId, 'iso31000');
 
 export async function saveCellAcceptability(
   matrixId: string,
