@@ -179,6 +179,97 @@ export type Database = {
           },
         ]
       }
+      entity_attachments: {
+        Row: {
+          created_at: string
+          entity_id: string
+          entity_type: string
+          file_name: string
+          file_size: number | null
+          file_type: string | null
+          file_url: string
+          id: string
+          process_id: string
+          uploaded_by: string | null
+        }
+        Insert: {
+          created_at?: string
+          entity_id: string
+          entity_type: string
+          file_name: string
+          file_size?: number | null
+          file_type?: string | null
+          file_url: string
+          id?: string
+          process_id: string
+          uploaded_by?: string | null
+        }
+        Update: {
+          created_at?: string
+          entity_id?: string
+          entity_type?: string
+          file_name?: string
+          file_size?: number | null
+          file_type?: string | null
+          file_url?: string
+          id?: string
+          process_id?: string
+          uploaded_by?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "entity_attachments_process_id_fkey"
+            columns: ["process_id"]
+            isOneToOne: false
+            referencedRelation: "business_processes"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      entity_comments: {
+        Row: {
+          author_id: string | null
+          comment: string | null
+          conclusion: string | null
+          created_at: string
+          entity_id: string
+          entity_type: string
+          id: string
+          process_id: string
+          updated_at: string
+        }
+        Insert: {
+          author_id?: string | null
+          comment?: string | null
+          conclusion?: string | null
+          created_at?: string
+          entity_id: string
+          entity_type: string
+          id?: string
+          process_id: string
+          updated_at?: string
+        }
+        Update: {
+          author_id?: string | null
+          comment?: string | null
+          conclusion?: string | null
+          created_at?: string
+          entity_id?: string
+          entity_type?: string
+          id?: string
+          process_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "entity_comments_process_id_fkey"
+            columns: ["process_id"]
+            isOneToOne: false
+            referencedRelation: "business_processes"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       incidents: {
         Row: {
           created_at: string
@@ -389,6 +480,7 @@ export type Database = {
           created_at: string
           description: string | null
           id: string
+          interface_subtype: string | null
           label: string
           position_index: number | null
           process_id: string
@@ -398,6 +490,7 @@ export type Database = {
           created_at?: string
           description?: string | null
           id?: string
+          interface_subtype?: string | null
           label: string
           position_index?: number | null
           process_id: string
@@ -407,6 +500,7 @@ export type Database = {
           created_at?: string
           description?: string | null
           id?: string
+          interface_subtype?: string | null
           label?: string
           position_index?: number | null
           process_id?: string
@@ -547,6 +641,54 @@ export type Database = {
           },
           {
             foreignKeyName: "risks_step_id_fkey"
+            columns: ["step_id"]
+            isOneToOne: false
+            referencedRelation: "process_steps"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      step_applications: {
+        Row: {
+          app_type: string | null
+          created_at: string
+          description: string | null
+          id: string
+          name: string
+          process_id: string
+          screen_name: string | null
+          step_id: string
+        }
+        Insert: {
+          app_type?: string | null
+          created_at?: string
+          description?: string | null
+          id?: string
+          name: string
+          process_id: string
+          screen_name?: string | null
+          step_id: string
+        }
+        Update: {
+          app_type?: string | null
+          created_at?: string
+          description?: string | null
+          id?: string
+          name?: string
+          process_id?: string
+          screen_name?: string | null
+          step_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "step_applications_process_id_fkey"
+            columns: ["process_id"]
+            isOneToOne: false
+            referencedRelation: "business_processes"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "step_applications_step_id_fkey"
             columns: ["step_id"]
             isOneToOne: false
             referencedRelation: "process_steps"

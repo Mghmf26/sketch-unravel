@@ -24,6 +24,7 @@ import NodeDetailPanel from '@/components/NodeDetailPanel';
 import { getLayoutedElements } from '@/lib/layout';
 import type { EPCNode, EPCConnection, NodeType } from '@/types/epc';
 import type { Risk, Control, Regulation, Incident } from '@/lib/api';
+import type { StepApplication } from '@/lib/api-applications';
 
 interface DiagramCanvasEditorProps {
   nodes: EPCNode[];
@@ -32,6 +33,7 @@ interface DiagramCanvasEditorProps {
   controls?: Control[];
   regulations?: Regulation[];
   incidents?: Incident[];
+  applications?: StepApplication[];
   processId?: string;
   onChange: (nodes: EPCNode[], connections: EPCConnection[]) => void;
   onDataChanged?: () => void;
@@ -64,12 +66,13 @@ function toFlowElements(
   controls: Control[],
   regulations: Regulation[],
   incidents: Incident[],
+  applications: StepApplication[],
   callbacks: {
     onDelete: (id: string) => void;
     onLabelChange: (id: string, label: string) => void;
     onTypeChange: (id: string, type: NodeType) => void;
     onNodeClick: (id: string) => void;
-    onIndicatorClick: (id: string, type: 'risks' | 'controls' | 'regulations' | 'incidents') => void;
+    onIndicatorClick: (id: string, type: 'risks' | 'controls' | 'regulations' | 'incidents' | 'applications') => void;
   }
 ) {
   const flowNodes: Node[] = epcNodes.map((n) => {
@@ -78,6 +81,7 @@ function toFlowElements(
     const stepControls = controls.filter(c => stepRiskIds.has(c.risk_id));
     const stepRegulations = regulations.filter(r => r.step_id === n.id);
     const stepIncidents = incidents.filter(i => i.step_id === n.id);
+    const stepApps = applications.filter(a => a.step_id === n.id);
 
     return {
       id: n.id,
@@ -88,10 +92,12 @@ function toFlowElements(
         nodeType: n.type,
         nodeId: n.id,
         description: n.description || '',
+        interfaceSubtype: n.interfaceSubtype,
         riskCount: stepRisks.length,
         controlCount: stepControls.length,
         regulationCount: stepRegulations.length,
         incidentCount: stepIncidents.length,
+        appCount: stepApps.length,
         onDelete: callbacks.onDelete,
         onLabelChange: callbacks.onLabelChange,
         onTypeChange: callbacks.onTypeChange,
@@ -114,7 +120,7 @@ function toFlowElements(
 
 export default function DiagramCanvasEditor({
   nodes: initialNodes, connections: initialConnections,
-  risks = [], controls = [], regulations = [], incidents = [],
+  risks = [], controls = [], regulations = [], incidents = [], applications = [],
   processId, onChange, onDataChanged
 }: DiagramCanvasEditorProps) {
   // Local working state (not saved until user clicks Save)
@@ -224,7 +230,7 @@ export default function DiagramCanvasEditor({
     onIndicatorClick: handleIndicatorClick,
   }), [handleDeleteNode, handleLabelChange, handleTypeChange, handleNodeClick, handleIndicatorClick]);
 
-  const initial = useMemo(() => toFlowElements(workingNodes, workingConns, risks, controls, regulations, incidents, callbacks), []);
+  const initial = useMemo(() => toFlowElements(workingNodes, workingConns, risks, controls, regulations, incidents, applications, callbacks), []);
   const [flowNodes, setFlowNodes, onNodesChange] = useNodesState(initial.nodes);
   const [flowEdges, setFlowEdges, onEdgesChange] = useEdgesState(initial.edges);
 
@@ -232,7 +238,7 @@ export default function DiagramCanvasEditor({
   const prevWorkingRef = useRef({ nodes: workingNodes, connections: workingConns });
   if (workingNodes !== prevWorkingRef.current.nodes || workingConns !== prevWorkingRef.current.connections) {
     prevWorkingRef.current = { nodes: workingNodes, connections: workingConns };
-    const { nodes: ln, edges: le } = toFlowElements(workingNodes, workingConns, risks, controls, regulations, incidents, callbacks);
+    const { nodes: ln, edges: le } = toFlowElements(workingNodes, workingConns, risks, controls, regulations, incidents, applications, callbacks);
     const posMap = new Map(flowNodes.map(n => [n.id, n.position]));
     const merged = ln.map(n => ({ ...n, position: posMap.get(n.id) || n.position }));
     setFlowNodes(merged);
@@ -268,7 +274,7 @@ export default function DiagramCanvasEditor({
   const addNode = useCallback((type: NodeType) => {
     const id = crypto.randomUUID();
     const labels: Record<NodeType, string> = {
-      'in-scope': 'New Step', 'interface': 'New Process Interface', 'event': 'New Event', 'xor': 'XOR',
+      'in-scope': 'New Step', 'interface': 'New Business Process', 'event': 'New Event', 'xor': 'XOR',
       'start-end': 'Start', 'decision': 'Decision?', 'storage': 'Storage', 'delay': 'Delay', 'document': 'Document',
     };
     const newNode: EPCNode = { id, label: labels[type], type, description: '' };
@@ -278,10 +284,10 @@ export default function DiagramCanvasEditor({
   }, [pushHistory]);
 
   const autoLayout = useCallback(() => {
-    const { nodes: ln, edges: le } = toFlowElements(workingNodesRef.current, workingConnsRef.current, risks, controls, regulations, incidents, callbacks);
+    const { nodes: ln, edges: le } = toFlowElements(workingNodesRef.current, workingConnsRef.current, risks, controls, regulations, incidents, applications, callbacks);
     setFlowNodes(ln);
     setFlowEdges(le);
-  }, [callbacks, setFlowNodes, setFlowEdges, risks, controls, regulations, incidents]);
+  }, [callbacks, setFlowNodes, setFlowEdges, risks, controls, regulations, incidents, applications]);
 
   const onEdgeDoubleClick = useCallback((_event: React.MouseEvent, edge: Edge) => {
     const newLabel = prompt('Connection label (e.g. Yes, No, or leave empty):', (edge.label as string) || '');
@@ -356,7 +362,7 @@ export default function DiagramCanvasEditor({
                   <p className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider mb-2">Node Types</p>
                   {[
                     { color: 'bg-emerald-500', shape: 'rounded-sm', label: 'Step', desc: 'Process activity' },
-                    { color: 'bg-slate-400', shape: 'rounded-sm', label: 'Process Interface', desc: 'External process' },
+                    { color: 'bg-slate-400', shape: 'rounded-sm', label: 'Business Process', desc: 'External process' },
                     { color: 'bg-pink-500', shape: 'rounded-sm', label: 'Event', desc: 'Trigger or outcome' },
                     { color: 'bg-blue-500', shape: 'rounded-full', label: 'XOR Gateway', desc: 'Exclusive branch' },
                     { color: 'bg-green-500', shape: 'rounded-full', label: 'Start / End', desc: 'Flow boundary' },
@@ -403,7 +409,7 @@ export default function DiagramCanvasEditor({
                   <span className="w-2.5 h-2.5 rounded-sm bg-emerald-400 mr-2" /> Step
                 </DropdownMenuItem>
                 <DropdownMenuItem onClick={() => addNode('interface')}>
-                  <span className="w-2.5 h-2.5 rounded-sm bg-slate-300 mr-2" /> Process Interface
+                  <span className="w-2.5 h-2.5 rounded-sm bg-slate-300 mr-2" /> Business Process
                 </DropdownMenuItem>
                 <DropdownMenuItem onClick={() => addNode('event')}>
                   <span className="w-2.5 h-2.5 rounded-sm bg-pink-400 mr-2" /> Event
@@ -491,6 +497,7 @@ export default function DiagramCanvasEditor({
           controls={controls}
           regulations={regulations}
           incidents={incidents}
+          applications={applications}
           processId={processId}
           defaultTab={detailTab}
           onClose={() => setSelectedNodeId(null)}

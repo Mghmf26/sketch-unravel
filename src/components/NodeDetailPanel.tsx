@@ -1,5 +1,5 @@
-import { useState, useCallback } from 'react';
-import { X, ShieldAlert, ShieldCheck, Scale, AlertCircle, Info, Pencil, Check, Plus, Trash2, Loader2 } from 'lucide-react';
+import { useState, useCallback, useRef } from 'react';
+import { X, ShieldAlert, ShieldCheck, Scale, AlertCircle, Info, Pencil, Check, Plus, Trash2, Loader2, Monitor, MessageSquare, Paperclip, FileText } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
@@ -17,6 +17,12 @@ import {
   deleteRisk, deleteControl, deleteRegulation, deleteIncident,
   type Risk, type Control, type Regulation, type Incident,
 } from '@/lib/api';
+import { insertStepApplication, updateStepApplication, deleteStepApplication, type StepApplication } from '@/lib/api-applications';
+import {
+  fetchEntityComments, insertEntityComment, updateEntityComment, deleteEntityComment,
+  fetchEntityAttachments, insertEntityAttachment, deleteEntityAttachment, uploadEntityFile,
+  type EntityComment, type EntityAttachment,
+} from '@/lib/api-comments';
 import type { EPCNode, NodeType } from '@/types/epc';
 
 interface NodeDetailPanelProps {
@@ -25,6 +31,7 @@ interface NodeDetailPanelProps {
   controls: Control[];
   regulations: Regulation[];
   incidents: Incident[];
+  applications?: StepApplication[];
   processId?: string;
   defaultTab?: string;
   onClose: () => void;
@@ -44,7 +51,7 @@ const TYPE_COLORS: Record<string, { bg: string; text: string; border: string }> 
 };
 
 const TYPE_LABELS: Record<string, string> = {
-  'in-scope': 'Step', 'interface': 'Process Interface', 'event': 'Event', 'xor': 'XOR',
+  'in-scope': 'Step', 'interface': 'Business Process', 'event': 'Event', 'xor': 'XOR',
   'start-end': 'Start/End', 'decision': 'Decision', 'storage': 'Storage', 'delay': 'Delay', 'document': 'Document',
 };
 
@@ -130,15 +137,135 @@ function EditableSelect({ label, value, options, onSave }: {
   );
 }
 
-type AddDialogType = 'risk' | 'control' | 'regulation' | 'incident' | null;
+// Inline comments & attachments for any entity
+function EntityNotesSection({ entityType, entityId, processId }: { entityType: string; entityId: string; processId: string }) {
+  const [comments, setComments] = useState<EntityComment[]>([]);
+  const [attachments, setAttachments] = useState<EntityAttachment[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [newComment, setNewComment] = useState('');
+  const [newConclusion, setNewConclusion] = useState('');
+  const [showAddComment, setShowAddComment] = useState(false);
+  const [uploading, setUploading] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
-export default function NodeDetailPanel({ node, risks, controls, regulations, incidents, processId, defaultTab = 'overview', onClose, onDataChanged }: NodeDetailPanelProps) {
+  const load = useCallback(async () => {
+    const [c, a] = await Promise.all([
+      fetchEntityComments(entityType, entityId),
+      fetchEntityAttachments(entityType, entityId),
+    ]);
+    setComments(c); setAttachments(a); setLoading(false);
+  }, [entityType, entityId]);
+
+  useState(() => { load(); });
+
+  const handleAddComment = async () => {
+    if (!newComment.trim() && !newConclusion.trim()) return;
+    try {
+      await insertEntityComment({ entity_type: entityType, entity_id: entityId, process_id: processId, comment: newComment || null, conclusion: newConclusion || null });
+      setNewComment(''); setNewConclusion(''); setShowAddComment(false);
+      toast({ title: 'Comment added' });
+      load();
+    } catch { toast({ title: 'Failed', variant: 'destructive' }); }
+  };
+
+  const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setUploading(true);
+    try {
+      const url = await uploadEntityFile(file, processId);
+      await insertEntityAttachment({
+        entity_type: entityType, entity_id: entityId, process_id: processId,
+        file_name: file.name, file_url: url, file_type: file.type, file_size: file.size,
+      });
+      toast({ title: 'File uploaded' });
+      load();
+    } catch { toast({ title: 'Upload failed', variant: 'destructive' }); }
+    setUploading(false);
+    if (fileInputRef.current) fileInputRef.current.value = '';
+  };
+
+  const handleDeleteComment = async (id: string) => {
+    await deleteEntityComment(id); load();
+  };
+
+  const handleDeleteAttachment = async (id: string) => {
+    await deleteEntityAttachment(id); load();
+  };
+
+  return (
+    <div className="mt-3 space-y-2 border-t pt-2">
+      <div className="flex items-center justify-between">
+        <span className="text-[10px] font-semibold text-muted-foreground uppercase flex items-center gap-1">
+          <MessageSquare className="h-3 w-3" /> Notes & Files
+        </span>
+        <div className="flex gap-1">
+          <Button size="sm" variant="ghost" className="h-5 text-[10px] gap-0.5" onClick={() => setShowAddComment(true)}>
+            <Plus className="h-2.5 w-2.5" /> Note
+          </Button>
+          <label className="cursor-pointer">
+            <Button size="sm" variant="ghost" className="h-5 text-[10px] gap-0.5 pointer-events-none" tabIndex={-1}>
+              <Paperclip className="h-2.5 w-2.5" /> {uploading ? '...' : 'File'}
+            </Button>
+            <input ref={fileInputRef} type="file" className="hidden"
+              accept=".pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx,.xml,.html,.csv,.txt,.json,.png,.jpg,.jpeg"
+              onChange={handleFileUpload} disabled={uploading} />
+          </label>
+        </div>
+      </div>
+
+      {showAddComment && (
+        <div className="p-2 rounded border bg-muted/30 space-y-1.5">
+          <Textarea value={newComment} onChange={e => setNewComment(e.target.value)} placeholder="Comment..." className="text-xs min-h-[40px]" />
+          <Textarea value={newConclusion} onChange={e => setNewConclusion(e.target.value)} placeholder="Conclusion (optional)..." className="text-xs min-h-[30px]" />
+          <div className="flex gap-1 justify-end">
+            <Button size="sm" variant="ghost" className="h-6 text-xs" onClick={() => setShowAddComment(false)}>Cancel</Button>
+            <Button size="sm" className="h-6 text-xs" onClick={handleAddComment}>Save</Button>
+          </div>
+        </div>
+      )}
+
+      {comments.map(c => (
+        <div key={c.id} className="p-2 rounded border bg-card text-xs space-y-1 group">
+          {c.comment && <p>{c.comment}</p>}
+          {c.conclusion && <p className="font-semibold text-primary">Conclusion: {c.conclusion}</p>}
+          <div className="flex justify-between items-center">
+            <span className="text-[9px] text-muted-foreground">{new Date(c.created_at).toLocaleDateString()}</span>
+            <Button variant="ghost" size="icon" className="h-4 w-4 opacity-0 group-hover:opacity-100 text-destructive" onClick={() => handleDeleteComment(c.id)}>
+              <Trash2 className="h-2.5 w-2.5" />
+            </Button>
+          </div>
+        </div>
+      ))}
+
+      {attachments.map(a => (
+        <div key={a.id} className="flex items-center gap-2 p-1.5 rounded border bg-card text-xs group">
+          <FileText className="h-3.5 w-3.5 text-muted-foreground shrink-0" />
+          <a href={a.file_url} target="_blank" rel="noopener noreferrer" className="flex-1 truncate text-primary hover:underline">{a.file_name}</a>
+          <span className="text-[9px] text-muted-foreground shrink-0">{a.file_size ? `${Math.round(a.file_size / 1024)}KB` : ''}</span>
+          <Button variant="ghost" size="icon" className="h-4 w-4 opacity-0 group-hover:opacity-100 text-destructive shrink-0" onClick={() => handleDeleteAttachment(a.id)}>
+            <Trash2 className="h-2.5 w-2.5" />
+          </Button>
+        </div>
+      ))}
+
+      {!loading && comments.length === 0 && attachments.length === 0 && !showAddComment && (
+        <p className="text-[10px] text-muted-foreground italic text-center py-1">No notes or files yet</p>
+      )}
+    </div>
+  );
+}
+
+type AddDialogType = 'risk' | 'control' | 'regulation' | 'incident' | 'application' | null;
+
+export default function NodeDetailPanel({ node, risks, controls, regulations, incidents, applications = [], processId, defaultTab = 'overview', onClose, onDataChanged }: NodeDetailPanelProps) {
   const tc = TYPE_COLORS[node.type] || TYPE_COLORS['in-scope'];
   const stepRisks = risks.filter(r => r.step_id === node.id);
   const stepRiskIds = new Set(stepRisks.map(r => r.id));
   const stepControls = controls.filter(c => stepRiskIds.has(c.risk_id));
   const stepRegulations = regulations.filter(r => r.step_id === node.id);
   const stepIncidents = incidents.filter(i => i.step_id === node.id);
+  const stepApps = applications.filter(a => a.step_id === node.id);
 
   const [addDialog, setAddDialog] = useState<AddDialogType>(null);
   const [saving, setSaving] = useState(false);
@@ -149,8 +276,8 @@ export default function NodeDetailPanel({ node, risks, controls, regulations, in
   const [controlForm, setControlForm] = useState({ name: '', description: '', type: 'preventive', effectiveness: 'effective' });
   const [regulationForm, setRegulationForm] = useState({ name: '', description: '', authority: '', compliance_status: 'partial' });
   const [incidentForm, setIncidentForm] = useState({ title: '', description: '', severity: 'medium', status: 'open' });
+  const [appForm, setAppForm] = useState({ name: '', screen_name: '', description: '', app_type: 'application' });
 
-  // Derive processId from data if not provided
   const derivedProcessId = processId || stepRisks[0]?.process_id || stepRegulations[0]?.process_id || stepIncidents[0]?.process_id || '';
 
   const saveField = useCallback(async (fn: () => Promise<void>, msg: string) => {
@@ -168,10 +295,7 @@ export default function NodeDetailPanel({ node, risks, controls, regulations, in
     setSaving(true);
     try {
       await insertRisk({ step_id: node.id, process_id: derivedProcessId, description: riskForm.description.trim(), likelihood: riskForm.likelihood, impact: riskForm.impact });
-      toast({ title: 'Risk added' });
-      setAddDialog(null);
-      setRiskForm({ description: '', likelihood: 'medium', impact: 'medium' });
-      onDataChanged?.();
+      toast({ title: 'Risk added' }); setAddDialog(null); setRiskForm({ description: '', likelihood: 'medium', impact: 'medium' }); onDataChanged?.();
     } catch { toast({ title: 'Failed to add risk', variant: 'destructive' }); }
     setSaving(false);
   };
@@ -181,10 +305,7 @@ export default function NodeDetailPanel({ node, risks, controls, regulations, in
     setSaving(true);
     try {
       await insertControl({ risk_id: contextRiskId, name: controlForm.name.trim(), description: controlForm.description || null, type: controlForm.type, effectiveness: controlForm.effectiveness });
-      toast({ title: 'Control added' });
-      setAddDialog(null);
-      setControlForm({ name: '', description: '', type: 'preventive', effectiveness: 'effective' });
-      onDataChanged?.();
+      toast({ title: 'Control added' }); setAddDialog(null); setControlForm({ name: '', description: '', type: 'preventive', effectiveness: 'effective' }); onDataChanged?.();
     } catch { toast({ title: 'Failed to add control', variant: 'destructive' }); }
     setSaving(false);
   };
@@ -194,10 +315,7 @@ export default function NodeDetailPanel({ node, risks, controls, regulations, in
     setSaving(true);
     try {
       await insertRegulation({ step_id: node.id, process_id: derivedProcessId, name: regulationForm.name.trim(), description: regulationForm.description || null, authority: regulationForm.authority || null, compliance_status: regulationForm.compliance_status });
-      toast({ title: 'Regulation added' });
-      setAddDialog(null);
-      setRegulationForm({ name: '', description: '', authority: '', compliance_status: 'partial' });
-      onDataChanged?.();
+      toast({ title: 'Regulation added' }); setAddDialog(null); setRegulationForm({ name: '', description: '', authority: '', compliance_status: 'partial' }); onDataChanged?.();
     } catch { toast({ title: 'Failed to add regulation', variant: 'destructive' }); }
     setSaving(false);
   };
@@ -207,11 +325,18 @@ export default function NodeDetailPanel({ node, risks, controls, regulations, in
     setSaving(true);
     try {
       await insertIncident({ step_id: node.id, process_id: derivedProcessId, title: incidentForm.title.trim(), description: incidentForm.description || null, severity: incidentForm.severity, status: incidentForm.status });
-      toast({ title: 'Incident added' });
-      setAddDialog(null);
-      setIncidentForm({ title: '', description: '', severity: 'medium', status: 'open' });
-      onDataChanged?.();
+      toast({ title: 'Incident added' }); setAddDialog(null); setIncidentForm({ title: '', description: '', severity: 'medium', status: 'open' }); onDataChanged?.();
     } catch { toast({ title: 'Failed to add incident', variant: 'destructive' }); }
+    setSaving(false);
+  };
+
+  const handleAddApplication = async () => {
+    if (!appForm.name.trim() || !derivedProcessId) return;
+    setSaving(true);
+    try {
+      await insertStepApplication({ step_id: node.id, process_id: derivedProcessId, name: appForm.name.trim(), screen_name: appForm.screen_name || null, description: appForm.description || null, app_type: appForm.app_type });
+      toast({ title: 'Application added' }); setAddDialog(null); setAppForm({ name: '', screen_name: '', description: '', app_type: 'application' }); onDataChanged?.();
+    } catch { toast({ title: 'Failed to add application', variant: 'destructive' }); }
     setSaving(false);
   };
 
@@ -222,6 +347,7 @@ export default function NodeDetailPanel({ node, risks, controls, regulations, in
       else if (type === 'control') await deleteControl(id);
       else if (type === 'regulation') await deleteRegulation(id);
       else if (type === 'incident') await deleteIncident(id);
+      else if (type === 'application') await deleteStepApplication(id);
       toast({ title: `${type.charAt(0).toUpperCase() + type.slice(1)} deleted` });
       onDataChanged?.();
     } catch { toast({ title: 'Delete failed', variant: 'destructive' }); }
@@ -229,7 +355,7 @@ export default function NodeDetailPanel({ node, risks, controls, regulations, in
 
   return (
     <>
-    <div className="w-[340px] bg-background border-l shadow-lg flex flex-col h-full overflow-hidden" style={{ borderTopColor: tc.border, borderTopWidth: 3 }}>
+    <div className="w-[360px] bg-background border-l shadow-lg flex flex-col h-full overflow-hidden" style={{ borderTopColor: tc.border, borderTopWidth: 3 }}>
       {/* Header */}
       <div className="flex items-start gap-2 p-4 pb-2">
         <div className="flex-1 min-w-0">
@@ -240,9 +366,7 @@ export default function NodeDetailPanel({ node, risks, controls, regulations, in
             </span>
           </div>
           <h3 className="text-sm font-bold truncate">{node.label}</h3>
-          {node.description && (
-            <p className="text-xs text-muted-foreground mt-0.5">{node.description}</p>
-          )}
+          {node.description && <p className="text-xs text-muted-foreground mt-0.5">{node.description}</p>}
         </div>
         <Button variant="ghost" size="icon" className="h-7 w-7 shrink-0" onClick={onClose}>
           <X className="h-4 w-4" />
@@ -253,25 +377,29 @@ export default function NodeDetailPanel({ node, risks, controls, regulations, in
 
       {/* Tabs */}
       <Tabs defaultValue={defaultTab} className="flex-1 flex flex-col overflow-hidden">
-        <TabsList className="mx-4 mt-2 bg-muted/50 h-8">
+        <TabsList className="mx-4 mt-2 bg-muted/50 h-8 flex-wrap">
           <TabsTrigger value="overview" className="text-[10px] h-6 px-2">
-            <Info className="h-3 w-3 mr-1" /> Overview
+            <Info className="h-3 w-3 mr-1" /> Info
           </TabsTrigger>
           <TabsTrigger value="risks" className="text-[10px] h-6 px-2">
-            <ShieldAlert className="h-3 w-3 mr-1" /> Risks
-            {stepRisks.length > 0 && <Badge variant="secondary" className="ml-1 h-4 text-[8px] px-1">{stepRisks.length}</Badge>}
+            <ShieldAlert className="h-3 w-3 mr-1" />
+            {stepRisks.length > 0 && <Badge variant="secondary" className="ml-0.5 h-4 text-[8px] px-1">{stepRisks.length}</Badge>}
           </TabsTrigger>
           <TabsTrigger value="controls" className="text-[10px] h-6 px-2">
-            <ShieldCheck className="h-3 w-3 mr-1" /> Ctrl
-            {stepControls.length > 0 && <Badge variant="secondary" className="ml-1 h-4 text-[8px] px-1">{stepControls.length}</Badge>}
+            <ShieldCheck className="h-3 w-3 mr-1" />
+            {stepControls.length > 0 && <Badge variant="secondary" className="ml-0.5 h-4 text-[8px] px-1">{stepControls.length}</Badge>}
           </TabsTrigger>
           <TabsTrigger value="regulations" className="text-[10px] h-6 px-2">
-            <Scale className="h-3 w-3 mr-1" /> Reg
-            {stepRegulations.length > 0 && <Badge variant="secondary" className="ml-1 h-4 text-[8px] px-1">{stepRegulations.length}</Badge>}
+            <Scale className="h-3 w-3 mr-1" />
+            {stepRegulations.length > 0 && <Badge variant="secondary" className="ml-0.5 h-4 text-[8px] px-1">{stepRegulations.length}</Badge>}
           </TabsTrigger>
           <TabsTrigger value="incidents" className="text-[10px] h-6 px-2">
-            <AlertCircle className="h-3 w-3 mr-1" /> Inc
-            {stepIncidents.length > 0 && <Badge variant="secondary" className="ml-1 h-4 text-[8px] px-1">{stepIncidents.length}</Badge>}
+            <AlertCircle className="h-3 w-3 mr-1" />
+            {stepIncidents.length > 0 && <Badge variant="secondary" className="ml-0.5 h-4 text-[8px] px-1">{stepIncidents.length}</Badge>}
+          </TabsTrigger>
+          <TabsTrigger value="applications" className="text-[10px] h-6 px-2">
+            <Monitor className="h-3 w-3 mr-1" />
+            {stepApps.length > 0 && <Badge variant="secondary" className="ml-0.5 h-4 text-[8px] px-1">{stepApps.length}</Badge>}
           </TabsTrigger>
         </TabsList>
 
@@ -286,7 +414,7 @@ export default function NodeDetailPanel({ node, risks, controls, regulations, in
               <p className="text-sm">{TYPE_LABELS[node.type] || node.type}</p>
             </div>
             <Separator />
-            <div className="grid grid-cols-2 gap-3">
+            <div className="grid grid-cols-3 gap-2">
               <div className="p-2 rounded-lg border bg-orange-50">
                 <div className="flex items-center gap-1 mb-0.5"><ShieldAlert className="h-3 w-3 text-orange-500" /><span className="text-[10px] font-semibold text-orange-700">Risks</span></div>
                 <span className="text-lg font-bold text-orange-700">{stepRisks.length}</span>
@@ -303,7 +431,13 @@ export default function NodeDetailPanel({ node, risks, controls, regulations, in
                 <div className="flex items-center gap-1 mb-0.5"><AlertCircle className="h-3 w-3 text-red-500" /><span className="text-[10px] font-semibold text-red-700">Incidents</span></div>
                 <span className="text-lg font-bold text-red-700">{stepIncidents.length}</span>
               </div>
+              <div className="p-2 rounded-lg border bg-sky-50">
+                <div className="flex items-center gap-1 mb-0.5"><Monitor className="h-3 w-3 text-sky-500" /><span className="text-[10px] font-semibold text-sky-700">Apps</span></div>
+                <span className="text-lg font-bold text-sky-700">{stepApps.length}</span>
+              </div>
             </div>
+            {/* Notes & files for the step itself */}
+            {derivedProcessId && <EntityNotesSection entityType="step" entityId={node.id} processId={derivedProcessId} />}
           </TabsContent>
 
           <TabsContent value="risks" className="mt-0 space-y-2">
@@ -350,6 +484,7 @@ export default function NodeDetailPanel({ node, risks, controls, regulations, in
                   <Button size="sm" variant="ghost" className="h-5 text-[10px] text-blue-600 gap-1 px-1" onClick={() => { setContextRiskId(risk.id); setControlForm({ name: '', description: '', type: 'preventive', effectiveness: 'effective' }); setAddDialog('control'); }}>
                     <Plus className="h-2.5 w-2.5" /> Add Control
                   </Button>
+                  {derivedProcessId && <EntityNotesSection entityType="risk" entityId={risk.id} processId={derivedProcessId} />}
                 </div>
               );
             })}
@@ -375,6 +510,7 @@ export default function NodeDetailPanel({ node, risks, controls, regulations, in
                   <EditableSelect label="Effectiveness" value={ctrl.effectiveness || 'effective'} options={['effective', 'partially', 'ineffective']}
                     onSave={val => saveField(() => updateControl(ctrl.id, { effectiveness: val }), 'Effectiveness updated')} />
                 </div>
+                {derivedProcessId && <EntityNotesSection entityType="control" entityId={ctrl.id} processId={derivedProcessId} />}
               </div>
             ))}
           </TabsContent>
@@ -405,6 +541,7 @@ export default function NodeDetailPanel({ node, risks, controls, regulations, in
                   <EditableSelect label="Compliance" value={reg.compliance_status || 'partial'} options={['compliant', 'partial', 'non-compliant']}
                     onSave={val => saveField(() => updateRegulation(reg.id, { compliance_status: val }), 'Status updated')} />
                 </div>
+                {derivedProcessId && <EntityNotesSection entityType="regulation" entityId={reg.id} processId={derivedProcessId} />}
               </div>
             ))}
           </TabsContent>
@@ -436,6 +573,42 @@ export default function NodeDetailPanel({ node, risks, controls, regulations, in
                   <EditableSelect label="Status" value={inc.status || 'open'} options={['open', 'investigating', 'resolved', 'closed']}
                     onSave={val => saveField(() => updateIncident(inc.id, { status: val }), 'Status updated')} />
                 </div>
+                {derivedProcessId && <EntityNotesSection entityType="incident" entityId={inc.id} processId={derivedProcessId} />}
+              </div>
+            ))}
+          </TabsContent>
+
+          {/* Applications Tab */}
+          <TabsContent value="applications" className="mt-0 space-y-2">
+            <div className="flex items-center justify-between mb-1">
+              <span className="text-xs font-semibold text-muted-foreground">{stepApps.length} Application{stepApps.length !== 1 ? 's' : ''}</span>
+              <Button size="sm" variant="ghost" className="h-6 text-xs gap-1" onClick={() => { setAppForm({ name: '', screen_name: '', description: '', app_type: 'application' }); setAddDialog('application'); }}>
+                <Plus className="h-3 w-3" /> Add App
+              </Button>
+            </div>
+            {stepApps.length === 0 ? (
+              <p className="text-xs text-muted-foreground text-center py-8">No applications linked to this step</p>
+            ) : stepApps.map(app => (
+              <div key={app.id} className="p-3 rounded-lg border bg-sky-50/50 space-y-1.5 group">
+                <div className="flex items-center gap-2">
+                  <Monitor className="h-3.5 w-3.5 text-sky-500" />
+                  <div className="flex-1">
+                    <EditableField label="Name" value={app.name}
+                      onSave={val => saveField(() => updateStepApplication(app.id, { name: val }), 'App updated')} />
+                  </div>
+                  <Badge variant="outline" className="text-[9px]">{app.app_type}</Badge>
+                  <Button variant="ghost" size="icon" className="h-5 w-5 opacity-0 group-hover:opacity-100 text-destructive" onClick={() => handleDeleteItem('application', app.id)}>
+                    <Trash2 className="h-3 w-3" />
+                  </Button>
+                </div>
+                {app.screen_name && (
+                  <div className="text-xs text-muted-foreground">Screen: {app.screen_name}</div>
+                )}
+                {app.description && (
+                  <EditableField label="Description" value={app.description} multiline
+                    onSave={val => saveField(() => updateStepApplication(app.id, { description: val }), 'Description updated')} />
+                )}
+                {derivedProcessId && <EntityNotesSection entityType="application" entityId={app.id} processId={derivedProcessId} />}
               </div>
             ))}
           </TabsContent>
@@ -613,6 +786,45 @@ export default function NodeDetailPanel({ node, risks, controls, regulations, in
           <Button variant="outline" onClick={() => setAddDialog(null)}>Cancel</Button>
           <Button onClick={handleAddIncident} disabled={saving || !incidentForm.title.trim()}>
             {saving && <Loader2 className="mr-2 h-4 w-4 animate-spin" />} Add Incident
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+
+    {/* Add Application Dialog */}
+    <Dialog open={addDialog === 'application'} onOpenChange={v => !v && setAddDialog(null)}>
+      <DialogContent className="sm:max-w-md">
+        <DialogHeader>
+          <DialogTitle className="flex items-center gap-2"><Monitor className="h-5 w-5 text-sky-500" /> Add Application / Screen</DialogTitle>
+          <DialogDescription>Link an application or screen to this step.</DialogDescription>
+        </DialogHeader>
+        <div className="grid gap-3 py-2">
+          <div className="grid gap-1.5">
+            <Label>Application Name *</Label>
+            <Input value={appForm.name} onChange={e => setAppForm(f => ({ ...f, name: e.target.value }))} placeholder="e.g. SAP FI, Oracle EBS" />
+          </div>
+          <div className="grid gap-1.5">
+            <Label>Screen / Module Name</Label>
+            <Input value={appForm.screen_name} onChange={e => setAppForm(f => ({ ...f, screen_name: e.target.value }))} placeholder="e.g. Transaction VA01" />
+          </div>
+          <div className="grid gap-1.5">
+            <Label>Type</Label>
+            <Select value={appForm.app_type} onValueChange={v => setAppForm(f => ({ ...f, app_type: v }))}>
+              <SelectTrigger><SelectValue /></SelectTrigger>
+              <SelectContent>
+                {['application', 'screen', 'module', 'service', 'database'].map(o => <SelectItem key={o} value={o} className="capitalize">{o}</SelectItem>)}
+              </SelectContent>
+            </Select>
+          </div>
+          <div className="grid gap-1.5">
+            <Label>Description</Label>
+            <Textarea value={appForm.description} onChange={e => setAppForm(f => ({ ...f, description: e.target.value }))} placeholder="Optional description..." />
+          </div>
+        </div>
+        <DialogFooter>
+          <Button variant="outline" onClick={() => setAddDialog(null)}>Cancel</Button>
+          <Button onClick={handleAddApplication} disabled={saving || !appForm.name.trim()}>
+            {saving && <Loader2 className="mr-2 h-4 w-4 animate-spin" />} Add Application
           </Button>
         </DialogFooter>
       </DialogContent>

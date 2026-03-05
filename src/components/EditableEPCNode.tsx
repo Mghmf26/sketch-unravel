@@ -1,22 +1,24 @@
 import { memo, useState, useCallback, useRef, useEffect } from 'react';
 import { Handle, Position, type NodeProps } from '@xyflow/react';
-import type { NodeType } from '@/types/epc';
-import { Trash2, ShieldAlert, ShieldCheck, Scale, AlertCircle } from 'lucide-react';
+import type { NodeType, InterfaceSubtype } from '@/types/epc';
+import { Trash2, ShieldAlert, ShieldCheck, Scale, AlertCircle, Monitor } from 'lucide-react';
 
 interface EditableEPCNodeData {
   label: string;
   nodeType: NodeType;
   nodeId: string;
   description?: string;
+  interfaceSubtype?: InterfaceSubtype;
   riskCount?: number;
   controlCount?: number;
   regulationCount?: number;
   incidentCount?: number;
+  appCount?: number;
   onDelete?: (id: string) => void;
   onLabelChange?: (id: string, label: string) => void;
   onTypeChange?: (id: string, type: NodeType) => void;
   onNodeClick?: (id: string) => void;
-  onIndicatorClick?: (id: string, type: 'risks' | 'controls' | 'regulations' | 'incidents') => void;
+  onIndicatorClick?: (id: string, type: 'risks' | 'controls' | 'regulations' | 'incidents' | 'applications') => void;
   [key: string]: unknown;
 }
 
@@ -81,8 +83,14 @@ const STYLE_MAP: Record<NodeType, {
 };
 
 const TYPE_LABELS: Record<NodeType, string> = {
-  'in-scope': 'Step', 'interface': 'Process Interface', 'event': 'Event', 'xor': 'XOR',
+  'in-scope': 'Step', 'interface': 'Business Process', 'event': 'Event', 'xor': 'XOR',
   'start-end': 'Start/End', 'decision': 'Decision', 'storage': 'Storage', 'delay': 'Delay', 'document': 'Document',
+};
+
+const INTERFACE_SUBTYPE_LABELS: Record<string, string> = {
+  'default': 'Business Process',
+  'input': 'Business Process (Input)',
+  'output': 'Business Process (Output)',
 };
 
 const NODE_TYPES: NodeType[] = ['in-scope', 'interface', 'event', 'xor', 'start-end', 'decision', 'storage', 'delay', 'document'];
@@ -153,16 +161,20 @@ function RelationDot({ count, color, icon: Icon, label, onClick }: {
 }
 
 // Type badge (no ID)
-function TypeBadge({ nodeType, style, onCycleType }: {
+function TypeBadge({ nodeType, interfaceSubtype, style, onCycleType }: {
   nodeType: NodeType;
+  interfaceSubtype?: InterfaceSubtype;
   style: { border: string; text: string; badgeBg: string };
   onCycleType: () => void;
 }) {
+  const label = nodeType === 'interface' && interfaceSubtype
+    ? INTERFACE_SUBTYPE_LABELS[interfaceSubtype] || INTERFACE_SUBTYPE_LABELS['default']
+    : TYPE_LABELS[nodeType];
   return (
     <button onClick={onCycleType}
       className="text-[9px] font-semibold px-2 py-0.5 rounded-full border cursor-pointer hover:scale-105 transition-transform"
       style={{ borderColor: style.border, color: style.text, backgroundColor: style.badgeBg }}>
-      {TYPE_LABELS[nodeType]}
+      {label}
     </button>
   );
 }
@@ -192,7 +204,7 @@ function EditableEPCNode({ id, data, selected }: NodeProps) {
     d.onNodeClick?.(id);
   }, [d, id]);
 
-  const handleIndicatorClick = useCallback((type: 'risks' | 'controls' | 'regulations' | 'incidents') => {
+  const handleIndicatorClick = useCallback((type: 'risks' | 'controls' | 'regulations' | 'incidents' | 'applications') => {
     d.onIndicatorClick?.(id, type);
   }, [d, id]);
 
@@ -203,12 +215,13 @@ function EditableEPCNode({ id, data, selected }: NodeProps) {
       <RelationDot count={d.controlCount || 0} color="#3b82f6" icon={ShieldCheck} label="Controls" onClick={() => handleIndicatorClick('controls')} />
       <RelationDot count={d.regulationCount || 0} color="#8b5cf6" icon={Scale} label="Regulations" onClick={() => handleIndicatorClick('regulations')} />
       <RelationDot count={d.incidentCount || 0} color="#ef4444" icon={AlertCircle} label="Incidents" onClick={() => handleIndicatorClick('incidents')} />
+      <RelationDot count={d.appCount || 0} color="#0ea5e9" icon={Monitor} label="Applications" onClick={() => handleIndicatorClick('applications')} />
     </div>
   );
 
-  // Only step-type nodes can have relations (risks/controls/regulations/incidents are linked to steps)
+  // Only step-type nodes can have relations
   const isStepType = d.nodeType === 'in-scope';
-  const hasRelations = isStepType && (d.riskCount || 0) + (d.controlCount || 0) + (d.regulationCount || 0) + (d.incidentCount || 0) > 0;
+  const hasRelations = isStepType && (d.riskCount || 0) + (d.controlCount || 0) + (d.regulationCount || 0) + (d.incidentCount || 0) + (d.appCount || 0) > 0;
 
   // XOR — blue diamond
   if (d.nodeType === 'xor') {
@@ -393,7 +406,7 @@ function EditableEPCNode({ id, data, selected }: NodeProps) {
                 onDoubleClick={() => edit.setEditing(true)}>{d.label}</span>
             )}
           </div>
-          <TypeBadge nodeType={d.nodeType} style={s} onCycleType={edit.cycleType} />
+          <TypeBadge nodeType={d.nodeType} interfaceSubtype={d.interfaceSubtype} style={s} onCycleType={edit.cycleType} />
         </div>
 
         {/* Divider */}

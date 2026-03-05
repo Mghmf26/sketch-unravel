@@ -1,10 +1,13 @@
 export type NodeType = 'in-scope' | 'interface' | 'event' | 'xor' | 'start-end' | 'decision' | 'storage' | 'delay' | 'document';
 
+export type InterfaceSubtype = 'default' | 'input' | 'output';
+
 export interface EPCNode {
   id: string;
   label: string;
   type: NodeType;
   description?: string;
+  interfaceSubtype?: InterfaceSubtype;
 }
 
 export interface EPCConnection {
