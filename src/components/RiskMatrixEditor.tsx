@@ -2,17 +2,17 @@ import { useState, useEffect, useCallback } from 'react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Separator } from '@/components/ui/separator';
 import { toast } from '@/hooks/use-toast';
-import { Grid3x3, Shield, CheckCircle, XCircle, Info } from 'lucide-react';
+import { Grid3x3, Shield, CheckCircle, XCircle, Info, Copy, FileText } from 'lucide-react';
 import {
   fetchRiskMatrix, fetchRiskMatrixCells, upsertRiskMatrix,
-  saveCellAcceptability, applyStandardMatrix,
-  STANDARD_IMPACT_LEVELS, STANDARD_FREQUENCY_LEVELS, LEVEL_LABELS,
-  STANDARD_ACCEPTABLE_CELLS,
-  type RiskMatrix, type RiskMatrixCell,
+  saveCellAcceptability, applyTemplateMatrix,
+  LEVEL_LABELS, STANDARD_TEMPLATES,
+  type RiskMatrix, type RiskMatrixCell, type RiskMatrixTemplate,
 } from '@/lib/api-risk-matrix';
+import MatrixGrid from '@/components/risk-matrix/MatrixGrid';
+import TemplateSelector from '@/components/risk-matrix/TemplateSelector';
 
 interface RiskMatrixEditorProps {
   processId: string;
@@ -24,8 +24,8 @@ export default function RiskMatrixEditor({ processId }: RiskMatrixEditorProps) {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
 
-  const impactLevels = matrix?.impact_levels || STANDARD_IMPACT_LEVELS;
-  const freqLevels = matrix?.frequency_levels || STANDARD_FREQUENCY_LEVELS;
+  const impactLevels = matrix?.impact_levels || STANDARD_TEMPLATES[0].impactLevels;
+  const freqLevels = matrix?.frequency_levels || STANDARD_TEMPLATES[0].frequencyLevels;
 
   const reload = useCallback(async () => {
     setLoading(true);
@@ -46,10 +46,7 @@ export default function RiskMatrixEditor({ processId }: RiskMatrixEditorProps) {
   useEffect(() => { reload(); }, [reload]);
 
   const isAcceptable = (impact: string, freq: string): boolean | null => {
-    if (!matrix) {
-      // Show standard preview
-      return STANDARD_ACCEPTABLE_CELLS.some(([i, f]) => i === impact && f === freq);
-    }
+    if (!matrix) return null;
     const cell = cells.find(c => c.impact_level === impact && c.frequency_level === freq);
     if (!cell) return null;
     return cell.acceptable;
@@ -70,14 +67,28 @@ export default function RiskMatrixEditor({ processId }: RiskMatrixEditorProps) {
     }
   };
 
-  const handleCreateMatrix = async (type: 'user-defined' | 'standard') => {
+  const handleSelectTemplate = async (template: RiskMatrixTemplate) => {
     setSaving(true);
     try {
-      const m = await upsertRiskMatrix(processId, type);
-      if (type === 'standard') {
-        await applyStandardMatrix(m.id);
-      }
-      toast({ title: type === 'standard' ? 'Standard matrix applied' : 'Custom matrix created' });
+      const m = await upsertRiskMatrix(
+        processId, 'standard', template.name, template.description,
+        template.impactLevels, template.frequencyLevels,
+      );
+      await applyTemplateMatrix(m.id, template.key);
+      toast({ title: `Applied "${template.name}" template` });
+      await reload();
+    } catch {
+      toast({ title: 'Error applying template', variant: 'destructive' });
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const handleCreateCustom = async () => {
+    setSaving(true);
+    try {
+      await upsertRiskMatrix(processId, 'user-defined', 'Custom Risk Matrix');
+      toast({ title: 'Custom matrix created — click cells to configure' });
       await reload();
     } catch {
       toast({ title: 'Error creating matrix', variant: 'destructive' });
@@ -86,18 +97,19 @@ export default function RiskMatrixEditor({ processId }: RiskMatrixEditorProps) {
     }
   };
 
-  const handleSwitchType = async (type: 'user-defined' | 'standard') => {
+  const handleDuplicateAsCustom = async () => {
     if (!matrix) return;
     setSaving(true);
     try {
-      await upsertRiskMatrix(processId, type);
-      if (type === 'standard') {
-        await applyStandardMatrix(matrix.id);
-      }
-      toast({ title: type === 'standard' ? 'Switched to standard matrix' : 'Switched to custom matrix' });
+      await upsertRiskMatrix(
+        processId, 'user-defined',
+        `${matrix.name} (Custom)`, matrix.description || undefined,
+        matrix.impact_levels, matrix.frequency_levels,
+      );
+      toast({ title: 'Duplicated as custom matrix — you can now edit cells' });
       await reload();
     } catch {
-      toast({ title: 'Error switching matrix', variant: 'destructive' });
+      toast({ title: 'Error duplicating matrix', variant: 'destructive' });
     } finally {
       setSaving(false);
     }
@@ -110,7 +122,6 @@ export default function RiskMatrixEditor({ processId }: RiskMatrixEditorProps) {
     return 'bg-muted/30 hover:bg-muted/50 border-border text-muted-foreground';
   };
 
-  // Reversed impact levels for display (VH at top)
   const displayImpactLevels = [...impactLevels].reverse();
 
   if (loading) {
@@ -121,56 +132,23 @@ export default function RiskMatrixEditor({ processId }: RiskMatrixEditorProps) {
     );
   }
 
-  // No matrix assigned yet
+  // No matrix assigned — show template selection
   if (!matrix) {
     return (
-      <Card className="border-2 border-dashed">
-        <CardContent className="p-8">
-          <div className="text-center space-y-4">
-            <div className="h-14 w-14 rounded-xl bg-primary/10 flex items-center justify-center mx-auto">
-              <Grid3x3 className="h-7 w-7 text-primary" />
-            </div>
-            <div>
-              <h3 className="text-lg font-semibold">No Risk Matrix Assigned</h3>
-              <p className="text-sm text-muted-foreground mt-1 max-w-md mx-auto">
-                Choose a risk matrix type to define acceptable risk combinations for this business process.
-              </p>
-            </div>
-            <div className="flex flex-col sm:flex-row gap-3 justify-center mt-4">
-              <Button variant="outline" className="gap-2" onClick={() => handleCreateMatrix('user-defined')} disabled={saving}>
-                <Shield className="h-4 w-4" />
-                User-Defined Matrix
-              </Button>
-              <Button className="gap-2" onClick={() => handleCreateMatrix('standard')} disabled={saving}>
-                <Grid3x3 className="h-4 w-4" />
-                Standard Matrix
-              </Button>
-            </div>
-
-            {/* Standard matrix preview */}
-            <div className="mt-6 pt-4 border-t">
-              <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-3">Standard Matrix Preview</p>
-              <div className="inline-block">
-                <MatrixGrid
-                  impactLevels={displayImpactLevels}
-                  freqLevels={STANDARD_FREQUENCY_LEVELS}
-                  getCellColor={getCellColor}
-                  isAcceptable={isAcceptable}
-                  onCellClick={() => {}}
-                  readonly
-                />
-              </div>
-            </div>
-          </div>
-        </CardContent>
-      </Card>
+      <TemplateSelector
+        saving={saving}
+        onSelectTemplate={handleSelectTemplate}
+        onCreateCustom={handleCreateCustom}
+      />
     );
   }
+
+  const isStandard = matrix.matrix_type === 'standard';
 
   return (
     <Card>
       <CardHeader className="pb-3">
-        <div className="flex items-center justify-between">
+        <div className="flex items-center justify-between flex-wrap gap-3">
           <div className="flex items-center gap-3">
             <div className="h-9 w-9 rounded-lg bg-primary/10 flex items-center justify-center">
               <Grid3x3 className="h-4.5 w-4.5 text-primary" />
@@ -178,38 +156,37 @@ export default function RiskMatrixEditor({ processId }: RiskMatrixEditorProps) {
             <div>
               <CardTitle className="text-base">{matrix.name}</CardTitle>
               <CardDescription className="text-xs">
-                {matrix.matrix_type === 'standard' ? 'Predefined benchmark matrix' : 'Custom-configured matrix'}
+                {matrix.description || (isStandard ? 'Predefined benchmark matrix' : 'Custom-configured matrix')}
               </CardDescription>
             </div>
           </div>
-          <div className="flex items-center gap-2">
-            <Badge variant={matrix.matrix_type === 'standard' ? 'default' : 'secondary'} className="text-[10px]">
-              {matrix.matrix_type === 'standard' ? 'Standard' : 'User-Defined'}
+          <div className="flex items-center gap-2 flex-wrap">
+            <Badge variant={isStandard ? 'default' : 'secondary'} className="text-[10px]">
+              {isStandard ? 'Standard Template' : 'User-Defined'}
             </Badge>
-            <Select value={matrix.matrix_type} onValueChange={v => handleSwitchType(v as any)}>
-              <SelectTrigger className="h-8 w-[140px] text-xs">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="user-defined">User-Defined</SelectItem>
-                <SelectItem value="standard">Standard</SelectItem>
-              </SelectContent>
-            </Select>
+            {isStandard && (
+              <Button variant="outline" size="sm" className="gap-1.5 text-xs h-8" onClick={handleDuplicateAsCustom} disabled={saving}>
+                <Copy className="h-3.5 w-3.5" /> Duplicate as Custom
+              </Button>
+            )}
+            <Button variant="ghost" size="sm" className="gap-1.5 text-xs h-8" onClick={() => { setMatrix(null); setCells([]); }} disabled={saving}>
+              <FileText className="h-3.5 w-3.5" /> Change Template
+            </Button>
           </div>
         </div>
       </CardHeader>
       <Separator />
       <CardContent className="pt-4">
-        {matrix.matrix_type === 'user-defined' && (
+        {!isStandard && (
           <div className="flex items-center gap-2 mb-4 p-3 rounded-lg bg-amber-50 border border-amber-200 text-amber-800">
             <Info className="h-4 w-4 shrink-0" />
             <p className="text-xs">Click cells to toggle between acceptable (green) and not acceptable (red). Unset cells are shown in gray.</p>
           </div>
         )}
-        {matrix.matrix_type === 'standard' && (
+        {isStandard && (
           <div className="flex items-center gap-2 mb-4 p-3 rounded-lg bg-blue-50 border border-blue-200 text-blue-800">
             <Info className="h-4 w-4 shrink-0" />
-            <p className="text-xs">This is the standard benchmark matrix. Switch to "User-Defined" to customize acceptable combinations.</p>
+            <p className="text-xs">This is a standard template and cannot be modified. Use "Duplicate as Custom" to create an editable copy.</p>
           </div>
         )}
 
@@ -220,7 +197,7 @@ export default function RiskMatrixEditor({ processId }: RiskMatrixEditorProps) {
             getCellColor={getCellColor}
             isAcceptable={isAcceptable}
             onCellClick={handleCellToggle}
-            readonly={matrix.matrix_type === 'standard'}
+            readonly={isStandard}
           />
         </div>
 
@@ -229,7 +206,7 @@ export default function RiskMatrixEditor({ processId }: RiskMatrixEditorProps) {
           <span className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider">Legend:</span>
           <div className="flex items-center gap-1.5">
             <div className="w-4 h-4 rounded border bg-emerald-100 border-emerald-300" />
-            <span className="text-xs text-muted-foreground">Acceptable (OK)</span>
+            <span className="text-xs text-muted-foreground">Acceptable</span>
           </div>
           <div className="flex items-center gap-1.5">
             <div className="w-4 h-4 rounded border bg-red-100 border-red-300" />
@@ -264,74 +241,5 @@ export default function RiskMatrixEditor({ processId }: RiskMatrixEditorProps) {
         </div>
       </CardContent>
     </Card>
-  );
-}
-
-// Matrix grid sub-component
-function MatrixGrid({
-  impactLevels, freqLevels, getCellColor, isAcceptable, onCellClick, readonly,
-}: {
-  impactLevels: string[];
-  freqLevels: string[];
-  getCellColor: (impact: string, freq: string) => string;
-  isAcceptable: (impact: string, freq: string) => boolean | null;
-  onCellClick: (impact: string, freq: string) => void;
-  readonly?: boolean;
-}) {
-  return (
-    <div className="inline-flex flex-col">
-      {/* Column header */}
-      <div className="flex items-end mb-1 pl-[100px]">
-        <span className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider text-center w-full mb-1">
-          Frequency →
-        </span>
-      </div>
-      <div className="flex items-center mb-1 pl-[100px]">
-        {freqLevels.map(f => (
-          <div key={f} className="w-16 text-center">
-            <span className="text-[10px] font-bold text-muted-foreground">{f}</span>
-            <p className="text-[8px] text-muted-foreground/70 leading-tight">{LEVEL_LABELS[f]}</p>
-          </div>
-        ))}
-      </div>
-
-      {/* Rows */}
-      <div className="flex">
-        {/* Y-axis label */}
-        <div className="flex flex-col items-center justify-center mr-1" style={{ width: 20 }}>
-          <span className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider writing-mode-vertical"
-            style={{ writingMode: 'vertical-rl', transform: 'rotate(180deg)' }}>
-            Impact ↑
-          </span>
-        </div>
-
-        {/* Row labels + cells */}
-        <div className="flex flex-col gap-1">
-          {impactLevels.map(impact => (
-            <div key={impact} className="flex items-center gap-1">
-              <div className="w-[76px] text-right pr-2">
-                <span className="text-[10px] font-bold text-muted-foreground">{impact}</span>
-                <p className="text-[8px] text-muted-foreground/70 leading-tight">{LEVEL_LABELS[impact]}</p>
-              </div>
-              {freqLevels.map(freq => {
-                const acc = isAcceptable(impact, freq);
-                return (
-                  <button
-                    key={`${impact}-${freq}`}
-                    className={`w-16 h-12 rounded-md border text-[10px] font-bold transition-all flex items-center justify-center ${getCellColor(impact, freq)} ${readonly ? 'cursor-default' : 'cursor-pointer active:scale-95'}`}
-                    onClick={() => !readonly && onCellClick(impact, freq)}
-                    disabled={readonly}
-                    title={`Impact: ${LEVEL_LABELS[impact]}, Frequency: ${LEVEL_LABELS[freq]} — ${acc === true ? 'Acceptable' : acc === false ? 'Not Acceptable' : 'Not Set'}`}
-                  >
-                    {acc === true && <CheckCircle className="h-4 w-4" />}
-                    {acc === false && <XCircle className="h-4 w-4" />}
-                  </button>
-                );
-              })}
-            </div>
-          ))}
-        </div>
-      </div>
-    </div>
   );
 }

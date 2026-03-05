@@ -21,21 +21,72 @@ export interface RiskMatrixCell {
   created_at: string;
 }
 
-// Standard risk matrix definition (5x5)
-export const STANDARD_IMPACT_LEVELS = ['VL', 'L', 'M', 'H', 'VH'];
-export const STANDARD_FREQUENCY_LEVELS = ['VL', 'L', 'M', 'H', 'VH'];
+// Level label lookups
 export const LEVEL_LABELS: Record<string, string> = {
   VL: 'Very Low', L: 'Low', M: 'Medium', H: 'High', VH: 'Very High',
+  Rare: 'Rare', Possible: 'Possible', Likely: 'Likely', 'Almost Certain': 'Almost Certain',
+  Minor: 'Minor', Moderate: 'Moderate', Major: 'Major', Severe: 'Severe',
 };
 
-// Standard matrix: acceptable cells (impact, frequency) — conservative standard
-export const STANDARD_ACCEPTABLE_CELLS: [string, string][] = [
-  ['VL', 'VL'], ['VL', 'L'], ['VL', 'M'], ['VL', 'H'], ['VL', 'VH'],
-  ['L', 'VL'], ['L', 'L'], ['L', 'M'], ['L', 'H'],
-  ['M', 'VL'], ['M', 'L'], ['M', 'M'],
-  ['H', 'VL'], ['H', 'L'],
-  ['VH', 'VL'],
+// ─── Standard Templates ─────────────────────────────────────────────
+
+export interface RiskMatrixTemplate {
+  key: string;
+  name: string;
+  description: string;
+  impactLevels: string[];
+  frequencyLevels: string[];
+  acceptableCells: [string, string][];
+}
+
+export const STANDARD_TEMPLATES: RiskMatrixTemplate[] = [
+  {
+    key: 'iso31000',
+    name: 'ISO 31000 / ISO 27005 (5×5)',
+    description: 'Default enterprise & information-security risk matrix based on ISO 31000 and ISO 27005.',
+    impactLevels: ['VL', 'L', 'M', 'H', 'VH'],
+    frequencyLevels: ['VL', 'L', 'M', 'H', 'VH'],
+    acceptableCells: [
+      ['VL', 'VL'], ['VL', 'L'], ['VL', 'M'], ['VL', 'H'], ['VL', 'VH'],
+      ['L', 'VL'], ['L', 'L'], ['L', 'M'], ['L', 'H'],
+      ['M', 'VL'], ['M', 'L'], ['M', 'M'],
+      ['H', 'VL'], ['H', 'L'],
+      ['VH', 'VL'],
+    ],
+  },
+  {
+    key: 'basic3x3',
+    name: 'Basic 3×3 (Simple Assessment)',
+    description: 'Quick assessments, small organizations, and early risk screening.',
+    impactLevels: ['L', 'M', 'H'],
+    frequencyLevels: ['L', 'M', 'H'],
+    acceptableCells: [
+      ['L', 'L'], ['L', 'M'], ['L', 'H'],
+      ['M', 'L'], ['M', 'M'],
+      ['H', 'L'],
+    ],
+  },
+  {
+    key: 'operational4x4',
+    name: 'Operational / Audit (4×4)',
+    description: 'Internal audit, operational risk, and compliance frameworks.',
+    impactLevels: ['Minor', 'Moderate', 'Major', 'Severe'],
+    frequencyLevels: ['Rare', 'Possible', 'Likely', 'Almost Certain'],
+    acceptableCells: [
+      ['Minor', 'Rare'], ['Minor', 'Possible'], ['Minor', 'Likely'], ['Minor', 'Almost Certain'],
+      ['Moderate', 'Rare'], ['Moderate', 'Possible'], ['Moderate', 'Likely'],
+      ['Major', 'Rare'], ['Major', 'Possible'],
+      ['Severe', 'Rare'],
+    ],
+  },
 ];
+
+// Convenience aliases for the default ISO template
+export const STANDARD_IMPACT_LEVELS = STANDARD_TEMPLATES[0].impactLevels;
+export const STANDARD_FREQUENCY_LEVELS = STANDARD_TEMPLATES[0].frequencyLevels;
+export const STANDARD_ACCEPTABLE_CELLS = STANDARD_TEMPLATES[0].acceptableCells;
+
+// ─── Data access ────────────────────────────────────────────────────
 
 export async function fetchRiskMatrix(processId: string): Promise<RiskMatrix | null> {
   const { data } = await supabase
@@ -59,17 +110,22 @@ export async function upsertRiskMatrix(
   matrixType: 'user-defined' | 'standard',
   name?: string,
   description?: string,
+  impactLevels?: string[],
+  frequencyLevels?: string[],
 ): Promise<RiskMatrix> {
-  // Check if matrix already exists
+  const payload: Record<string, unknown> = {
+    matrix_type: matrixType,
+    name: name || (matrixType === 'standard' ? 'Standard Risk Matrix' : 'Custom Risk Matrix'),
+    description: description || null,
+  };
+  if (impactLevels) payload.impact_levels = impactLevels;
+  if (frequencyLevels) payload.frequency_levels = frequencyLevels;
+
   const existing = await fetchRiskMatrix(processId);
   if (existing) {
     const { data, error } = await supabase
       .from('risk_matrices')
-      .update({
-        matrix_type: matrixType,
-        name: name || (matrixType === 'standard' ? 'Standard Risk Matrix' : 'Custom Risk Matrix'),
-        description: description || null,
-      })
+      .update(payload)
       .eq('id', existing.id)
       .select()
       .single();
@@ -79,12 +135,7 @@ export async function upsertRiskMatrix(
 
   const { data, error } = await supabase
     .from('risk_matrices')
-    .insert({
-      process_id: processId,
-      matrix_type: matrixType,
-      name: name || (matrixType === 'standard' ? 'Standard Risk Matrix' : 'Custom Risk Matrix'),
-      description: description || null,
-    })
+    .insert({ process_id: processId, ...payload } as any)
     .select()
     .single();
   if (error) throw error;
@@ -102,7 +153,6 @@ export async function saveCellAcceptability(
   frequencyLevel: string,
   acceptable: boolean,
 ) {
-  // Upsert the cell
   const { error } = await supabase
     .from('risk_matrix_cells')
     .upsert(
@@ -112,15 +162,16 @@ export async function saveCellAcceptability(
   if (error) throw error;
 }
 
-export async function applyStandardMatrix(matrixId: string) {
-  // Delete all existing cells
+/** Apply a template's cells to a matrix. Falls back to ISO 31000 default. */
+export async function applyTemplateMatrix(matrixId: string, templateKey?: string) {
+  const template = STANDARD_TEMPLATES.find(t => t.key === templateKey) || STANDARD_TEMPLATES[0];
+
   await supabase.from('risk_matrix_cells').delete().eq('matrix_id', matrixId);
 
-  // Insert standard cells
   const cells = [];
-  for (const impact of STANDARD_IMPACT_LEVELS) {
-    for (const freq of STANDARD_FREQUENCY_LEVELS) {
-      const acceptable = STANDARD_ACCEPTABLE_CELLS.some(
+  for (const impact of template.impactLevels) {
+    for (const freq of template.frequencyLevels) {
+      const acceptable = template.acceptableCells.some(
         ([i, f]) => i === impact && f === freq
       );
       cells.push({
@@ -134,3 +185,6 @@ export async function applyStandardMatrix(matrixId: string) {
   const { error } = await supabase.from('risk_matrix_cells').insert(cells);
   if (error) throw error;
 }
+
+/** @deprecated use applyTemplateMatrix */
+export const applyStandardMatrix = (matrixId: string) => applyTemplateMatrix(matrixId, 'iso31000');
