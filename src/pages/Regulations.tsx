@@ -13,6 +13,7 @@ const REG_COLUMNS: ColumnDef[] = [
   { key: 'actions', label: 'Actions', defaultVisible: true, minWidth: 60 },
 ];
 import { ArrowLeft, Scale, CheckCircle, AlertTriangle, XCircle, Plus, Trash2, Pencil, Search, X } from 'lucide-react';
+import { ConfirmDialog } from '@/components/ConfirmDialog';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -38,6 +39,7 @@ export default function Regulations() {
   const [clients, setClients] = useState<Client[]>([]);
   const [addDialog, setAddDialog] = useState(false);
   const [editReg, setEditReg] = useState<Regulation | null>(null);
+  const [confirmDelete, setConfirmDelete] = useState<Regulation | null>(null);
 
   const [search, setSearch] = useState('');
   const [filterClient, setFilterClient] = useState('all');
@@ -209,7 +211,7 @@ export default function Regulations() {
                       {colSettings.isVisible('actions') && <TableCell className="text-right py-2.5 px-3">
                         <div className="flex items-center justify-end gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity">
                           <Button variant="ghost" size="icon" className="h-6 w-6" onClick={() => setEditReg(r)}><Pencil className="h-3 w-3" /></Button>
-                          <Button variant="ghost" size="icon" className="h-6 w-6 hover:text-destructive" onClick={async () => { await deleteRegulation(r.id); reload(); }}><Trash2 className="h-3 w-3" /></Button>
+                          <Button variant="ghost" size="icon" className="h-6 w-6 hover:text-destructive" onClick={() => setConfirmDelete(r)}><Trash2 className="h-3 w-3" /></Button>
                         </div>
                       </TableCell>}
                     </TableRow>
@@ -223,6 +225,14 @@ export default function Regulations() {
 
       {addDialog && <RegulationDialog mode="add" processes={processes} steps={steps} onClose={() => setAddDialog(false)} onRefresh={reload} />}
       {editReg && <RegulationDialog mode="edit" regulation={editReg} processes={processes} steps={steps} onClose={() => setEditReg(null)} onRefresh={reload} />}
+      <ConfirmDialog
+        open={!!confirmDelete}
+        title="Delete Regulation"
+        description={`Are you sure you want to delete "${confirmDelete?.name || ''}"? This action cannot be undone.`}
+        confirmLabel="Delete"
+        onConfirm={async () => { if (confirmDelete) { await deleteRegulation(confirmDelete.id); reload(); } setConfirmDelete(null); }}
+        onCancel={() => setConfirmDelete(null)}
+      />
     </div>
   );
 }

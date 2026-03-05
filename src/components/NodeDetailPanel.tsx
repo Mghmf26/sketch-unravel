@@ -10,6 +10,7 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import { Separator } from '@/components/ui/separator';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog';
+import { ConfirmDialog } from '@/components/ConfirmDialog';
 import { toast } from '@/hooks/use-toast';
 import {
   updateStep, updateRisk, updateControl, updateRegulation, updateIncident,
@@ -344,8 +345,15 @@ export default function NodeDetailPanel({ node, risks, controls, regulations, in
     setSaving(false);
   };
 
-  const handleDeleteItem = async (type: string, id: string) => {
-    if (!confirm(`Delete this ${type}?`)) return;
+  const [pendingDelete, setPendingDelete] = useState<{ type: string; id: string; label: string } | null>(null);
+
+  const handleDeleteItem = async (type: string, id: string, label?: string) => {
+    setPendingDelete({ type, id, label: label || type });
+  };
+
+  const executeDelete = async () => {
+    if (!pendingDelete) return;
+    const { type, id } = pendingDelete;
     try {
       if (type === 'risk') await deleteRisk(id);
       else if (type === 'control') await deleteControl(id);
@@ -355,6 +363,7 @@ export default function NodeDetailPanel({ node, risks, controls, regulations, in
       toast({ title: `${type.charAt(0).toUpperCase() + type.slice(1)} deleted` });
       onDataChanged?.();
     } catch { toast({ title: 'Delete failed', variant: 'destructive' }); }
+    setPendingDelete(null);
   };
 
   return (
@@ -436,7 +445,7 @@ export default function NodeDetailPanel({ node, risks, controls, regulations, in
                 <span className="text-lg font-bold text-red-700">{stepIncidents.length}</span>
               </div>
               <div className="p-2 rounded-lg border bg-sky-50">
-                <div className="flex items-center gap-1 mb-0.5"><Monitor className="h-3 w-3 text-sky-500" /><span className="text-[10px] font-semibold text-sky-700">Apps</span></div>
+                <div className="flex items-center gap-1 mb-0.5"><Monitor className="h-3 w-3 text-sky-500" /><span className="text-[10px] font-semibold text-sky-700">Int./App.</span></div>
                 <span className="text-lg font-bold text-sky-700">{stepApps.length}</span>
               </div>
             </div>
@@ -888,6 +897,14 @@ export default function NodeDetailPanel({ node, risks, controls, regulations, in
         </DialogFooter>
       </DialogContent>
     </Dialog>
+    <ConfirmDialog
+      open={!!pendingDelete}
+      title={`Delete ${pendingDelete?.type || ''}?`}
+      description={`Are you sure you want to delete this ${pendingDelete?.type || 'item'}? This action cannot be undone.`}
+      confirmLabel="Delete"
+      onConfirm={executeDelete}
+      onCancel={() => setPendingDelete(null)}
+    />
     </>
   );
 }

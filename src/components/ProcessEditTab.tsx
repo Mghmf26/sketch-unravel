@@ -53,7 +53,7 @@ const typeColors: Record<string, { bg: string; text: string; border: string; dot
 
 const typeLabel: Record<string, string> = {
   'in-scope': 'Step',
-  'interface': 'Process Interface',
+  'interface': 'Business Process',
   'event': 'Event',
   'xor': 'XOR Gateway',
   'decision': 'Decision',
@@ -241,13 +241,13 @@ export default function ProcessEditTab({ processId }: ProcessEditTabProps) {
       <div className="grid grid-cols-4 md:grid-cols-9 gap-2">
         {[
           { label: 'Steps', count: steps.length, dot: 'bg-emerald-500' },
-          { label: 'Interfaces', count: steps.filter(s => s.type === 'interface').length, dot: 'bg-slate-400' },
+          { label: 'Bus. Processes', count: steps.filter(s => s.type === 'interface').length, dot: 'bg-slate-400' },
           { label: 'Connections', count: connections.length, dot: 'bg-slate-500' },
           { label: 'Risks', count: risks.length, dot: 'bg-orange-500' },
           { label: 'Controls', count: controls.length, dot: 'bg-blue-500' },
           { label: 'Regulations', count: regulations.length, dot: 'bg-purple-500' },
           { label: 'Incidents', count: incidents.length, dot: 'bg-red-500' },
-          { label: 'Apps', count: applications.length, dot: 'bg-sky-500' },
+          { label: 'Int./App.', count: applications.length, dot: 'bg-sky-500' },
           { label: 'RACI', count: raciEntries.length, dot: 'bg-cyan-500' },
         ].map(m => (
           <div key={m.label} className="flex items-center gap-2 p-2 rounded-lg border bg-card">
@@ -529,7 +529,7 @@ export default function ProcessEditTab({ processId }: ProcessEditTabProps) {
                             <div className="flex items-center gap-1.5 justify-between">
                               <div className="flex items-center gap-1.5">
                                 <Monitor className="h-3 w-3 text-sky-500" />
-                                <span className="text-[11px] font-semibold text-sky-700">Applications & Screens ({stepApps.length})</span>
+                                <span className="text-[11px] font-semibold text-sky-700">Interfaces / Applications ({stepApps.length})</span>
                               </div>
                               <Button variant="ghost" size="sm" className="h-5 text-[10px] text-sky-600" onClick={() => { setContextStepId(step.id); setAddDialog('application'); }}>
                                 <Plus className="h-3 w-3 mr-0.5" /> Add

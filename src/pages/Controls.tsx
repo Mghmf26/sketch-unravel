@@ -13,6 +13,7 @@ const CONTROL_COLUMNS: ColumnDef[] = [
   { key: 'actions', label: 'Actions', defaultVisible: true, minWidth: 60 },
 ];
 import { ArrowLeft, Shield, Plus, Trash2, Pencil, Search, X } from 'lucide-react';
+import { ConfirmDialog } from '@/components/ConfirmDialog';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -39,6 +40,7 @@ export default function Controls() {
   const [clients, setClients] = useState<Client[]>([]);
   const [addDialog, setAddDialog] = useState(false);
   const [editControl, setEditControl] = useState<Control | null>(null);
+  const [confirmDelete, setConfirmDelete] = useState<Control | null>(null);
 
   const [search, setSearch] = useState('');
   const [filterClient, setFilterClient] = useState('all');
@@ -215,7 +217,7 @@ export default function Controls() {
                       {colSettings.isVisible('actions') && <TableCell className="text-right py-2.5 px-3">
                         <div className="flex items-center justify-end gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity">
                           <Button variant="ghost" size="icon" className="h-6 w-6" onClick={() => setEditControl(c)}><Pencil className="h-3 w-3" /></Button>
-                          <Button variant="ghost" size="icon" className="h-6 w-6 hover:text-destructive" onClick={async () => { await deleteControl(c.id); reload(); }}><Trash2 className="h-3 w-3" /></Button>
+                          <Button variant="ghost" size="icon" className="h-6 w-6 hover:text-destructive" onClick={() => setConfirmDelete(c)}><Trash2 className="h-3 w-3" /></Button>
                         </div>
                       </TableCell>}
                     </TableRow>
@@ -229,6 +231,14 @@ export default function Controls() {
 
       {addDialog && <ControlDialog mode="add" risks={risks} processes={processes} onClose={() => setAddDialog(false)} onRefresh={reload} />}
       {editControl && <ControlDialog mode="edit" control={editControl} risks={risks} processes={processes} onClose={() => setEditControl(null)} onRefresh={reload} />}
+      <ConfirmDialog
+        open={!!confirmDelete}
+        title="Delete Control"
+        description={`Are you sure you want to delete "${confirmDelete?.name || ''}"? This action cannot be undone.`}
+        confirmLabel="Delete"
+        onConfirm={async () => { if (confirmDelete) { await deleteControl(confirmDelete.id); reload(); } setConfirmDelete(null); }}
+        onCancel={() => setConfirmDelete(null)}
+      />
     </div>
   );
 }

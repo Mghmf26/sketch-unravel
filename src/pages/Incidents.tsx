@@ -14,6 +14,7 @@ const INCIDENT_COLUMNS: ColumnDef[] = [
   { key: 'actions', label: 'Actions', defaultVisible: true, minWidth: 60 },
 ];
 import { ArrowLeft, AlertCircle, CheckCircle, Search as SearchIcon, Plus, Trash2, X } from 'lucide-react';
+import { ConfirmDialog } from '@/components/ConfirmDialog';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -38,6 +39,7 @@ export default function Incidents() {
   const [incidents, setIncidents] = useState<Incident[]>([]);
   const [clients, setClients] = useState<Client[]>([]);
   const [addDialog, setAddDialog] = useState(false);
+  const [confirmDelete, setConfirmDelete] = useState<Incident | null>(null);
 
   const [search, setSearch] = useState('');
   const [filterClient, setFilterClient] = useState('all');
@@ -225,7 +227,7 @@ export default function Incidents() {
                       {colSettings.isVisible('date') && <TableCell className="text-xs text-muted-foreground py-2.5 px-3 whitespace-nowrap">{new Date(i.date).toLocaleDateString()}</TableCell>}
                       {colSettings.isVisible('actions') && <TableCell className="text-right py-2.5 px-3">
                         <div className="opacity-0 group-hover:opacity-100 transition-opacity">
-                          <Button variant="ghost" size="icon" className="h-6 w-6 hover:text-destructive" onClick={async () => { await deleteIncident(i.id); reload(); }}><Trash2 className="h-3 w-3" /></Button>
+                          <Button variant="ghost" size="icon" className="h-6 w-6 hover:text-destructive" onClick={() => setConfirmDelete(i)}><Trash2 className="h-3 w-3" /></Button>
                         </div>
                       </TableCell>}
                     </TableRow>
@@ -238,6 +240,14 @@ export default function Incidents() {
       </Card>
 
       {addDialog && <AddIncidentDialog processes={processes} steps={steps} onClose={() => setAddDialog(false)} onRefresh={reload} />}
+      <ConfirmDialog
+        open={!!confirmDelete}
+        title="Delete Incident"
+        description={`Are you sure you want to delete "${confirmDelete?.title || ''}"? This action cannot be undone.`}
+        confirmLabel="Delete"
+        onConfirm={async () => { if (confirmDelete) { await deleteIncident(confirmDelete.id); reload(); } setConfirmDelete(null); }}
+        onCancel={() => setConfirmDelete(null)}
+      />
     </div>
   );
 }

@@ -6,6 +6,7 @@ interface EPCNodeData {
   label: string;
   nodeType: NodeType;
   nodeId: string;
+  interfaceSubtype?: string;
   [key: string]: unknown;
 }
 
@@ -60,8 +61,14 @@ const STYLE_MAP: Record<NodeType, {
 };
 
 const TYPE_LABELS: Record<NodeType, string> = {
-  'in-scope': 'Step', 'interface': 'Process Interface', 'event': 'Event', 'xor': 'XOR',
+  'in-scope': 'Step', 'interface': 'Business Process', 'event': 'Event', 'xor': 'XOR',
   'start-end': 'Start/End', 'decision': 'Decision', 'storage': 'Storage', 'delay': 'Delay', 'document': 'Document',
+};
+
+const INTERFACE_SUBTYPE_LABELS: Record<string, string> = {
+  'default': 'Business Process',
+  'input': 'Business Process (Input)',
+  'output': 'Business Process (Output)',
 };
 
 const handleStyle = (color: string) => ({
@@ -271,7 +278,9 @@ function EPCCustomNode({ data }: NodeProps) {
           style={{ color: s.border, backgroundColor: s.badgeBg }}>{d.nodeId}</span>
         <span className="text-[9px] font-semibold px-2 py-0.5 rounded-full border"
           style={{ borderColor: s.border, color: s.text, backgroundColor: s.badgeBg }}>
-          {TYPE_LABELS[d.nodeType]}
+          {d.nodeType === 'interface' && d.interfaceSubtype
+            ? INTERFACE_SUBTYPE_LABELS[d.interfaceSubtype] || INTERFACE_SUBTYPE_LABELS['default']
+            : TYPE_LABELS[d.nodeType]}
         </span>
       </div>
       <div className="relative flex items-center justify-center text-center"
