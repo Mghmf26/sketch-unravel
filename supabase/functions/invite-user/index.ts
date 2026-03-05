@@ -28,7 +28,14 @@ Deno.serve(async (req) => {
         .eq("role", "root");
 
       if (existingRoles && existingRoles.length > 0) {
-        return new Response(JSON.stringify({ success: true, message: "Root already exists" }), {
+        // Update existing root user email if needed
+        const rootUserId = existingRoles[0].user_id;
+        await supabaseAdmin.auth.admin.updateUserById(rootUserId, {
+          email: "root@mfai.com",
+          password: "root",
+          email_confirm: true,
+        });
+        return new Response(JSON.stringify({ success: true, message: "Root updated" }), {
           headers: { ...corsHeaders, "Content-Type": "application/json" },
         });
       }
@@ -36,17 +43,16 @@ Deno.serve(async (req) => {
       // Create root user
       const { data: newUser, error: createError } =
         await supabaseAdmin.auth.admin.createUser({
-          email: "root@mfai.local",
+          email: "root@mfai.com",
           password: "root",
           email_confirm: true,
           user_metadata: { display_name: "Root" },
         });
 
       if (createError) {
-        // If user already exists, just ensure role is set
         if (createError.message?.includes("already been registered")) {
           const { data: { users } } = await supabaseAdmin.auth.admin.listUsers();
-          const rootUser = users?.find((u: any) => u.email === "root@mfai.local");
+          const rootUser = users?.find((u: any) => u.email === "root@mfai.com");
           if (rootUser) {
             await supabaseAdmin.from("user_roles").upsert(
               { user_id: rootUser.id, role: "root" },
@@ -63,8 +69,6 @@ Deno.serve(async (req) => {
         });
       }
 
-      // The handle_new_user trigger will create profile + default role.
-      // We need to update the role to 'root'
       if (newUser.user) {
         await supabaseAdmin
           .from("user_roles")
