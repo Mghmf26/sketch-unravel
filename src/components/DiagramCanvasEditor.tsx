@@ -362,7 +362,7 @@ export default function DiagramCanvasEditor({
                   <p className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider mb-2">Node Types</p>
                   {[
                     { color: 'bg-emerald-500', shape: 'rounded-sm', label: 'Step', desc: 'Process activity' },
-                    { color: 'bg-slate-400', shape: 'rounded-sm', label: 'Process Interface', desc: 'External process' },
+                    { color: 'bg-slate-400', shape: 'rounded-sm', label: 'Business Process', desc: 'External process' },
                     { color: 'bg-pink-500', shape: 'rounded-sm', label: 'Event', desc: 'Trigger or outcome' },
                     { color: 'bg-blue-500', shape: 'rounded-full', label: 'XOR Gateway', desc: 'Exclusive branch' },
                     { color: 'bg-green-500', shape: 'rounded-full', label: 'Start / End', desc: 'Flow boundary' },
@@ -409,7 +409,7 @@ export default function DiagramCanvasEditor({
                   <span className="w-2.5 h-2.5 rounded-sm bg-emerald-400 mr-2" /> Step
                 </DropdownMenuItem>
                 <DropdownMenuItem onClick={() => addNode('interface')}>
-                  <span className="w-2.5 h-2.5 rounded-sm bg-slate-300 mr-2" /> Process Interface
+                  <span className="w-2.5 h-2.5 rounded-sm bg-slate-300 mr-2" /> Business Process
                 </DropdownMenuItem>
                 <DropdownMenuItem onClick={() => addNode('event')}>
                   <span className="w-2.5 h-2.5 rounded-sm bg-pink-400 mr-2" /> Event
