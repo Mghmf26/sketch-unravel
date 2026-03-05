@@ -667,6 +667,7 @@ export type Database = {
           description: string | null
           id: string
           name: string
+          parent_id: string | null
           process_id: string
           screen_name: string | null
           step_id: string
@@ -677,6 +678,7 @@ export type Database = {
           description?: string | null
           id?: string
           name: string
+          parent_id?: string | null
           process_id: string
           screen_name?: string | null
           step_id: string
@@ -687,11 +689,19 @@ export type Database = {
           description?: string | null
           id?: string
           name?: string
+          parent_id?: string | null
           process_id?: string
           screen_name?: string | null
           step_id?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "step_applications_parent_id_fkey"
+            columns: ["parent_id"]
+            isOneToOne: false
+            referencedRelation: "step_applications"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "step_applications_process_id_fkey"
             columns: ["process_id"]

@@ -149,6 +149,7 @@ export default function ProcessEditTab({ processId }: ProcessEditTabProps) {
   const [addDialog, setAddDialog] = useState<AddDialog>(null);
   const [contextStepId, setContextStepId] = useState<string | null>(null);
   const [contextRiskId, setContextRiskId] = useState<string | null>(null);
+  const [contextScreenId, setContextScreenId] = useState<string | null>(null);
   const [expandedSteps, setExpandedSteps] = useState<Set<string>>(new Set());
 
   // Global sections
@@ -528,17 +529,56 @@ export default function ProcessEditTab({ processId }: ProcessEditTabProps) {
                             <div className="flex items-center gap-1.5 justify-between">
                               <div className="flex items-center gap-1.5">
                                 <Monitor className="h-3 w-3 text-sky-500" />
-                                <span className="text-[11px] font-semibold text-sky-700">Applications ({stepApps.length})</span>
+                                <span className="text-[11px] font-semibold text-sky-700">Applications & Screens ({stepApps.length})</span>
                               </div>
                               <Button variant="ghost" size="sm" className="h-5 text-[10px] text-sky-600" onClick={() => { setContextStepId(step.id); setAddDialog('application'); }}>
                                 <Plus className="h-3 w-3 mr-0.5" /> Add
                               </Button>
                             </div>
-                            {stepApps.map(app => (
+                            {/* Screens with nested apps */}
+                            {stepApps.filter(a => a.app_type === 'screen' && !a.parent_id).map(screen => {
+                              const childApps = stepApps.filter(a => a.parent_id === screen.id);
+                              return (
+                                <div key={screen.id} className="ml-4 pl-3 border-l-2 border-sky-200 space-y-1">
+                                  <div className="flex items-center gap-2 group/app py-1">
+                                    <Monitor className="h-3 w-3 text-sky-400 shrink-0" />
+                                    <InlineEdit value={screen.name} onSave={v => updateStepApplication(screen.id, { name: v }).then(reload)} className="text-sm font-medium" />
+                                    <Badge className="border-0 bg-sky-100 text-sky-700 text-[9px]">Screen</Badge>
+                                    <span className="flex-1" />
+                                    <Button variant="ghost" size="sm" className="h-5 text-[10px] text-sky-600 opacity-0 group-hover/app:opacity-100"
+                                      onClick={() => { setContextStepId(step.id); setContextScreenId(screen.id); setAddDialog('application'); }}>
+                                      <Plus className="h-2.5 w-2.5 mr-0.5" /> App
+                                    </Button>
+                                    <Button variant="ghost" size="icon" className="h-5 w-5 opacity-0 group-hover/app:opacity-100 text-muted-foreground hover:text-destructive"
+                                      onClick={() => deleteStepApplication(screen.id).then(reload)}>
+                                      <Trash2 className="h-2.5 w-2.5" />
+                                    </Button>
+                                  </div>
+                                  {childApps.length > 0 && (
+                                    <div className="ml-4 pl-3 border-l-2 border-sky-100 space-y-1">
+                                      {childApps.map(app => (
+                                        <div key={app.id} className="flex items-center gap-2 group/child py-0.5">
+                                          <Monitor className="h-2.5 w-2.5 text-sky-300 shrink-0" />
+                                          <InlineEdit value={app.name} onSave={v => updateStepApplication(app.id, { name: v }).then(reload)} className="text-xs" />
+                                          <Badge variant="outline" className="text-[8px]">App</Badge>
+                                          <span className="flex-1" />
+                                          <Button variant="ghost" size="icon" className="h-4 w-4 opacity-0 group-hover/child:opacity-100 text-muted-foreground hover:text-destructive"
+                                            onClick={() => deleteStepApplication(app.id).then(reload)}>
+                                            <Trash2 className="h-2 w-2" />
+                                          </Button>
+                                        </div>
+                                      ))}
+                                    </div>
+                                  )}
+                                </div>
+                              );
+                            })}
+                            {/* Standalone applications (no parent, not screens) */}
+                            {stepApps.filter(a => a.app_type !== 'screen' && !a.parent_id).map(app => (
                               <div key={app.id} className="ml-4 pl-3 border-l-2 border-sky-200 flex items-center gap-2 group/app py-1">
+                                <Monitor className="h-3 w-3 text-sky-400 shrink-0" />
                                 <InlineEdit value={app.name} onSave={v => updateStepApplication(app.id, { name: v }).then(reload)} className="text-sm font-medium" />
                                 <Badge variant="outline" className="text-[9px] capitalize">{app.app_type}</Badge>
-                                {app.screen_name && <span className="text-[10px] text-muted-foreground">Screen: {app.screen_name}</span>}
                                 <span className="flex-1" />
                                 <Button variant="ghost" size="icon" className="h-5 w-5 opacity-0 group-hover/app:opacity-100 text-muted-foreground hover:text-destructive"
                                   onClick={() => deleteStepApplication(app.id).then(reload)}>
@@ -693,7 +733,12 @@ export default function ProcessEditTab({ processId }: ProcessEditTabProps) {
         <AddRaciDialog processId={processId} stepId={contextStepId} onClose={() => { setAddDialog(null); setContextStepId(null); }} onRefresh={reload} />
       )}
       {addDialog === 'application' && contextStepId && (
-        <AddApplicationDialog processId={processId} stepId={contextStepId} onClose={() => { setAddDialog(null); setContextStepId(null); }} onRefresh={reload} />
+        <AddApplicationDialog 
+          processId={processId} stepId={contextStepId} 
+          parentScreenId={contextScreenId}
+          screens={applications.filter(a => a.app_type === 'screen' && a.step_id === contextStepId && !a.parent_id)}
+          onClose={() => { setAddDialog(null); setContextStepId(null); setContextScreenId(null); }} onRefresh={reload} 
+        />
       )}
     </div>
   );
@@ -991,14 +1036,20 @@ function AddRaciDialog({ processId, stepId, onClose, onRefresh }: { processId: s
   );
 }
 
-function AddApplicationDialog({ processId, stepId, onClose, onRefresh }: { processId: string; stepId: string; onClose: () => void; onRefresh: () => void }) {
+function AddApplicationDialog({ processId, stepId, parentScreenId, screens, onClose, onRefresh }: { 
+  processId: string; stepId: string; parentScreenId?: string | null; screens: StepApplication[]; onClose: () => void; onRefresh: () => void;
+}) {
   const [name, setName] = useState('');
-  const [screenName, setScreenName] = useState('');
-  const [appType, setAppType] = useState('application');
+  const [appType, setAppType] = useState(parentScreenId ? 'application' : 'application');
+  const [parentId, setParentId] = useState(parentScreenId || '');
   const [desc, setDesc] = useState('');
   const submit = async () => {
     if (!name.trim()) return;
-    await insertStepApplication({ process_id: processId, step_id: stepId, name: name.trim(), screen_name: screenName || null, app_type: appType, description: desc || null });
+    await insertStepApplication({ 
+      process_id: processId, step_id: stepId, name: name.trim(), 
+      app_type: appType, description: desc || null,
+      parent_id: parentId || null,
+    } as any);
     toast({ title: `${appType === 'screen' ? 'Screen' : 'Application'} added` }); onRefresh(); onClose();
   };
   return (
@@ -1007,8 +1058,8 @@ function AddApplicationDialog({ processId, stepId, onClose, onRefresh }: { proce
         <DialogHeader><DialogTitle className="flex items-center gap-2"><Monitor className="h-5 w-5 text-sky-500" /> Add Application / Screen</DialogTitle></DialogHeader>
         <div className="grid gap-3 py-2">
           <div className="grid gap-1.5">
-            <Label>Type</Label>
-            <Select value={appType} onValueChange={setAppType}>
+            <Label>What are you adding?</Label>
+            <Select value={appType} onValueChange={v => { setAppType(v); if (v === 'screen') setParentId(''); }}>
               <SelectTrigger><SelectValue /></SelectTrigger>
               <SelectContent>
                 <SelectItem value="application">Application</SelectItem>
@@ -1016,13 +1067,26 @@ function AddApplicationDialog({ processId, stepId, onClose, onRefresh }: { proce
               </SelectContent>
             </Select>
           </div>
-          <div className="grid gap-1.5"><Label>Name *</Label><Input value={name} onChange={e => setName(e.target.value)} placeholder={appType === 'screen' ? 'Screen name...' : 'Application name...'} /></div>
-          {appType === 'application' && (
-            <div className="grid gap-1.5"><Label>Screen Name (optional)</Label><Input value={screenName} onChange={e => setScreenName(e.target.value)} placeholder="e.g. Main Dashboard" /></div>
+          <div className="grid gap-1.5">
+            <Label>{appType === 'screen' ? 'Screen Name' : 'Application Name'} *</Label>
+            <Input value={name} onChange={e => setName(e.target.value)} placeholder={appType === 'screen' ? 'e.g. Invoice Entry Screen' : 'e.g. SAP FI, Oracle EBS'} />
+          </div>
+          {appType === 'application' && screens.length > 0 && (
+            <div className="grid gap-1.5">
+              <Label>Link to Screen (optional)</Label>
+              <Select value={parentId} onValueChange={setParentId}>
+                <SelectTrigger><SelectValue placeholder="Standalone application" /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="">Standalone (no screen)</SelectItem>
+                  {screens.map(s => <SelectItem key={s.id} value={s.id}>{s.name}</SelectItem>)}
+                </SelectContent>
+              </Select>
+              <p className="text-[10px] text-muted-foreground">Link this application to a screen to show it as a child</p>
+            </div>
           )}
           <div className="grid gap-1.5"><Label>Description</Label><Textarea value={desc} onChange={e => setDesc(e.target.value)} placeholder="Optional description..." /></div>
         </div>
-        <DialogFooter><Button variant="outline" onClick={onClose}>Cancel</Button><Button onClick={submit}>Add</Button></DialogFooter>
+        <DialogFooter><Button variant="outline" onClick={onClose}>Cancel</Button><Button onClick={submit} disabled={!name.trim()}>Add {appType === 'screen' ? 'Screen' : 'Application'}</Button></DialogFooter>
       </DialogContent>
     </Dialog>
   );

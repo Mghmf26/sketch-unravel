@@ -274,7 +274,7 @@ export default function NodeDetailPanel({ node, risks, controls, regulations, in
   const [controlForm, setControlForm] = useState({ name: '', description: '', type: 'preventive', effectiveness: 'effective' });
   const [regulationForm, setRegulationForm] = useState({ name: '', description: '', authority: '', compliance_status: 'partial' });
   const [incidentForm, setIncidentForm] = useState({ title: '', description: '', severity: 'medium', status: 'open' });
-  const [appForm, setAppForm] = useState({ name: '', screen_name: '', description: '', app_type: 'application' });
+  const [appForm, setAppForm] = useState({ name: '', description: '', app_type: 'application', parent_id: '' });
 
   const derivedProcessId = processId || stepRisks[0]?.process_id || stepRegulations[0]?.process_id || stepIncidents[0]?.process_id || '';
 
@@ -332,9 +332,15 @@ export default function NodeDetailPanel({ node, risks, controls, regulations, in
     if (!appForm.name.trim() || !derivedProcessId) return;
     setSaving(true);
     try {
-      await insertStepApplication({ step_id: node.id, process_id: derivedProcessId, name: appForm.name.trim(), screen_name: appForm.screen_name || null, description: appForm.description || null, app_type: appForm.app_type });
-      toast({ title: 'Application added' }); setAddDialog(null); setAppForm({ name: '', screen_name: '', description: '', app_type: 'application' }); onDataChanged?.();
-    } catch { toast({ title: 'Failed to add application', variant: 'destructive' }); }
+      await insertStepApplication({ 
+        step_id: node.id, process_id: derivedProcessId, name: appForm.name.trim(), 
+        description: appForm.description || null, app_type: appForm.app_type,
+        parent_id: appForm.parent_id || null,
+      } as any);
+      toast({ title: 'Added' }); setAddDialog(null); 
+      setAppForm({ name: '', description: '', app_type: 'application', parent_id: '' }); 
+      onDataChanged?.();
+    } catch { toast({ title: 'Failed to add', variant: 'destructive' }); }
     setSaving(false);
   };
 
@@ -579,36 +585,82 @@ export default function NodeDetailPanel({ node, risks, controls, regulations, in
           {/* Applications Tab */}
           <TabsContent value="applications" className="mt-0 space-y-2">
             <div className="flex items-center justify-between mb-1">
-              <span className="text-xs font-semibold text-muted-foreground">{stepApps.length} Application{stepApps.length !== 1 ? 's' : ''}</span>
-              <Button size="sm" variant="ghost" className="h-6 text-xs gap-1" onClick={() => { setAppForm({ name: '', screen_name: '', description: '', app_type: 'application' }); setAddDialog('application'); }}>
-                <Plus className="h-3 w-3" /> Add App
+              <span className="text-xs font-semibold text-muted-foreground">{stepApps.length} item{stepApps.length !== 1 ? 's' : ''}</span>
+              <Button size="sm" variant="ghost" className="h-6 text-xs gap-1" onClick={() => { setAppForm({ name: '', description: '', app_type: 'application', parent_id: '' }); setAddDialog('application'); }}>
+                <Plus className="h-3 w-3" /> Add
               </Button>
             </div>
             {stepApps.length === 0 ? (
-              <p className="text-xs text-muted-foreground text-center py-8">No applications linked to this step</p>
-            ) : stepApps.map(app => (
-              <div key={app.id} className="p-3 rounded-lg border bg-sky-50/50 space-y-1.5 group">
-                <div className="flex items-center gap-2">
-                  <Monitor className="h-3.5 w-3.5 text-sky-500" />
-                  <div className="flex-1">
-                    <EditableField label="Name" value={app.name}
-                      onSave={val => saveField(() => updateStepApplication(app.id, { name: val }), 'App updated')} />
+              <p className="text-xs text-muted-foreground text-center py-8">No applications or screens linked to this step</p>
+            ) : (
+              <>
+                {/* Screens with nested apps */}
+                {stepApps.filter(a => a.app_type === 'screen' && !a.parent_id).map(screen => {
+                  const childApps = stepApps.filter(a => a.parent_id === screen.id);
+                  return (
+                    <div key={screen.id} className="p-3 rounded-lg border bg-sky-50/50 space-y-2 group">
+                      <div className="flex items-center gap-2">
+                        <Monitor className="h-3.5 w-3.5 text-sky-500" />
+                        <div className="flex-1">
+                          <EditableField label="Screen" value={screen.name}
+                            onSave={val => saveField(() => updateStepApplication(screen.id, { name: val }), 'Screen updated')} />
+                        </div>
+                        <Badge className="border-0 bg-sky-100 text-sky-700 text-[9px]">Screen</Badge>
+                        <Button variant="ghost" size="icon" className="h-5 w-5 opacity-0 group-hover:opacity-100 text-destructive" onClick={() => handleDeleteItem('application', screen.id)}>
+                          <Trash2 className="h-3 w-3" />
+                        </Button>
+                      </div>
+                      <Button size="sm" variant="ghost" className="h-5 text-[10px] gap-0.5 text-sky-600"
+                        onClick={() => { setAppForm({ name: '', description: '', app_type: 'application', parent_id: screen.id }); setAddDialog('application'); }}>
+                        <Plus className="h-2.5 w-2.5" /> Add App to Screen
+                      </Button>
+                      {childApps.map(app => (
+                        <div key={app.id} className="ml-4 pl-3 border-l-2 border-sky-200 p-2 rounded border bg-card space-y-1 group/child">
+                          <div className="flex items-center gap-2">
+                            <Monitor className="h-3 w-3 text-sky-400" />
+                            <div className="flex-1">
+                              <EditableField label="Application" value={app.name}
+                                onSave={val => saveField(() => updateStepApplication(app.id, { name: val }), 'App updated')} />
+                            </div>
+                            <Badge variant="outline" className="text-[8px]">App</Badge>
+                            <Button variant="ghost" size="icon" className="h-4 w-4 opacity-0 group-hover/child:opacity-100 text-destructive" onClick={() => handleDeleteItem('application', app.id)}>
+                              <Trash2 className="h-2.5 w-2.5" />
+                            </Button>
+                          </div>
+                          {app.description && (
+                            <EditableField label="Description" value={app.description} multiline
+                              onSave={val => saveField(() => updateStepApplication(app.id, { description: val }), 'Updated')} />
+                          )}
+                          {derivedProcessId && <EntityNotesSection entityType="application" entityId={app.id} processId={derivedProcessId} />}
+                        </div>
+                      ))}
+                      {derivedProcessId && <EntityNotesSection entityType="application" entityId={screen.id} processId={derivedProcessId} />}
+                    </div>
+                  );
+                })}
+                {/* Standalone applications */}
+                {stepApps.filter(a => a.app_type !== 'screen' && !a.parent_id).map(app => (
+                  <div key={app.id} className="p-3 rounded-lg border bg-sky-50/50 space-y-1.5 group">
+                    <div className="flex items-center gap-2">
+                      <Monitor className="h-3.5 w-3.5 text-sky-500" />
+                      <div className="flex-1">
+                        <EditableField label="Application" value={app.name}
+                          onSave={val => saveField(() => updateStepApplication(app.id, { name: val }), 'App updated')} />
+                      </div>
+                      <Badge variant="outline" className="text-[9px] capitalize">{app.app_type}</Badge>
+                      <Button variant="ghost" size="icon" className="h-5 w-5 opacity-0 group-hover:opacity-100 text-destructive" onClick={() => handleDeleteItem('application', app.id)}>
+                        <Trash2 className="h-3 w-3" />
+                      </Button>
+                    </div>
+                    {app.description && (
+                      <EditableField label="Description" value={app.description} multiline
+                        onSave={val => saveField(() => updateStepApplication(app.id, { description: val }), 'Description updated')} />
+                    )}
+                    {derivedProcessId && <EntityNotesSection entityType="application" entityId={app.id} processId={derivedProcessId} />}
                   </div>
-                  <Badge variant="outline" className="text-[9px]">{app.app_type}</Badge>
-                  <Button variant="ghost" size="icon" className="h-5 w-5 opacity-0 group-hover:opacity-100 text-destructive" onClick={() => handleDeleteItem('application', app.id)}>
-                    <Trash2 className="h-3 w-3" />
-                  </Button>
-                </div>
-                {app.screen_name && (
-                  <div className="text-xs text-muted-foreground">Screen: {app.screen_name}</div>
-                )}
-                {app.description && (
-                  <EditableField label="Description" value={app.description} multiline
-                    onSave={val => saveField(() => updateStepApplication(app.id, { description: val }), 'Description updated')} />
-                )}
-                {derivedProcessId && <EntityNotesSection entityType="application" entityId={app.id} processId={derivedProcessId} />}
-              </div>
-            ))}
+                ))}
+              </>
+            )}
           </TabsContent>
         </ScrollArea>
       </Tabs>
@@ -794,26 +846,35 @@ export default function NodeDetailPanel({ node, risks, controls, regulations, in
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2"><Monitor className="h-5 w-5 text-sky-500" /> Add Application / Screen</DialogTitle>
-          <DialogDescription>Link an application or screen to this step.</DialogDescription>
+          <DialogDescription>Add a standalone application or a screen with linked apps.</DialogDescription>
         </DialogHeader>
         <div className="grid gap-3 py-2">
           <div className="grid gap-1.5">
-            <Label>Application Name *</Label>
-            <Input value={appForm.name} onChange={e => setAppForm(f => ({ ...f, name: e.target.value }))} placeholder="e.g. SAP FI, Oracle EBS" />
-          </div>
-          <div className="grid gap-1.5">
-            <Label>Screen / Module Name</Label>
-            <Input value={appForm.screen_name} onChange={e => setAppForm(f => ({ ...f, screen_name: e.target.value }))} placeholder="e.g. Transaction VA01" />
-          </div>
-          <div className="grid gap-1.5">
-            <Label>Type</Label>
-            <Select value={appForm.app_type} onValueChange={v => setAppForm(f => ({ ...f, app_type: v }))}>
+            <Label>What are you adding?</Label>
+            <Select value={appForm.app_type} onValueChange={v => setAppForm(f => ({ ...f, app_type: v, parent_id: v === 'screen' ? '' : f.parent_id }))}>
               <SelectTrigger><SelectValue /></SelectTrigger>
               <SelectContent>
-                {['application', 'screen', 'module', 'service', 'database'].map(o => <SelectItem key={o} value={o} className="capitalize">{o}</SelectItem>)}
+                <SelectItem value="application">Application</SelectItem>
+                <SelectItem value="screen">Screen</SelectItem>
               </SelectContent>
             </Select>
           </div>
+          <div className="grid gap-1.5">
+            <Label>{appForm.app_type === 'screen' ? 'Screen Name' : 'Application Name'} *</Label>
+            <Input value={appForm.name} onChange={e => setAppForm(f => ({ ...f, name: e.target.value }))} placeholder={appForm.app_type === 'screen' ? 'e.g. Invoice Entry Screen' : 'e.g. SAP FI, Oracle EBS'} />
+          </div>
+          {appForm.app_type === 'application' && stepApps.filter(a => a.app_type === 'screen' && !a.parent_id).length > 0 && (
+            <div className="grid gap-1.5">
+              <Label>Link to Screen (optional)</Label>
+              <Select value={appForm.parent_id} onValueChange={v => setAppForm(f => ({ ...f, parent_id: v }))}>
+                <SelectTrigger><SelectValue placeholder="Standalone application" /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="">Standalone (no screen)</SelectItem>
+                  {stepApps.filter(a => a.app_type === 'screen' && !a.parent_id).map(s => <SelectItem key={s.id} value={s.id}>{s.name}</SelectItem>)}
+                </SelectContent>
+              </Select>
+            </div>
+          )}
           <div className="grid gap-1.5">
             <Label>Description</Label>
             <Textarea value={appForm.description} onChange={e => setAppForm(f => ({ ...f, description: e.target.value }))} placeholder="Optional description..." />
@@ -822,7 +883,7 @@ export default function NodeDetailPanel({ node, risks, controls, regulations, in
         <DialogFooter>
           <Button variant="outline" onClick={() => setAddDialog(null)}>Cancel</Button>
           <Button onClick={handleAddApplication} disabled={saving || !appForm.name.trim()}>
-            {saving && <Loader2 className="mr-2 h-4 w-4 animate-spin" />} Add Application
+            {saving && <Loader2 className="mr-2 h-4 w-4 animate-spin" />} Add {appForm.app_type === 'screen' ? 'Screen' : 'Application'}
           </Button>
         </DialogFooter>
       </DialogContent>
