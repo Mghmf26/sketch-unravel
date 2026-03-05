@@ -274,7 +274,7 @@ export default function DiagramCanvasEditor({
   const addNode = useCallback((type: NodeType) => {
     const id = crypto.randomUUID();
     const labels: Record<NodeType, string> = {
-      'in-scope': 'New Step', 'interface': 'New Process Interface', 'event': 'New Event', 'xor': 'XOR',
+      'in-scope': 'New Step', 'interface': 'New Business Process', 'event': 'New Event', 'xor': 'XOR',
       'start-end': 'Start', 'decision': 'Decision?', 'storage': 'Storage', 'delay': 'Delay', 'document': 'Document',
     };
     const newNode: EPCNode = { id, label: labels[type], type, description: '' };
@@ -497,6 +497,7 @@ export default function DiagramCanvasEditor({
           controls={controls}
           regulations={regulations}
           incidents={incidents}
+          applications={applications}
           processId={processId}
           defaultTab={detailTab}
           onClose={() => setSelectedNodeId(null)}
