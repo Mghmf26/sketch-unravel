@@ -61,7 +61,7 @@ export default function ProcessDetails() {
           <ArrowLeft className="h-4 w-4" />
         </Button>
         <div>
-          <h1 className="text-2xl font-bold text-foreground tracking-tight">Process Details</h1>
+          <h1 className="text-2xl font-bold text-foreground tracking-tight">Business Process Flows</h1>
           <p className="text-sm text-muted-foreground mt-1">Browse and inspect your business processes</p>
         </div>
       </div>

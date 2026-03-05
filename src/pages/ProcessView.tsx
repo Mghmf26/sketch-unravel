@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate, useSearchParams } from 'react-router-dom';
-import { ArrowLeft, Image as ImageIcon, LayoutGrid, Share2, Upload, Grid3x3 } from 'lucide-react';
+import { ArrowLeft, Image as ImageIcon, LayoutGrid, Share2, Upload, Grid3x3, Cpu } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -9,6 +9,7 @@ import { supabase } from '@/integrations/supabase/client';
 import DiagramCanvasEditor from '@/components/DiagramCanvasEditor';
 import ProcessEditTab from '@/components/ProcessEditTab';
 import RiskMatrixEditor from '@/components/RiskMatrixEditor';
+import MainframeFlowEditor from '@/components/MainframeFlowEditor';
 import {
   fetchProcesses, fetchSteps, fetchStepConnections,
   fetchRisks, fetchAllControls, fetchRegulations, fetchIncidents,
@@ -24,7 +25,18 @@ export default function ProcessView() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
-  const defaultTab = searchParams.get('tab') === 'edit' ? 'edit' : 'image';
+  
+  // Determine default tab from URL
+  const tabParam = searchParams.get('tab');
+  const defaultTab = tabParam === 'edit' ? 'edit' 
+    : tabParam === 'mainframe-flows' ? 'mainframe-flows'
+    : tabParam === 'diagram' ? 'diagram'
+    : tabParam === 'risk-matrix' ? 'risk-matrix'
+    : 'image';
+
+  const initialStepId = searchParams.get('stepId') || undefined;
+  const initialFlowId = searchParams.get('flowId') || undefined;
+
   const [process, setProcess] = useState<BusinessProcess | null>(null);
   const [steps, setSteps] = useState<ProcessStep[]>([]);
   const [connections, setConnections] = useState<StepConnection[]>([]);
@@ -126,7 +138,8 @@ export default function ProcessView() {
         <TabsList className="bg-muted/50 p-1">
           <TabsTrigger value="image" className="gap-2"><ImageIcon className="h-4 w-4" /> Image View</TabsTrigger>
           <TabsTrigger value="edit" className="gap-2"><LayoutGrid className="h-4 w-4" /> Edit Data</TabsTrigger>
-          <TabsTrigger value="diagram" className="gap-2"><Share2 className="h-4 w-4" /> Diagram Editor</TabsTrigger>
+          <TabsTrigger value="diagram" className="gap-2"><Share2 className="h-4 w-4" /> Business Process Flows</TabsTrigger>
+          <TabsTrigger value="mainframe-flows" className="gap-2"><Cpu className="h-4 w-4" /> Mainframe Flows</TabsTrigger>
           <TabsTrigger value="risk-matrix" className="gap-2"><Grid3x3 className="h-4 w-4" /> Risk Matrix</TabsTrigger>
         </TabsList>
 
@@ -168,6 +181,10 @@ export default function ProcessView() {
 
         <TabsContent value="diagram" className="mt-0">
           <DiagramCanvasEditor nodes={epcNodes} connections={epcConns} risks={risks} controls={controls} regulations={regulations} incidents={incidents} applications={applications} processId={id} onChange={handleDiagramChange} onDataChanged={loadData} />
+        </TabsContent>
+
+        <TabsContent value="mainframe-flows" className="mt-0">
+          <MainframeFlowEditor processId={id!} initialStepId={initialStepId} initialFlowId={initialFlowId} />
         </TabsContent>
 
         <TabsContent value="risk-matrix" className="mt-0">

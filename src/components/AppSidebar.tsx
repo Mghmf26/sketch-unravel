@@ -54,8 +54,8 @@ const menuGroups: MenuGroup[] = [
     title: 'Business Processes',
     icon: Network,
     children: [
-      { title: 'All Processes', url: '/processes', icon: Network, pageSlug: 'processes' },
-      { title: 'Process Details', url: '/process-details', icon: FileText, pageSlug: 'processes' },
+      { title: 'All Business Processes', url: '/processes', icon: Network, pageSlug: 'processes' },
+      { title: 'Business Process Flows', url: '/process-details', icon: FileText, pageSlug: 'processes' },
       { title: 'Risks', url: '/risks', icon: AlertTriangle, pageSlug: 'risks-controls' },
       { title: 'Controls', url: '/controls', icon: ShieldCheck, pageSlug: 'controls' },
       { title: 'Regulations', url: '/regulations', icon: Scale, pageSlug: 'regulations' },
@@ -67,6 +67,7 @@ const menuGroups: MenuGroup[] = [
     icon: Cpu,
     children: [
       { title: 'MF Data Sources', url: '/imports', icon: Database, pageSlug: 'mainframe-imports' },
+      { title: 'Mainframe Flows', url: '/mainframe-flows', icon: Cpu, pageSlug: 'mainframe-imports' },
       { title: 'Processing Analysis', url: '/processing-analysis', icon: BarChart3, pageSlug: 'mainframe-imports' },
     ],
   },
