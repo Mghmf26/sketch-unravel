@@ -8,6 +8,7 @@ export interface StepApplication {
   screen_name: string | null;
   description: string | null;
   app_type: string;
+  parent_id: string | null;
   created_at: string;
 }
 
