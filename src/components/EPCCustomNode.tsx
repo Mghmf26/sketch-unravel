@@ -7,8 +7,15 @@ interface EPCNodeData {
   nodeType: NodeType;
   nodeId: string;
   interfaceSubtype?: string;
+  stepType?: string;
   [key: string]: unknown;
 }
+
+const STEP_TYPE_COLORS: Record<string, { bg: string; text: string; border: string }> = {
+  critical: { bg: '#fee2e2', text: '#991b1b', border: '#fca5a5' },
+  mechanical: { bg: '#f1f5f9', text: '#475569', border: '#cbd5e1' },
+  decisional: { bg: '#fef3c7', text: '#92400e', border: '#fcd34d' },
+};
 
 const STYLE_MAP: Record<NodeType, {
   bgGradient: string; border: string; text: string; shadow: string; badgeBg: string;
@@ -282,6 +289,12 @@ function EPCCustomNode({ data }: NodeProps) {
             ? INTERFACE_SUBTYPE_LABELS[d.interfaceSubtype] || INTERFACE_SUBTYPE_LABELS['default']
             : TYPE_LABELS[d.nodeType]}
         </span>
+        {d.stepType && STEP_TYPE_COLORS[d.stepType] && (
+          <span className="text-[8px] font-bold px-1.5 py-0.5 rounded border uppercase tracking-wide"
+            style={{ backgroundColor: STEP_TYPE_COLORS[d.stepType].bg, color: STEP_TYPE_COLORS[d.stepType].text, borderColor: STEP_TYPE_COLORS[d.stepType].border }}>
+            {d.stepType}
+          </span>
+        )}
       </div>
       <div className="relative flex items-center justify-center text-center"
         style={{

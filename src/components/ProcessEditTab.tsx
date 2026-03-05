@@ -33,6 +33,7 @@ import {
   type Regulation, type Incident, type MainframeImport, type MFQuestion, type StepRaci,
 } from '@/lib/api';
 import { fetchStepApplications, insertStepApplication, updateStepApplication, deleteStepApplication, type StepApplication } from '@/lib/api-applications';
+import { StepTypeBadge, STEP_TYPE_OPTIONS } from '@/components/StepTypeBadge';
 
 interface ProcessEditTabProps {
   processId: string;
@@ -297,6 +298,7 @@ export default function ProcessEditTab({ processId }: ProcessEditTabProps) {
                           {isExpanded ? <ChevronDown className="h-4 w-4 text-muted-foreground" /> : <ChevronRight className="h-4 w-4 text-muted-foreground" />}
                         </div>
                         <TypeBadge type={step.type} />
+                        {step.step_type && <StepTypeBadge stepType={step.step_type as any} />}
                         <span className="text-sm flex-1 font-medium" onClick={e => e.stopPropagation()}>
                           <InlineEdit value={step.label} onSave={v => updateStep(step.id, { label: v }).then(reload)} />
                         </span>
@@ -357,6 +359,17 @@ export default function ProcessEditTab({ processId }: ProcessEditTabProps) {
                               options={Object.entries(typeLabel).map(([v, l]) => ({ value: v, label: l }))}
                               onSave={v => updateStep(step.id, { type: v }).then(reload)}
                             />
+                          </div>
+
+                          {/* Step Type (Critical/Mechanical/Decisional) */}
+                          <div className="flex items-center gap-2 text-xs">
+                            <span className="text-muted-foreground font-medium">Step Type:</span>
+                            <InlineSelect
+                              value={step.step_type || '__none__'}
+                              options={[{ value: '__none__', label: '— None —' }, ...STEP_TYPE_OPTIONS]}
+                              onSave={v => updateStep(step.id, { step_type: v === '__none__' ? null : v } as any).then(reload)}
+                            />
+                            {step.step_type && <StepTypeBadge stepType={step.step_type as any} />}
                           </div>
 
                           {/* Risks & Controls */}
@@ -749,10 +762,11 @@ export default function ProcessEditTab({ processId }: ProcessEditTabProps) {
 function AddStepDialog({ processId, onClose, onRefresh }: { processId: string; onClose: () => void; onRefresh: () => void }) {
   const [label, setLabel] = useState('');
   const [type, setType] = useState('in-scope');
+  const [stepType, setStepType] = useState('__none__');
   const [desc, setDesc] = useState('');
   const submit = async () => {
     if (!label.trim()) return;
-    await insertStep({ process_id: processId, label: label.trim(), type, description: desc || null });
+    await insertStep({ process_id: processId, label: label.trim(), type, description: desc || null, step_type: stepType === '__none__' ? null : stepType } as any);
     toast({ title: 'Step added' }); onRefresh(); onClose();
   };
   const style = getTypeStyle(type);
@@ -775,6 +789,16 @@ function AddStepDialog({ processId, onClose, onRefresh }: { processId: string; o
                     </span>
                   </SelectItem>
                 ))}
+              </SelectContent>
+            </Select>
+          </div>
+          <div className="grid gap-1.5">
+            <Label>Step Type</Label>
+            <Select value={stepType} onValueChange={setStepType}>
+              <SelectTrigger><SelectValue /></SelectTrigger>
+              <SelectContent>
+                <SelectItem value="__none__">— None —</SelectItem>
+                {STEP_TYPE_OPTIONS.map(o => <SelectItem key={o.value} value={o.value}>{o.label}</SelectItem>)}
               </SelectContent>
             </Select>
           </div>

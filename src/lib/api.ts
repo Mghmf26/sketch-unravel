@@ -18,6 +18,7 @@ export interface ProcessStep {
   process_id: string;
   label: string;
   type: string;
+  step_type: string | null;
   description: string | null;
   position_index: number;
   created_at: string;

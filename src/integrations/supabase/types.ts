@@ -496,6 +496,7 @@ export type Database = {
           label: string
           position_index: number | null
           process_id: string
+          step_type: string | null
           type: string
         }
         Insert: {
@@ -506,6 +507,7 @@ export type Database = {
           label: string
           position_index?: number | null
           process_id: string
+          step_type?: string | null
           type?: string
         }
         Update: {
@@ -516,6 +518,7 @@ export type Database = {
           label?: string
           position_index?: number | null
           process_id?: string
+          step_type?: string | null
           type?: string
         }
         Relationships: [
@@ -611,6 +614,85 @@ export type Database = {
             columns: ["step_id"]
             isOneToOne: false
             referencedRelation: "process_steps"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      risk_matrices: {
+        Row: {
+          created_at: string
+          description: string | null
+          frequency_levels: string[]
+          id: string
+          impact_levels: string[]
+          matrix_type: string
+          name: string
+          process_id: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          description?: string | null
+          frequency_levels?: string[]
+          id?: string
+          impact_levels?: string[]
+          matrix_type?: string
+          name?: string
+          process_id: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          description?: string | null
+          frequency_levels?: string[]
+          id?: string
+          impact_levels?: string[]
+          matrix_type?: string
+          name?: string
+          process_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "risk_matrices_process_id_fkey"
+            columns: ["process_id"]
+            isOneToOne: true
+            referencedRelation: "business_processes"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      risk_matrix_cells: {
+        Row: {
+          acceptable: boolean
+          created_at: string
+          frequency_level: string
+          id: string
+          impact_level: string
+          matrix_id: string
+        }
+        Insert: {
+          acceptable?: boolean
+          created_at?: string
+          frequency_level: string
+          id?: string
+          impact_level: string
+          matrix_id: string
+        }
+        Update: {
+          acceptable?: boolean
+          created_at?: string
+          frequency_level?: string
+          id?: string
+          impact_level?: string
+          matrix_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "risk_matrix_cells_matrix_id_fkey"
+            columns: ["matrix_id"]
+            isOneToOne: false
+            referencedRelation: "risk_matrices"
             referencedColumns: ["id"]
           },
         ]
