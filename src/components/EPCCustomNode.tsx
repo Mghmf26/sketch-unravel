@@ -278,7 +278,9 @@ function EPCCustomNode({ data }: NodeProps) {
           style={{ color: s.border, backgroundColor: s.badgeBg }}>{d.nodeId}</span>
         <span className="text-[9px] font-semibold px-2 py-0.5 rounded-full border"
           style={{ borderColor: s.border, color: s.text, backgroundColor: s.badgeBg }}>
-          {TYPE_LABELS[d.nodeType]}
+          {d.nodeType === 'interface' && d.interfaceSubtype
+            ? INTERFACE_SUBTYPE_LABELS[d.interfaceSubtype] || INTERFACE_SUBTYPE_LABELS['default']
+            : TYPE_LABELS[d.nodeType]}
         </span>
       </div>
       <div className="relative flex items-center justify-center text-center"
