@@ -692,6 +692,9 @@ export default function ProcessEditTab({ processId }: ProcessEditTabProps) {
       {addDialog === 'raci' && contextStepId && (
         <AddRaciDialog processId={processId} stepId={contextStepId} onClose={() => { setAddDialog(null); setContextStepId(null); }} onRefresh={reload} />
       )}
+      {addDialog === 'application' && contextStepId && (
+        <AddApplicationDialog processId={processId} stepId={contextStepId} onClose={() => { setAddDialog(null); setContextStepId(null); }} onRefresh={reload} />
+      )}
     </div>
   );
 }
