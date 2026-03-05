@@ -237,7 +237,7 @@ export default function ProcessEditTab({ processId }: ProcessEditTabProps) {
   return (
     <div className="space-y-3">
       {/* Summary Bar */}
-      <div className="grid grid-cols-4 md:grid-cols-8 gap-2">
+      <div className="grid grid-cols-4 md:grid-cols-9 gap-2">
         {[
           { label: 'Steps', count: steps.length, dot: 'bg-emerald-500' },
           { label: 'Interfaces', count: steps.filter(s => s.type === 'interface').length, dot: 'bg-slate-400' },
@@ -246,6 +246,7 @@ export default function ProcessEditTab({ processId }: ProcessEditTabProps) {
           { label: 'Controls', count: controls.length, dot: 'bg-blue-500' },
           { label: 'Regulations', count: regulations.length, dot: 'bg-purple-500' },
           { label: 'Incidents', count: incidents.length, dot: 'bg-red-500' },
+          { label: 'Apps', count: applications.length, dot: 'bg-sky-500' },
           { label: 'RACI', count: raciEntries.length, dot: 'bg-cyan-500' },
         ].map(m => (
           <div key={m.label} className="flex items-center gap-2 p-2 rounded-lg border bg-card">
@@ -278,6 +279,7 @@ export default function ProcessEditTab({ processId }: ProcessEditTabProps) {
                 {steps.length === 0 && <p className="text-xs text-muted-foreground text-center py-6">No steps defined</p>}
                 {steps.map(step => {
                   const isExpanded = expandedSteps.has(step.id);
+                  const stepApps = getStepApps(step.id);
                   const stepRisks = getStepRisks(step.id);
                   const stepRegs = getStepRegulations(step.id);
                   const stepIncs = getStepIncidents(step.id);
