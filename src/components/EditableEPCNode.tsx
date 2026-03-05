@@ -9,6 +9,7 @@ interface EditableEPCNodeData {
   nodeId: string;
   description?: string;
   interfaceSubtype?: InterfaceSubtype;
+  stepType?: string;
   riskCount?: number;
   controlCount?: number;
   regulationCount?: number;
@@ -21,6 +22,12 @@ interface EditableEPCNodeData {
   onIndicatorClick?: (id: string, type: 'risks' | 'controls' | 'regulations' | 'incidents' | 'applications') => void;
   [key: string]: unknown;
 }
+
+const STEP_TYPE_COLORS: Record<string, { bg: string; text: string; border: string }> = {
+  critical: { bg: '#fee2e2', text: '#991b1b', border: '#fca5a5' },
+  mechanical: { bg: '#f1f5f9', text: '#475569', border: '#cbd5e1' },
+  decisional: { bg: '#fef3c7', text: '#92400e', border: '#fcd34d' },
+};
 
 const STYLE_MAP: Record<NodeType, {
   bg: string; bgGradient: string; border: string; text: string;
@@ -407,6 +414,12 @@ function EditableEPCNode({ id, data, selected }: NodeProps) {
             )}
           </div>
           <TypeBadge nodeType={d.nodeType} interfaceSubtype={d.interfaceSubtype} style={s} onCycleType={edit.cycleType} />
+          {d.stepType && STEP_TYPE_COLORS[d.stepType] && (
+            <span className="text-[7px] font-bold px-1 py-0.5 rounded border uppercase"
+              style={{ backgroundColor: STEP_TYPE_COLORS[d.stepType].bg, color: STEP_TYPE_COLORS[d.stepType].text, borderColor: STEP_TYPE_COLORS[d.stepType].border }}>
+              {d.stepType.slice(0, 4)}
+            </span>
+          )}
         </div>
 
         {/* Divider */}
