@@ -733,7 +733,12 @@ export default function ProcessEditTab({ processId }: ProcessEditTabProps) {
         <AddRaciDialog processId={processId} stepId={contextStepId} onClose={() => { setAddDialog(null); setContextStepId(null); }} onRefresh={reload} />
       )}
       {addDialog === 'application' && contextStepId && (
-        <AddApplicationDialog processId={processId} stepId={contextStepId} onClose={() => { setAddDialog(null); setContextStepId(null); }} onRefresh={reload} />
+        <AddApplicationDialog 
+          processId={processId} stepId={contextStepId} 
+          parentScreenId={contextScreenId}
+          screens={applications.filter(a => a.app_type === 'screen' && a.step_id === contextStepId && !a.parent_id)}
+          onClose={() => { setAddDialog(null); setContextStepId(null); setContextScreenId(null); }} onRefresh={reload} 
+        />
       )}
     </div>
   );
