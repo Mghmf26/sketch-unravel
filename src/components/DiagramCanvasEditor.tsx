@@ -66,12 +66,13 @@ function toFlowElements(
   controls: Control[],
   regulations: Regulation[],
   incidents: Incident[],
+  applications: StepApplication[],
   callbacks: {
     onDelete: (id: string) => void;
     onLabelChange: (id: string, label: string) => void;
     onTypeChange: (id: string, type: NodeType) => void;
     onNodeClick: (id: string) => void;
-    onIndicatorClick: (id: string, type: 'risks' | 'controls' | 'regulations' | 'incidents') => void;
+    onIndicatorClick: (id: string, type: 'risks' | 'controls' | 'regulations' | 'incidents' | 'applications') => void;
   }
 ) {
   const flowNodes: Node[] = epcNodes.map((n) => {
