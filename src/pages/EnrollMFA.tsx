@@ -21,8 +21,22 @@ export default function EnrollMFA({ onEnrolled, onSkipped }: EnrollMFAProps) {
 
   useEffect(() => {
     (async () => {
+      // Check if a factor already exists first
+      const { data: factors } = await supabase.auth.mfa.listFactors();
+      const existing = factors?.totp?.[0];
+      if (existing) {
+        // Factor already enrolled – skip to verified state
+        onEnrolled();
+        return;
+      }
+
       const { data, error } = await supabase.auth.mfa.enroll({ factorType: 'totp', friendlyName: 'MF AI Navigator' });
       if (error) {
+        if (error.message?.includes('already exists')) {
+          // Race condition – factor was created between check and enroll
+          onEnrolled();
+          return;
+        }
         toast({ title: 'MFA Error', description: error.message, variant: 'destructive' });
         setEnrolling(false);
         return;
