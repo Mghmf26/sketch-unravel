@@ -21,21 +21,71 @@ export interface RiskMatrixCell {
   created_at: string;
 }
 
-// Standard risk matrix definition (5x5)
-export const STANDARD_IMPACT_LEVELS = ['VL', 'L', 'M', 'H', 'VH'];
-export const STANDARD_FREQUENCY_LEVELS = ['VL', 'L', 'M', 'H', 'VH'];
+// Level label lookups
 export const LEVEL_LABELS: Record<string, string> = {
   VL: 'Very Low', L: 'Low', M: 'Medium', H: 'High', VH: 'Very High',
+  // 4x4 Operational
+  Rare: 'Rare', Possible: 'Possible', Likely: 'Likely', 'Almost Certain': 'Almost Certain',
+  Minor: 'Minor', Moderate: 'Moderate', Major: 'Major', Severe: 'Severe',
 };
 
-// Standard matrix: acceptable cells (impact, frequency) — conservative standard
-export const STANDARD_ACCEPTABLE_CELLS: [string, string][] = [
-  ['VL', 'VL'], ['VL', 'L'], ['VL', 'M'], ['VL', 'H'], ['VL', 'VH'],
-  ['L', 'VL'], ['L', 'L'], ['L', 'M'], ['L', 'H'],
-  ['M', 'VL'], ['M', 'L'], ['M', 'M'],
-  ['H', 'VL'], ['H', 'L'],
-  ['VH', 'VL'],
+// ─── Standard Templates ─────────────────────────────────────────────
+
+export interface RiskMatrixTemplate {
+  key: string;
+  name: string;
+  description: string;
+  impactLevels: string[];
+  frequencyLevels: string[];
+  acceptableCells: [string, string][];
+}
+
+export const STANDARD_TEMPLATES: RiskMatrixTemplate[] = [
+  {
+    key: 'iso31000',
+    name: 'ISO 31000 / ISO 27005 (5×5)',
+    description: 'Default enterprise & information-security risk matrix based on ISO 31000 and ISO 27005.',
+    impactLevels: ['VL', 'L', 'M', 'H', 'VH'],
+    frequencyLevels: ['VL', 'L', 'M', 'H', 'VH'],
+    acceptableCells: [
+      ['VL', 'VL'], ['VL', 'L'], ['VL', 'M'], ['VL', 'H'], ['VL', 'VH'],
+      ['L', 'VL'], ['L', 'L'], ['L', 'M'], ['L', 'H'],
+      ['M', 'VL'], ['M', 'L'], ['M', 'M'],
+      ['H', 'VL'], ['H', 'L'],
+      ['VH', 'VL'],
+    ],
+  },
+  {
+    key: 'basic3x3',
+    name: 'Basic 3×3 (Simple Assessment)',
+    description: 'Quick assessments, small organizations, and early risk screening.',
+    impactLevels: ['L', 'M', 'H'],
+    frequencyLevels: ['L', 'M', 'H'],
+    acceptableCells: [
+      ['L', 'L'], ['L', 'M'], ['L', 'H'],
+      ['M', 'L'], ['M', 'M'],
+      ['H', 'L'],
+    ],
+  },
+  {
+    key: 'operational4x4',
+    name: 'Operational / Audit (4×4)',
+    description: 'Internal audit, operational risk, and compliance frameworks.',
+    impactLevels: ['Minor', 'Moderate', 'Major', 'Severe'],
+    frequencyLevels: ['Rare', 'Possible', 'Likely', 'Almost Certain'],
+    acceptableCells: [
+      ['Minor', 'Rare'], ['Minor', 'Possible'], ['Minor', 'Likely'], ['Minor', 'Almost Certain'],
+      ['Moderate', 'Rare'], ['Moderate', 'Possible'], ['Moderate', 'Likely'],
+      ['Major', 'Rare'], ['Major', 'Possible'],
+      ['Severe', 'Rare'],
+    ],
+  },
 ];
+
+// Convenience aliases for the default ISO template
+export const STANDARD_IMPACT_LEVELS = STANDARD_TEMPLATES[0].impactLevels;
+export const STANDARD_FREQUENCY_LEVELS = STANDARD_TEMPLATES[0].frequencyLevels;
+export const STANDARD_ACCEPTABLE_CELLS = STANDARD_TEMPLATES[0].acceptableCells;
 
 export async function fetchRiskMatrix(processId: string): Promise<RiskMatrix | null> {
   const { data } = await supabase
