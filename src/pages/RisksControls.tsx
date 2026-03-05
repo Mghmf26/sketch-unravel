@@ -7,13 +7,14 @@ const RISK_COLUMNS: ColumnDef[] = [
   { key: 'client', label: 'Client', defaultVisible: true, minWidth: 80 },
   { key: 'process', label: 'Process', defaultVisible: true, minWidth: 100 },
   { key: 'step', label: 'Step', defaultVisible: true, minWidth: 80 },
-  { key: 'description', label: 'Description', defaultVisible: true, minWidth: 120 },
+  { key: 'description', label: 'Risk', defaultVisible: true, minWidth: 120 },
   { key: 'likelihood', label: 'Likelihood', defaultVisible: true, minWidth: 60 },
   { key: 'impact', label: 'Impact', defaultVisible: true, minWidth: 60 },
   { key: 'controls', label: 'Controls', defaultVisible: true, minWidth: 60 },
   { key: 'actions', label: 'Actions', defaultVisible: true, minWidth: 60 },
 ];
 import { ArrowLeft, ShieldAlert, Shield, AlertTriangle, Plus, Trash2, Pencil, Search, X } from 'lucide-react';
+import { ConfirmDialog } from '@/components/ConfirmDialog';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -40,6 +41,7 @@ export default function RisksControls() {
   const [clients, setClients] = useState<Client[]>([]);
   const [addDialog, setAddDialog] = useState(false);
   const [editRisk, setEditRisk] = useState<Risk | null>(null);
+  const [confirmDelete, setConfirmDelete] = useState<Risk | null>(null);
 
   const [search, setSearch] = useState('');
   const [filterClient, setFilterClient] = useState('all');
@@ -191,7 +193,7 @@ export default function RisksControls() {
                 {colSettings.isVisible('client') && <TableHead className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider py-2.5 px-3" style={{width: colSettings.getWidth('client')}}>Client</TableHead>}
                 {colSettings.isVisible('process') && <TableHead className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider py-2.5 px-3" style={{width: colSettings.getWidth('process')}}>Process</TableHead>}
                 {colSettings.isVisible('step') && <TableHead className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider py-2.5 px-3" style={{width: colSettings.getWidth('step')}}>Step</TableHead>}
-                {colSettings.isVisible('description') && <TableHead className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider py-2.5 px-3" style={{width: colSettings.getWidth('description')}}>Description</TableHead>}
+                {colSettings.isVisible('description') && <TableHead className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider py-2.5 px-3" style={{width: colSettings.getWidth('description')}}>Risk</TableHead>}
                 {colSettings.isVisible('likelihood') && <TableHead className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider py-2.5 px-3 text-center" style={{width: colSettings.getWidth('likelihood')}}>Likelihood</TableHead>}
                 {colSettings.isVisible('impact') && <TableHead className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider py-2.5 px-3 text-center" style={{width: colSettings.getWidth('impact')}}>Impact</TableHead>}
                 {colSettings.isVisible('controls') && <TableHead className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider py-2.5 px-3 text-center" style={{width: colSettings.getWidth('controls')}}>Controls</TableHead>}
@@ -223,7 +225,7 @@ export default function RisksControls() {
                       {colSettings.isVisible('actions') && <TableCell className="text-right py-2.5 px-3">
                         <div className="flex items-center justify-end gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity">
                           <Button variant="ghost" size="icon" className="h-6 w-6" onClick={() => setEditRisk(r)}><Pencil className="h-3 w-3" /></Button>
-                          <Button variant="ghost" size="icon" className="h-6 w-6 hover:text-destructive" onClick={async () => { await deleteRisk(r.id); reload(); }}><Trash2 className="h-3 w-3" /></Button>
+                          <Button variant="ghost" size="icon" className="h-6 w-6 hover:text-destructive" onClick={() => setConfirmDelete(r)}><Trash2 className="h-3 w-3" /></Button>
                         </div>
                       </TableCell>}
                     </TableRow>
@@ -237,6 +239,14 @@ export default function RisksControls() {
 
       {addDialog && <RiskDialog mode="add" processes={processes} steps={steps} onClose={() => setAddDialog(false)} onRefresh={reload} />}
       {editRisk && <RiskDialog mode="edit" risk={editRisk} processes={processes} steps={steps} onClose={() => setEditRisk(null)} onRefresh={reload} />}
+      <ConfirmDialog
+        open={!!confirmDelete}
+        title="Delete Risk"
+        description={`Are you sure you want to delete this risk? "${confirmDelete?.description?.slice(0, 80) || ''}" This action cannot be undone.`}
+        confirmLabel="Delete"
+        onConfirm={async () => { if (confirmDelete) { await deleteRisk(confirmDelete.id); reload(); } setConfirmDelete(null); }}
+        onCancel={() => setConfirmDelete(null)}
+      />
     </div>
   );
 }
