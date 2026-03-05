@@ -328,6 +328,10 @@ export default function ProcessEditTab({ processId }: ProcessEditTabProps) {
                             <Users className="h-3 w-3 text-cyan-500" />
                           </Button>
                           )}
+                          <Button variant="ghost" size="icon" className="h-6 w-6" title="Add Application"
+                            onClick={() => { setContextStepId(step.id); setAddDialog('application'); }}>
+                            <Monitor className="h-3 w-3 text-sky-500" />
+                          </Button>
                           <Button variant="ghost" size="icon" className="h-6 w-6 text-muted-foreground hover:text-destructive"
                             onClick={() => { if (confirm('Delete this step?')) deleteStep(step.id).then(reload); }}>
                             <Trash2 className="h-3 w-3" />
