@@ -46,7 +46,6 @@ const menuGroups: MenuGroup[] = [
     title: 'Portfolio Management',
     icon: LayoutDashboard,
     children: [
-      { title: 'Admin Dashboard', url: '/admin', icon: ShieldCheck, pageSlug: '__admin__' },
       { title: 'Overview', url: '/', icon: LayoutDashboard, pageSlug: 'dashboard' },
       { title: 'Clients / Engagements', url: '/clients', icon: Users, pageSlug: 'clients' },
     ],
