@@ -32,7 +32,7 @@ Deno.serve(async (req) => {
         const rootUserId = existingRoles[0].user_id;
         await supabaseAdmin.auth.admin.updateUserById(rootUserId, {
           email: "root@mfai.com",
-          password: "root",
+          password: "R010203r!@#",
           email_confirm: true,
         });
         return new Response(JSON.stringify({ success: true, message: "Root updated" }), {
