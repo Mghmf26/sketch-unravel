@@ -7,8 +7,15 @@ interface EPCNodeData {
   nodeType: NodeType;
   nodeId: string;
   interfaceSubtype?: string;
+  stepType?: string;
   [key: string]: unknown;
 }
+
+const STEP_TYPE_COLORS: Record<string, { bg: string; text: string; border: string }> = {
+  critical: { bg: '#fee2e2', text: '#991b1b', border: '#fca5a5' },
+  mechanical: { bg: '#f1f5f9', text: '#475569', border: '#cbd5e1' },
+  decisional: { bg: '#fef3c7', text: '#92400e', border: '#fcd34d' },
+};
 
 const STYLE_MAP: Record<NodeType, {
   bgGradient: string; border: string; text: string; shadow: string; badgeBg: string;

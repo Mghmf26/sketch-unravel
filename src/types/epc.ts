@@ -8,6 +8,7 @@ export interface EPCNode {
   type: NodeType;
   description?: string;
   interfaceSubtype?: InterfaceSubtype;
+  stepType?: 'critical' | 'mechanical' | 'decisional' | null;
 }
 
 export interface EPCConnection {
