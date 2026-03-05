@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import {
   LayoutDashboard,
   Users,
@@ -18,6 +18,8 @@ import {
   TrendingUp,
   Server,
   Microscope,
+  Monitor,
+  Cloud,
 } from 'lucide-react';
 import { NavLink } from '@/components/NavLink';
 import { useLocation } from 'react-router-dom';
@@ -38,7 +40,8 @@ import mfAiLogo from '@/assets/mf-ai-logo.png';
 interface MenuGroup {
   title: string;
   icon: React.ElementType;
-  children: { title: string; url: string; icon: React.ElementType; pageSlug?: string }[];
+  children?: { title: string; url: string; icon: React.ElementType; pageSlug?: string }[];
+  subgroups?: MenuGroup[];
 }
 
 const menuGroups: MenuGroup[] = [
@@ -63,12 +66,37 @@ const menuGroups: MenuGroup[] = [
     ],
   },
   {
-    title: 'Mainframe Ecosystem',
-    icon: Cpu,
-    children: [
-      { title: 'MF Data Sources', url: '/imports', icon: Database, pageSlug: 'mainframe-imports' },
-      { title: 'Mainframe Flows', url: '/mainframe-flows', icon: Cpu, pageSlug: 'mainframe-imports' },
-      { title: 'Processing Analysis', url: '/processing-analysis', icon: BarChart3, pageSlug: 'mainframe-imports' },
+    title: 'Technology',
+    icon: Server,
+    subgroups: [
+      {
+        title: 'Mainframe Ecosystem',
+        icon: Cpu,
+        children: [
+          { title: 'MF Data Sources', url: '/imports', icon: Database, pageSlug: 'mainframe-imports' },
+          { title: 'Mainframe Flows', url: '/mainframe-flows', icon: Cpu, pageSlug: 'mainframe-imports' },
+          { title: 'Processing Analysis', url: '/processing-analysis', icon: BarChart3, pageSlug: 'mainframe-imports' },
+        ],
+      },
+      {
+        title: 'On Premise Ecosystems',
+        icon: Monitor,
+        children: [
+          { title: 'Windows', url: '/on-premise/windows', icon: Monitor, pageSlug: 'on-premise' },
+          { title: 'Linux', url: '/on-premise/linux', icon: Monitor, pageSlug: 'on-premise' },
+          { title: 'Unix', url: '/on-premise/unix', icon: Monitor, pageSlug: 'on-premise' },
+          { title: 'Tandem', url: '/on-premise/tandem', icon: Monitor, pageSlug: 'on-premise' },
+        ],
+      },
+      {
+        title: 'Cloud',
+        icon: Cloud,
+        children: [
+          { title: 'IBM Cloud', url: '/cloud/ibm', icon: Cloud, pageSlug: 'cloud' },
+          { title: 'AWS Cloud', url: '/cloud/aws', icon: Cloud, pageSlug: 'cloud' },
+          { title: 'Azure Cloud', url: '/cloud/azure', icon: Cloud, pageSlug: 'cloud' },
+        ],
+      },
     ],
   },
   {
@@ -91,21 +119,34 @@ const menuGroups: MenuGroup[] = [
   },
 ];
 
+function getAllUrls(group: MenuGroup): string[] {
+  const urls: string[] = [];
+  if (group.children) urls.push(...group.children.map(c => c.url));
+  if (group.subgroups) group.subgroups.forEach(sg => urls.push(...getAllUrls(sg)));
+  return urls;
+}
+
 export function AppSidebar() {
   const location = useLocation();
   const currentPath = location.pathname;
   const { state } = useSidebar();
   const isCollapsed = state === 'collapsed';
   const { role } = useAuth();
-  const { canAccessPage } = usePermissions();
-  const isAdmin = role === 'admin';
+  const { canAccessPage, isPageHidden } = usePermissions();
 
   const getInitialOpen = () => {
     const open: Record<string, boolean> = {};
     menuGroups.forEach((g) => {
-      open[g.title] = g.children.some((c) => c.url === currentPath);
+      const urls = getAllUrls(g);
+      open[g.title] = urls.includes(currentPath);
+      if (g.subgroups) {
+        g.subgroups.forEach(sg => {
+          const sgUrls = getAllUrls(sg);
+          open[sg.title] = sgUrls.includes(currentPath);
+        });
+      }
     });
-    if (!Object.values(open).some(Boolean)) open['Dashboard'] = true;
+    if (!Object.values(open).some(Boolean)) open['Portfolio Management'] = true;
     return open;
   };
 
@@ -115,10 +156,92 @@ export function AppSidebar() {
     setOpenGroups((prev) => ({ ...prev, [title]: !prev[title] }));
   };
 
+  const filterChildren = (children: { title: string; url: string; icon: React.ElementType; pageSlug?: string }[]) => {
+    return children.filter(item => {
+      const slug = item.pageSlug || '';
+      return canAccessPage(slug) && !isPageHidden(slug);
+    });
+  };
+
+  const renderChildren = (children: { title: string; url: string; icon: React.ElementType; pageSlug?: string }[]) => {
+    const visible = filterChildren(children);
+    if (visible.length === 0) return null;
+    return (
+      <div className="ml-3 border-l border-sidebar-border pl-2 mt-0.5 mb-1 space-y-0.5">
+        {visible.map((item) => (
+          <SidebarMenuItem key={item.title}>
+            <SidebarMenuButton asChild>
+              <NavLink
+                to={item.url}
+                end
+                className="flex items-center gap-3 px-3 py-2 rounded-lg text-sidebar-foreground/70 hover:bg-sidebar-accent hover:text-sidebar-foreground transition-all duration-150 text-[12px]"
+                activeClassName="bg-sidebar-accent text-sidebar-primary font-semibold border-l-[3px] border-sidebar-primary rounded-l-none hover:bg-sidebar-accent hover:text-sidebar-primary"
+              >
+                <item.icon className="h-[15px] w-[15px]" />
+                <span className="font-medium">{item.title}</span>
+              </NavLink>
+            </SidebarMenuButton>
+          </SidebarMenuItem>
+        ))}
+      </div>
+    );
+  };
+
+  const renderGroup = (group: MenuGroup, depth: number = 0) => {
+    // Check if group has any visible content
+    if (group.children) {
+      const visible = filterChildren(group.children);
+      if (visible.length === 0) return null;
+    }
+    if (group.subgroups) {
+      const hasVisibleSubgroup = group.subgroups.some(sg => {
+        if (sg.children) return filterChildren(sg.children).length > 0;
+        return false;
+      });
+      if (!hasVisibleSubgroup) return null;
+    }
+
+    return (
+      <div key={group.title}>
+        <SidebarMenuItem>
+          <SidebarMenuButton asChild>
+            <button
+              onClick={() => toggleGroup(group.title)}
+              className={`flex items-center gap-3 px-3 py-2.5 rounded-lg text-sidebar-foreground/70 hover:bg-sidebar-accent hover:text-sidebar-foreground transition-all duration-150 w-full ${depth > 0 ? 'py-2 text-[12px]' : ''}`}
+            >
+              <group.icon className={`shrink-0 ${depth > 0 ? 'h-[15px] w-[15px]' : 'h-[18px] w-[18px]'}`} />
+              {!isCollapsed && (
+                <>
+                  <span className={`flex-1 text-left ${depth > 0 ? 'text-[12px] font-medium' : 'text-[13px] font-semibold'}`}>{group.title}</span>
+                  {openGroups[group.title] ? (
+                    <ChevronDown className="h-3.5 w-3.5 text-sidebar-foreground/40" />
+                  ) : (
+                    <ChevronRight className="h-3.5 w-3.5 text-sidebar-foreground/40" />
+                  )}
+                </>
+              )}
+            </button>
+          </SidebarMenuButton>
+        </SidebarMenuItem>
+
+        {!isCollapsed && openGroups[group.title] && (
+          <>
+            {group.children && renderChildren(group.children)}
+            {group.subgroups && (
+              <div className="ml-3 border-l border-sidebar-border pl-2 mt-0.5 mb-1 space-y-0.5">
+                {group.subgroups.map(sg => renderGroup(sg, depth + 1))}
+              </div>
+            )}
+          </>
+        )}
+      </div>
+    );
+  };
+
   return (
     <Sidebar collapsible="icon" className="border-r-0">
       <SidebarContent className="pt-0">
-        {/* Premium Brand Header */}
+        {/* Brand Header */}
         <div className="px-3 py-5 border-b border-sidebar-border">
           {!isCollapsed ? (
             <div className="flex items-center gap-3">
@@ -142,63 +265,11 @@ export function AppSidebar() {
         <SidebarGroup className="mt-2">
           <SidebarGroupContent>
             <SidebarMenu className="space-y-0.5 px-2">
-              {menuGroups.map((group) => {
-                // Filter children based on permissions
-                const visibleChildren = group.children.filter(item => {
-                  return canAccessPage(item.pageSlug || '');
-                });
-                if (visibleChildren.length === 0) return null;
-
-                return (
-                <div key={group.title}>
-                  <SidebarMenuItem>
-                    <SidebarMenuButton asChild>
-                      <button
-                        onClick={() => toggleGroup(group.title)}
-                        className="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sidebar-foreground/70 hover:bg-sidebar-accent hover:text-sidebar-foreground transition-all duration-150 w-full"
-                      >
-                        <group.icon className="h-[18px] w-[18px] shrink-0" />
-                        {!isCollapsed && (
-                          <>
-                            <span className="text-[13px] font-semibold flex-1 text-left">{group.title}</span>
-                            {openGroups[group.title] ? (
-                              <ChevronDown className="h-3.5 w-3.5 text-sidebar-foreground/40" />
-                            ) : (
-                              <ChevronRight className="h-3.5 w-3.5 text-sidebar-foreground/40" />
-                            )}
-                          </>
-                        )}
-                      </button>
-                    </SidebarMenuButton>
-                  </SidebarMenuItem>
-
-                  {!isCollapsed && openGroups[group.title] && (
-                    <div className="ml-3 border-l border-sidebar-border pl-2 mt-0.5 mb-1 space-y-0.5">
-                      {visibleChildren.map((item) => (
-                        <SidebarMenuItem key={item.title}>
-                          <SidebarMenuButton asChild>
-                            <NavLink
-                              to={item.url}
-                              end
-                              className="flex items-center gap-3 px-3 py-2 rounded-lg text-sidebar-foreground/70 hover:bg-sidebar-accent hover:text-sidebar-foreground transition-all duration-150 text-[12px]"
-                              activeClassName="bg-sidebar-accent text-sidebar-primary font-semibold border-l-[3px] border-sidebar-primary rounded-l-none hover:bg-sidebar-accent hover:text-sidebar-primary"
-                            >
-                              <item.icon className="h-[15px] w-[15px]" />
-                              <span className="font-medium">{item.title}</span>
-                            </NavLink>
-                          </SidebarMenuButton>
-                        </SidebarMenuItem>
-                      ))}
-                    </div>
-                  )}
-                </div>
-                );
-              })}
+              {menuGroups.map((group) => renderGroup(group))}
             </SidebarMenu>
           </SidebarGroupContent>
         </SidebarGroup>
 
-        {/* Version info */}
         {!isCollapsed && (
           <div className="mt-auto px-4 py-4 border-t border-sidebar-border">
             <p className="text-[10px] text-sidebar-foreground/30 tracking-wide">v1.0.0 · © 2026 MF AI</p>

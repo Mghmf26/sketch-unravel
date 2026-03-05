@@ -11,7 +11,7 @@ export interface UserPermissions {
 const ALL_PAGES = [
   'dashboard', 'processes', 'clients', 'analysis', 'data-entry', 'upload',
   'incidents', 'risks-controls', 'regulations', 'controls', 'mainframe-imports',
-  'visual-analytics', 'ai-reports', 'client-reports',
+  'visual-analytics', 'ai-reports', 'client-reports', 'on-premise', 'cloud',
 ];
 
 const ALL_MODULES = ['steps', 'risks', 'controls', 'regulations', 'incidents', 'raci', 'imports', 'ai'];
@@ -24,10 +24,16 @@ const FULL_ACCESS: UserPermissions = {
 
 const PARTICIPANT_ROLES = ['team_participant', 'client_participant'];
 
+interface PageVisibility {
+  page_slug: string;
+  hidden_from_roles: string[];
+}
+
 export function usePermissions() {
-  const { user, role } = useAuth();
+  const { user, role, isRoot } = useAuth();
   const [permissions, setPermissions] = useState<UserPermissions>(FULL_ACCESS);
   const [loading, setLoading] = useState(true);
+  const [hiddenPages, setHiddenPages] = useState<PageVisibility[]>([]);
 
   const isParticipant = role ? PARTICIPANT_ROLES.includes(role) : false;
 
@@ -38,7 +44,11 @@ export function usePermissions() {
       return;
     }
 
-    // Non-participants always get full access
+    // Fetch page visibility rules
+    supabase.from('page_visibility').select('page_slug, hidden_from_roles').then(({ data }) => {
+      setHiddenPages((data || []) as PageVisibility[]);
+    });
+
     if (!isParticipant) {
       setPermissions(FULL_ACCESS);
       setLoading(false);
@@ -53,7 +63,6 @@ export function usePermissions() {
         .single();
 
       if (error || !data) {
-        // If no permissions row, use defaults (full access)
         setPermissions(FULL_ACCESS);
       } else {
         setPermissions({
@@ -68,11 +77,20 @@ export function usePermissions() {
     fetchPermissions();
   }, [user, role, isParticipant]);
 
+  const isPageHidden = (pageSlug: string) => {
+    // Root is never affected by page visibility
+    if (isRoot) return false;
+    if (!role) return false;
+    const rule = hiddenPages.find(p => p.page_slug === pageSlug);
+    if (!rule) return false;
+    return rule.hidden_from_roles.includes(role);
+  };
+
   const canAccessPage = (pageSlug: string) => !isParticipant || permissions.allowed_pages.includes(pageSlug);
   const canAccessModule = (moduleSlug: string) => !isParticipant || permissions.allowed_modules.includes(moduleSlug);
   const isProcessExcluded = (processId: string) => isParticipant && permissions.excluded_process_ids.includes(processId);
 
-  return { permissions, loading, isParticipant, canAccessPage, canAccessModule, isProcessExcluded };
+  return { permissions, loading, isParticipant, canAccessPage, canAccessModule, isProcessExcluded, isPageHidden, hiddenPages };
 }
 
 export { ALL_PAGES, ALL_MODULES, PARTICIPANT_ROLES };
