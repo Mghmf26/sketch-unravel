@@ -107,6 +107,7 @@ export type Database = {
           notes: string | null
           status: string
           updated_at: string
+          wbs_code: string | null
         }
         Insert: {
           address?: string | null
@@ -121,6 +122,7 @@ export type Database = {
           notes?: string | null
           status?: string
           updated_at?: string
+          wbs_code?: string | null
         }
         Update: {
           address?: string | null
@@ -135,6 +137,7 @@ export type Database = {
           notes?: string | null
           status?: string
           updated_at?: string
+          wbs_code?: string | null
         }
         Relationships: []
       }
