@@ -32,6 +32,7 @@ interface DiagramCanvasEditorProps {
   controls?: Control[];
   regulations?: Regulation[];
   incidents?: Incident[];
+  processId?: string;
   onChange: (nodes: EPCNode[], connections: EPCConnection[]) => void;
   onDataChanged?: () => void;
 }
@@ -114,7 +115,7 @@ function toFlowElements(
 export default function DiagramCanvasEditor({
   nodes: initialNodes, connections: initialConnections,
   risks = [], controls = [], regulations = [], incidents = [],
-  onChange, onDataChanged
+  processId, onChange, onDataChanged
 }: DiagramCanvasEditorProps) {
   // Local working state (not saved until user clicks Save)
   const [workingNodes, setWorkingNodes] = useState<EPCNode[]>(initialNodes);
