@@ -528,17 +528,56 @@ export default function ProcessEditTab({ processId }: ProcessEditTabProps) {
                             <div className="flex items-center gap-1.5 justify-between">
                               <div className="flex items-center gap-1.5">
                                 <Monitor className="h-3 w-3 text-sky-500" />
-                                <span className="text-[11px] font-semibold text-sky-700">Applications ({stepApps.length})</span>
+                                <span className="text-[11px] font-semibold text-sky-700">Applications & Screens ({stepApps.length})</span>
                               </div>
                               <Button variant="ghost" size="sm" className="h-5 text-[10px] text-sky-600" onClick={() => { setContextStepId(step.id); setAddDialog('application'); }}>
                                 <Plus className="h-3 w-3 mr-0.5" /> Add
                               </Button>
                             </div>
-                            {stepApps.map(app => (
+                            {/* Screens with nested apps */}
+                            {stepApps.filter(a => a.app_type === 'screen' && !a.parent_id).map(screen => {
+                              const childApps = stepApps.filter(a => a.parent_id === screen.id);
+                              return (
+                                <div key={screen.id} className="ml-4 pl-3 border-l-2 border-sky-200 space-y-1">
+                                  <div className="flex items-center gap-2 group/app py-1">
+                                    <Monitor className="h-3 w-3 text-sky-400 shrink-0" />
+                                    <InlineEdit value={screen.name} onSave={v => updateStepApplication(screen.id, { name: v }).then(reload)} className="text-sm font-medium" />
+                                    <Badge className="border-0 bg-sky-100 text-sky-700 text-[9px]">Screen</Badge>
+                                    <span className="flex-1" />
+                                    <Button variant="ghost" size="sm" className="h-5 text-[10px] text-sky-600 opacity-0 group-hover/app:opacity-100"
+                                      onClick={() => { setContextStepId(step.id); setContextScreenId(screen.id); setAddDialog('application'); }}>
+                                      <Plus className="h-2.5 w-2.5 mr-0.5" /> App
+                                    </Button>
+                                    <Button variant="ghost" size="icon" className="h-5 w-5 opacity-0 group-hover/app:opacity-100 text-muted-foreground hover:text-destructive"
+                                      onClick={() => deleteStepApplication(screen.id).then(reload)}>
+                                      <Trash2 className="h-2.5 w-2.5" />
+                                    </Button>
+                                  </div>
+                                  {childApps.length > 0 && (
+                                    <div className="ml-4 pl-3 border-l-2 border-sky-100 space-y-1">
+                                      {childApps.map(app => (
+                                        <div key={app.id} className="flex items-center gap-2 group/child py-0.5">
+                                          <Monitor className="h-2.5 w-2.5 text-sky-300 shrink-0" />
+                                          <InlineEdit value={app.name} onSave={v => updateStepApplication(app.id, { name: v }).then(reload)} className="text-xs" />
+                                          <Badge variant="outline" className="text-[8px]">App</Badge>
+                                          <span className="flex-1" />
+                                          <Button variant="ghost" size="icon" className="h-4 w-4 opacity-0 group-hover/child:opacity-100 text-muted-foreground hover:text-destructive"
+                                            onClick={() => deleteStepApplication(app.id).then(reload)}>
+                                            <Trash2 className="h-2 w-2" />
+                                          </Button>
+                                        </div>
+                                      ))}
+                                    </div>
+                                  )}
+                                </div>
+                              );
+                            })}
+                            {/* Standalone applications (no parent, not screens) */}
+                            {stepApps.filter(a => a.app_type !== 'screen' && !a.parent_id).map(app => (
                               <div key={app.id} className="ml-4 pl-3 border-l-2 border-sky-200 flex items-center gap-2 group/app py-1">
+                                <Monitor className="h-3 w-3 text-sky-400 shrink-0" />
                                 <InlineEdit value={app.name} onSave={v => updateStepApplication(app.id, { name: v }).then(reload)} className="text-sm font-medium" />
                                 <Badge variant="outline" className="text-[9px] capitalize">{app.app_type}</Badge>
-                                {app.screen_name && <span className="text-[10px] text-muted-foreground">Screen: {app.screen_name}</span>}
                                 <span className="flex-1" />
                                 <Button variant="ghost" size="icon" className="h-5 w-5 opacity-0 group-hover/app:opacity-100 text-muted-foreground hover:text-destructive"
                                   onClick={() => deleteStepApplication(app.id).then(reload)}>
