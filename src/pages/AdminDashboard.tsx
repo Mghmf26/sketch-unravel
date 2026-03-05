@@ -116,7 +116,12 @@ export default function AdminDashboard() {
       assignMap[a.user_id].push({ id: a.client_id, name: (a as any).clients?.name || '' });
     });
 
-    setUsers((profiles || []).map((p: any) => ({
+    // Filter out root users from list (unless current user is root)
+    const filteredProfiles = isRoot
+      ? (profiles || [])
+      : (profiles || []).filter((p: any) => roleMap[p.user_id] !== 'root');
+
+    setUsers(filteredProfiles.map((p: any) => ({
       user_id: p.user_id,
       email: authUsersMap[p.user_id]?.email || '',
       display_name: p.display_name,
