@@ -149,6 +149,7 @@ export default function ProcessEditTab({ processId }: ProcessEditTabProps) {
   const [addDialog, setAddDialog] = useState<AddDialog>(null);
   const [contextStepId, setContextStepId] = useState<string | null>(null);
   const [contextRiskId, setContextRiskId] = useState<string | null>(null);
+  const [contextScreenId, setContextScreenId] = useState<string | null>(null);
   const [expandedSteps, setExpandedSteps] = useState<Set<string>>(new Set());
 
   // Global sections
@@ -1030,14 +1031,20 @@ function AddRaciDialog({ processId, stepId, onClose, onRefresh }: { processId: s
   );
 }
 
-function AddApplicationDialog({ processId, stepId, onClose, onRefresh }: { processId: string; stepId: string; onClose: () => void; onRefresh: () => void }) {
+function AddApplicationDialog({ processId, stepId, parentScreenId, screens, onClose, onRefresh }: { 
+  processId: string; stepId: string; parentScreenId?: string | null; screens: StepApplication[]; onClose: () => void; onRefresh: () => void;
+}) {
   const [name, setName] = useState('');
-  const [screenName, setScreenName] = useState('');
-  const [appType, setAppType] = useState('application');
+  const [appType, setAppType] = useState(parentScreenId ? 'application' : 'application');
+  const [parentId, setParentId] = useState(parentScreenId || '');
   const [desc, setDesc] = useState('');
   const submit = async () => {
     if (!name.trim()) return;
-    await insertStepApplication({ process_id: processId, step_id: stepId, name: name.trim(), screen_name: screenName || null, app_type: appType, description: desc || null });
+    await insertStepApplication({ 
+      process_id: processId, step_id: stepId, name: name.trim(), 
+      app_type: appType, description: desc || null,
+      parent_id: parentId || null,
+    } as any);
     toast({ title: `${appType === 'screen' ? 'Screen' : 'Application'} added` }); onRefresh(); onClose();
   };
   return (
@@ -1046,8 +1053,8 @@ function AddApplicationDialog({ processId, stepId, onClose, onRefresh }: { proce
         <DialogHeader><DialogTitle className="flex items-center gap-2"><Monitor className="h-5 w-5 text-sky-500" /> Add Application / Screen</DialogTitle></DialogHeader>
         <div className="grid gap-3 py-2">
           <div className="grid gap-1.5">
-            <Label>Type</Label>
-            <Select value={appType} onValueChange={setAppType}>
+            <Label>What are you adding?</Label>
+            <Select value={appType} onValueChange={v => { setAppType(v); if (v === 'screen') setParentId(''); }}>
               <SelectTrigger><SelectValue /></SelectTrigger>
               <SelectContent>
                 <SelectItem value="application">Application</SelectItem>
@@ -1055,13 +1062,26 @@ function AddApplicationDialog({ processId, stepId, onClose, onRefresh }: { proce
               </SelectContent>
             </Select>
           </div>
-          <div className="grid gap-1.5"><Label>Name *</Label><Input value={name} onChange={e => setName(e.target.value)} placeholder={appType === 'screen' ? 'Screen name...' : 'Application name...'} /></div>
-          {appType === 'application' && (
-            <div className="grid gap-1.5"><Label>Screen Name (optional)</Label><Input value={screenName} onChange={e => setScreenName(e.target.value)} placeholder="e.g. Main Dashboard" /></div>
+          <div className="grid gap-1.5">
+            <Label>{appType === 'screen' ? 'Screen Name' : 'Application Name'} *</Label>
+            <Input value={name} onChange={e => setName(e.target.value)} placeholder={appType === 'screen' ? 'e.g. Invoice Entry Screen' : 'e.g. SAP FI, Oracle EBS'} />
+          </div>
+          {appType === 'application' && screens.length > 0 && (
+            <div className="grid gap-1.5">
+              <Label>Link to Screen (optional)</Label>
+              <Select value={parentId} onValueChange={setParentId}>
+                <SelectTrigger><SelectValue placeholder="Standalone application" /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="">Standalone (no screen)</SelectItem>
+                  {screens.map(s => <SelectItem key={s.id} value={s.id}>{s.name}</SelectItem>)}
+                </SelectContent>
+              </Select>
+              <p className="text-[10px] text-muted-foreground">Link this application to a screen to show it as a child</p>
+            </div>
           )}
           <div className="grid gap-1.5"><Label>Description</Label><Textarea value={desc} onChange={e => setDesc(e.target.value)} placeholder="Optional description..." /></div>
         </div>
-        <DialogFooter><Button variant="outline" onClick={onClose}>Cancel</Button><Button onClick={submit}>Add</Button></DialogFooter>
+        <DialogFooter><Button variant="outline" onClick={onClose}>Cancel</Button><Button onClick={submit} disabled={!name.trim()}>Add {appType === 'screen' ? 'Screen' : 'Application'}</Button></DialogFooter>
       </DialogContent>
     </Dialog>
   );
