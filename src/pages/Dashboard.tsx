@@ -78,7 +78,7 @@ export default function Dashboard() {
           <p className="text-[hsl(var(--sidebar-primary))] text-xs font-semibold tracking-[0.2em] uppercase mb-2">{greeting}</p>
           <h1 className="text-3xl font-bold tracking-tight">{displayName}</h1>
           <p className="text-white/60 text-sm mt-2 max-w-xl">
-            Your process intelligence dashboard — monitor risks, controls, compliance, and mainframe health across all engagements.
+            Your portfolio management dashboard — monitor risks, controls, compliance, and mainframe health across all engagements.
           </p>
           <div className="flex gap-3 mt-5">
             <Badge className="bg-[hsl(var(--sidebar-primary)/0.15)] text-[hsl(var(--sidebar-primary))] border-0 px-3 py-1 text-xs font-medium">
@@ -265,9 +265,9 @@ export default function Dashboard() {
         </div>
       </div>
 
-      {/* Mainframe AI Potential Overview */}
+      {/* Overall Portfolio AI Potential */}
       <div>
-        <h2 className="text-sm font-semibold text-foreground tracking-wide uppercase mb-3">Mainframe AI Potential Overview</h2>
+        <h2 className="text-sm font-semibold text-foreground tracking-wide uppercase mb-3">Overall Portfolio AI Potential</h2>
         <Card className="border shadow-sm">
           <CardContent className="p-6">
             <div className="flex items-center gap-3 mb-5">
@@ -275,12 +275,13 @@ export default function Dashboard() {
                 <Brain className="h-5 w-5 text-primary" />
               </div>
               <div>
-                <p className="text-sm font-semibold text-foreground">MF AI Potential Distribution</p>
-                <p className="text-xs text-muted-foreground">AI-determined potential across all business processes</p>
+                <p className="text-sm font-semibold text-foreground">AI Potential Distribution</p>
+                <p className="text-xs text-muted-foreground">Percentage breakdown across all business processes</p>
               </div>
             </div>
             <div className="grid grid-cols-5 gap-3">
               {potentialCounts.map(({ level, count }) => {
+                const pct = processes.length > 0 ? Math.round((count / processes.length) * 100) : 0;
                 const colorMap: Record<string, string> = {
                   'very low': 'bg-muted text-muted-foreground',
                   'low': 'bg-blue-500/10 text-blue-600',
@@ -290,8 +291,9 @@ export default function Dashboard() {
                 };
                 return (
                   <div key={level} className={`rounded-xl p-4 text-center ${colorMap[level]}`}>
-                    <p className="text-2xl font-bold">{count}</p>
+                    <p className="text-2xl font-bold">{pct}%</p>
                     <p className="text-[10px] font-semibold uppercase tracking-wider mt-1 capitalize">{level}</p>
+                    <p className="text-[9px] text-muted-foreground mt-0.5">{count} of {processes.length}</p>
                   </div>
                 );
               })}
@@ -303,8 +305,8 @@ export default function Dashboard() {
       {/* Recent Added Processes */}
       <div>
         <h2 className="text-sm font-semibold text-foreground tracking-wide uppercase mb-3">Recent Added Processes</h2>
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-          {processes.slice(0, 6).map(p => {
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+          {processes.slice(0, 3).map(p => {
             const pRisks = risks.filter(r => r.process_id === p.id);
             const pControls = controls.filter(c => pRisks.some(r => r.id === c.risk_id));
             const pRegs = regulations.filter(r => r.process_id === p.id);
@@ -330,7 +332,7 @@ export default function Dashboard() {
             );
           })}
         </div>
-        {processes.length > 6 && (
+        {processes.length > 3 && (
           <div className="mt-3 text-center">
             <Button variant="ghost" size="sm" onClick={() => navigate('/processes')} className="text-xs text-muted-foreground">
               View all {processes.length} processes <ArrowUpRight className="h-3 w-3 ml-1" />

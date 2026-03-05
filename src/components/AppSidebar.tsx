@@ -43,7 +43,7 @@ interface MenuGroup {
 
 const menuGroups: MenuGroup[] = [
   {
-    title: 'Dashboard',
+    title: 'Portfolio Management',
     icon: LayoutDashboard,
     children: [
       { title: 'Admin Dashboard', url: '/admin', icon: ShieldCheck, pageSlug: '__admin__' },

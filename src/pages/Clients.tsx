@@ -69,6 +69,7 @@ const emptyForm = {
   notes: '',
   status: 'active',
   engagement_mode: 'external_audit',
+  wbs_code: '',
 };
 
 const industries = [
@@ -127,6 +128,7 @@ export default function Clients() {
       notes: c.notes || '',
       status: c.status,
       engagement_mode: (c as any).engagement_mode || 'audit',
+      wbs_code: (c as any).wbs_code || '',
     });
     setDialogOpen(true);
   };
@@ -147,6 +149,7 @@ export default function Clients() {
       notes: form.notes || null,
       status: form.status,
       engagement_mode: form.engagement_mode,
+      wbs_code: form.wbs_code || null,
     };
 
     if (editingClient) {
@@ -314,6 +317,12 @@ export default function Clients() {
                 </div>
 
                 <div className="space-y-1.5 mt-4">
+                  {(client as any).wbs_code && (
+                    <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                      <Briefcase className="h-3 w-3 flex-shrink-0" />
+                      <span className="font-medium">WBS: {(client as any).wbs_code}</span>
+                    </div>
+                  )}
                   {client.contact_person && (
                     <div className="flex items-center gap-2 text-xs text-muted-foreground">
                       <Users className="h-3 w-3 flex-shrink-0" />
@@ -400,6 +409,11 @@ export default function Clients() {
               </Select>
             </div>
             <div className="grid grid-cols-2 gap-4">
+              <div className="grid gap-1.5">
+                <Label htmlFor="wbs_code">WBS Code</Label>
+                <Input id="wbs_code" placeholder="e.g. WBS-2026-001" value={form.wbs_code} onChange={(e) => setForm({ ...form, wbs_code: e.target.value })} />
+              </div>
+              <div className="grid gap-1.5" />
               <div className="grid gap-1.5">
                 <Label htmlFor="contact_person">Contact Person</Label>
                 <Input id="contact_person" placeholder="John Doe" value={form.contact_person} onChange={(e) => setForm({ ...form, contact_person: e.target.value })} />
