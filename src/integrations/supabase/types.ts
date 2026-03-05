@@ -524,6 +524,8 @@ export type Database = {
           dataset_name: string | null
           description: string | null
           file_url: string | null
+          flow_id: string | null
+          flow_node_id: string | null
           id: string
           last_sync: string | null
           process_id: string
@@ -538,6 +540,8 @@ export type Database = {
           dataset_name?: string | null
           description?: string | null
           file_url?: string | null
+          flow_id?: string | null
+          flow_node_id?: string | null
           id?: string
           last_sync?: string | null
           process_id: string
@@ -552,6 +556,8 @@ export type Database = {
           dataset_name?: string | null
           description?: string | null
           file_url?: string | null
+          flow_id?: string | null
+          flow_node_id?: string | null
           id?: string
           last_sync?: string | null
           process_id?: string
@@ -562,6 +568,20 @@ export type Database = {
           step_id?: string | null
         }
         Relationships: [
+          {
+            foreignKeyName: "mainframe_imports_flow_id_fkey"
+            columns: ["flow_id"]
+            isOneToOne: false
+            referencedRelation: "mainframe_flows"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "mainframe_imports_flow_node_id_fkey"
+            columns: ["flow_node_id"]
+            isOneToOne: false
+            referencedRelation: "mainframe_flow_nodes"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "mainframe_imports_process_id_fkey"
             columns: ["process_id"]
