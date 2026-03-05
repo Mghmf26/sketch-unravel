@@ -875,10 +875,10 @@ export default function NodeDetailPanel({ node, risks, controls, regulations, in
           {appForm.app_type === 'application' && stepApps.filter(a => a.app_type === 'screen' && !a.parent_id).length > 0 && (
             <div className="grid gap-1.5">
               <Label>Link to Screen (optional)</Label>
-              <Select value={appForm.parent_id} onValueChange={v => setAppForm(f => ({ ...f, parent_id: v }))}>
+              <Select value={appForm.parent_id || '__none__'} onValueChange={v => setAppForm(f => ({ ...f, parent_id: v === '__none__' ? '' : v }))}>
                 <SelectTrigger><SelectValue placeholder="Standalone application" /></SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="">Standalone (no screen)</SelectItem>
+                  <SelectItem value="__none__">Standalone (no screen)</SelectItem>
                   {stepApps.filter(a => a.app_type === 'screen' && !a.parent_id).map(s => <SelectItem key={s.id} value={s.id}>{s.name}</SelectItem>)}
                 </SelectContent>
               </Select>

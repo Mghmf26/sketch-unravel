@@ -1074,10 +1074,10 @@ function AddApplicationDialog({ processId, stepId, parentScreenId, screens, onCl
           {appType === 'application' && screens.length > 0 && (
             <div className="grid gap-1.5">
               <Label>Link to Screen (optional)</Label>
-              <Select value={parentId} onValueChange={setParentId}>
+              <Select value={parentId || '__none__'} onValueChange={v => setParentId(v === '__none__' ? '' : v)}>
                 <SelectTrigger><SelectValue placeholder="Standalone application" /></SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="">Standalone (no screen)</SelectItem>
+                  <SelectItem value="__none__">Standalone (no screen)</SelectItem>
                   {screens.map(s => <SelectItem key={s.id} value={s.id}>{s.name}</SelectItem>)}
                 </SelectContent>
               </Select>
