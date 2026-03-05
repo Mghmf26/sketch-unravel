@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate, useSearchParams } from 'react-router-dom';
-import { ArrowLeft, Image as ImageIcon, LayoutGrid, Share2, Upload } from 'lucide-react';
+import { ArrowLeft, Image as ImageIcon, LayoutGrid, Share2, Upload, Grid3x3 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -8,6 +8,7 @@ import { toast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 import DiagramCanvasEditor from '@/components/DiagramCanvasEditor';
 import ProcessEditTab from '@/components/ProcessEditTab';
+import RiskMatrixEditor from '@/components/RiskMatrixEditor';
 import {
   fetchProcesses, fetchSteps, fetchStepConnections,
   fetchRisks, fetchAllControls, fetchRegulations, fetchIncidents,
@@ -126,6 +127,7 @@ export default function ProcessView() {
           <TabsTrigger value="image" className="gap-2"><ImageIcon className="h-4 w-4" /> Image View</TabsTrigger>
           <TabsTrigger value="edit" className="gap-2"><LayoutGrid className="h-4 w-4" /> Edit Data</TabsTrigger>
           <TabsTrigger value="diagram" className="gap-2"><Share2 className="h-4 w-4" /> Diagram Editor</TabsTrigger>
+          <TabsTrigger value="risk-matrix" className="gap-2"><Grid3x3 className="h-4 w-4" /> Risk Matrix</TabsTrigger>
         </TabsList>
 
         <TabsContent value="image" className="mt-0">
@@ -166,6 +168,11 @@ export default function ProcessView() {
 
         <TabsContent value="diagram" className="mt-0">
           <DiagramCanvasEditor nodes={epcNodes} connections={epcConns} risks={risks} controls={controls} regulations={regulations} incidents={incidents} applications={applications} processId={id} onChange={handleDiagramChange} onDataChanged={loadData} />
+        </TabsContent>
+
+        <TabsContent value="risk-matrix" className="mt-0">
+          <RiskMatrixEditor processId={id!} />
+        </TabsContent>
         </TabsContent>
       </Tabs>
     </div>

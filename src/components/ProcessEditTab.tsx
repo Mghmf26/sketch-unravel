@@ -762,10 +762,11 @@ export default function ProcessEditTab({ processId }: ProcessEditTabProps) {
 function AddStepDialog({ processId, onClose, onRefresh }: { processId: string; onClose: () => void; onRefresh: () => void }) {
   const [label, setLabel] = useState('');
   const [type, setType] = useState('in-scope');
+  const [stepType, setStepType] = useState('__none__');
   const [desc, setDesc] = useState('');
   const submit = async () => {
     if (!label.trim()) return;
-    await insertStep({ process_id: processId, label: label.trim(), type, description: desc || null });
+    await insertStep({ process_id: processId, label: label.trim(), type, description: desc || null, step_type: stepType === '__none__' ? null : stepType } as any);
     toast({ title: 'Step added' }); onRefresh(); onClose();
   };
   const style = getTypeStyle(type);
@@ -788,6 +789,16 @@ function AddStepDialog({ processId, onClose, onRefresh }: { processId: string; o
                     </span>
                   </SelectItem>
                 ))}
+              </SelectContent>
+            </Select>
+          </div>
+          <div className="grid gap-1.5">
+            <Label>Step Type</Label>
+            <Select value={stepType} onValueChange={setStepType}>
+              <SelectTrigger><SelectValue /></SelectTrigger>
+              <SelectContent>
+                <SelectItem value="__none__">— None —</SelectItem>
+                {STEP_TYPE_OPTIONS.map(o => <SelectItem key={o.value} value={o.value}>{o.label}</SelectItem>)}
               </SelectContent>
             </Select>
           </div>
