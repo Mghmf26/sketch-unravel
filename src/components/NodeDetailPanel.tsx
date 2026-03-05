@@ -897,6 +897,14 @@ export default function NodeDetailPanel({ node, risks, controls, regulations, in
         </DialogFooter>
       </DialogContent>
     </Dialog>
+    <ConfirmDialog
+      open={!!pendingDelete}
+      title={`Delete ${pendingDelete?.type || ''}?`}
+      description={`Are you sure you want to delete this ${pendingDelete?.type || 'item'}? This action cannot be undone.`}
+      confirmLabel="Delete"
+      onConfirm={executeDelete}
+      onCancel={() => setPendingDelete(null)}
+    />
     </>
   );
 }
