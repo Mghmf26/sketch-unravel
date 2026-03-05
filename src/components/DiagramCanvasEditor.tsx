@@ -93,6 +93,7 @@ function toFlowElements(
         nodeId: n.id,
         description: n.description || '',
         interfaceSubtype: n.interfaceSubtype,
+        stepType: n.stepType,
         riskCount: stepRisks.length,
         controlCount: stepControls.length,
         regulationCount: stepRegulations.length,
