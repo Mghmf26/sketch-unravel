@@ -69,7 +69,7 @@ const ROLE_COLORS: Record<string, string> = {
 
 export default function AdminDashboard() {
   const navigate = useNavigate();
-  const { role, loading, session } = useAuth();
+  const { role, loading, session, isRoot } = useAuth();
   const [users, setUsers] = useState<UserRow[]>([]);
   const [invitations, setInvitations] = useState<Invitation[]>([]);
   const [clients, setClients] = useState<Client[]>([]);
