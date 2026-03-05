@@ -161,16 +161,20 @@ function RelationDot({ count, color, icon: Icon, label, onClick }: {
 }
 
 // Type badge (no ID)
-function TypeBadge({ nodeType, style, onCycleType }: {
+function TypeBadge({ nodeType, interfaceSubtype, style, onCycleType }: {
   nodeType: NodeType;
+  interfaceSubtype?: InterfaceSubtype;
   style: { border: string; text: string; badgeBg: string };
   onCycleType: () => void;
 }) {
+  const label = nodeType === 'interface' && interfaceSubtype
+    ? INTERFACE_SUBTYPE_LABELS[interfaceSubtype] || INTERFACE_SUBTYPE_LABELS['default']
+    : TYPE_LABELS[nodeType];
   return (
     <button onClick={onCycleType}
       className="text-[9px] font-semibold px-2 py-0.5 rounded-full border cursor-pointer hover:scale-105 transition-transform"
       style={{ borderColor: style.border, color: style.text, backgroundColor: style.badgeBg }}>
-      {TYPE_LABELS[nodeType]}
+      {label}
     </button>
   );
 }
