@@ -616,6 +616,30 @@ export type Database = {
           },
         ]
       }
+      page_visibility: {
+        Row: {
+          created_at: string
+          hidden_from_roles: string[]
+          id: string
+          page_slug: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          hidden_from_roles?: string[]
+          id?: string
+          page_slug: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          hidden_from_roles?: string[]
+          id?: string
+          page_slug?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       process_steps: {
         Row: {
           created_at: string
@@ -1095,6 +1119,7 @@ export type Database = {
         Returns: boolean
       }
       is_participant: { Args: { _user_id: string }; Returns: boolean }
+      is_root: { Args: { _user_id: string }; Returns: boolean }
     }
     Enums: {
       app_role:
