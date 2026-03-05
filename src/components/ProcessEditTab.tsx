@@ -33,6 +33,7 @@ import {
   type Regulation, type Incident, type MainframeImport, type MFQuestion, type StepRaci,
 } from '@/lib/api';
 import { fetchStepApplications, insertStepApplication, updateStepApplication, deleteStepApplication, type StepApplication } from '@/lib/api-applications';
+import { StepTypeBadge, STEP_TYPE_OPTIONS } from '@/components/StepTypeBadge';
 
 interface ProcessEditTabProps {
   processId: string;
