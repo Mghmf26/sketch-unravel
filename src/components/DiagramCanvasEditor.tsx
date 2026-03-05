@@ -491,6 +491,7 @@ export default function DiagramCanvasEditor({
           controls={controls}
           regulations={regulations}
           incidents={incidents}
+          processId={processId}
           defaultTab={detailTab}
           onClose={() => setSelectedNodeId(null)}
           onDataChanged={onDataChanged}
