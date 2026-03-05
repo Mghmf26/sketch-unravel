@@ -22,7 +22,7 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import EditableEPCNode from '@/components/EditableEPCNode';
 import NodeDetailPanel from '@/components/NodeDetailPanel';
 import { getLayoutedElements } from '@/lib/layout';
-import type { EPCNode, EPCConnection, NodeType } from '@/types/epc';
+import type { EPCNode, EPCConnection, NodeType, InterfaceSubtype } from '@/types/epc';
 import type { Risk, Control, Regulation, Incident } from '@/lib/api';
 import type { StepApplication } from '@/lib/api-applications';
 
@@ -271,16 +271,18 @@ export default function DiagramCanvasEditor({
     onNodesChange(changes);
   }, [onNodesChange]);
 
-  const addNode = useCallback((type: NodeType) => {
+  const addNode = useCallback((type: NodeType, interfaceSubtype?: InterfaceSubtype) => {
     const id = crypto.randomUUID();
     const labels: Record<NodeType, string> = {
       'in-scope': 'New Step', 'interface': 'New Business Process', 'event': 'New Event', 'xor': 'XOR',
       'start-end': 'Start', 'decision': 'Decision?', 'storage': 'Storage', 'delay': 'Delay', 'document': 'Document',
     };
-    const newNode: EPCNode = { id, label: labels[type], type, description: '' };
+    const subtypeLabels: Record<string, string> = { 'input': 'New Business Process (Input)', 'output': 'New Business Process (Output)' };
+    const label = type === 'interface' && interfaceSubtype && interfaceSubtype !== 'default' ? subtypeLabels[interfaceSubtype] || labels[type] : labels[type];
+    const newNode: EPCNode = { id, label, type, description: '', ...(interfaceSubtype ? { interfaceSubtype } : {}) };
     const updatedNodes = [...workingNodesRef.current, newNode];
     setWorkingNodes(updatedNodes);
-    pushHistory(`Added ${labels[type]}`, updatedNodes, workingConnsRef.current);
+    pushHistory(`Added ${label}`, updatedNodes, workingConnsRef.current);
   }, [pushHistory]);
 
   const autoLayout = useCallback(() => {
@@ -408,8 +410,14 @@ export default function DiagramCanvasEditor({
                 <DropdownMenuItem onClick={() => addNode('in-scope')}>
                   <span className="w-2.5 h-2.5 rounded-sm bg-emerald-400 mr-2" /> Step
                 </DropdownMenuItem>
-                <DropdownMenuItem onClick={() => addNode('interface')}>
+                <DropdownMenuItem onClick={() => addNode('interface', 'default')}>
                   <span className="w-2.5 h-2.5 rounded-sm bg-slate-300 mr-2" /> Business Process
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => addNode('interface', 'input')}>
+                  <span className="w-2.5 h-2.5 rounded-sm bg-slate-400 mr-2" /> Business Process (Input)
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => addNode('interface', 'output')}>
+                  <span className="w-2.5 h-2.5 rounded-sm bg-slate-500 mr-2" /> Business Process (Output)
                 </DropdownMenuItem>
                 <DropdownMenuItem onClick={() => addNode('event')}>
                   <span className="w-2.5 h-2.5 rounded-sm bg-pink-400 mr-2" /> Event
