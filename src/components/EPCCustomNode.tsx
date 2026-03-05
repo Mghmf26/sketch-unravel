@@ -6,6 +6,7 @@ interface EPCNodeData {
   label: string;
   nodeType: NodeType;
   nodeId: string;
+  interfaceSubtype?: string;
   [key: string]: unknown;
 }
 
@@ -74,14 +75,6 @@ const handleStyle = (color: string) => ({
   background: color, width: 10, height: 10,
   border: '2px solid white', boxShadow: `0 0 0 1px ${color}40`,
 });
-
-interface EPCNodeData {
-  label: string;
-  nodeType: NodeType;
-  nodeId: string;
-  interfaceSubtype?: string;
-  [key: string]: unknown;
-}
 
 function EPCCustomNode({ data }: NodeProps) {
   const d = data as EPCNodeData;
