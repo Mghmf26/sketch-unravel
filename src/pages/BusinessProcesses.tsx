@@ -16,7 +16,7 @@ const BP_COLUMNS: ColumnDef[] = [
   { key: 'controls', label: 'Controls', defaultVisible: true, minWidth: 50 },
   { key: 'incidents', label: 'Incidents', defaultVisible: true, minWidth: 50 },
   { key: 'regs', label: 'Regulations', defaultVisible: true, minWidth: 50 },
-  { key: 'apps', label: 'Int./App.', defaultVisible: true, minWidth: 50 },
+  { key: 'apps', label: 'Scr./App.', defaultVisible: true, minWidth: 50 },
   { key: 'mfai', label: 'MF AI Potential', defaultVisible: true, minWidth: 80 },
   { key: 'actions', label: 'Actions', defaultVisible: true, minWidth: 80 },
 ];
@@ -153,7 +153,7 @@ export default function BusinessProcesses() {
           { label: 'Active Risks', value: totalRisks, icon: AlertTriangle, color: 'text-destructive' },
           { label: 'Open Incidents', value: totalIncidents, icon: AlertCircle, color: 'text-orange-600' },
           { label: 'Regulations', value: totalRegulations, icon: Scale, color: 'text-primary' },
-          { label: 'Int./App.', value: totalApps, icon: Monitor, color: 'text-sky-600' },
+          { label: 'Scr./App.', value: totalApps, icon: Monitor, color: 'text-sky-600' },
         ].map((kpi) => (
           <Card key={kpi.label} className="border bg-card hover:shadow-md transition-shadow">
             <CardContent className="p-4 flex items-center gap-3">
@@ -215,7 +215,7 @@ export default function BusinessProcesses() {
                 {colSettings.isVisible('controls') && <TableHead className="font-bold text-[11px] text-foreground/70 tracking-wider uppercase py-3 text-center" style={{width: colSettings.getWidth('controls')}}>Controls</TableHead>}
                 {colSettings.isVisible('incidents') && <TableHead className="font-bold text-[11px] text-foreground/70 tracking-wider uppercase py-3 text-center" style={{width: colSettings.getWidth('incidents')}}>Incidents</TableHead>}
                 {colSettings.isVisible('regs') && <TableHead className="font-bold text-[11px] text-foreground/70 tracking-wider uppercase py-3 text-center" style={{width: colSettings.getWidth('regs')}}>Regs.</TableHead>}
-                {colSettings.isVisible('apps') && <TableHead className="font-bold text-[11px] text-foreground/70 tracking-wider uppercase py-3 text-center" style={{width: colSettings.getWidth('apps')}}>Int./App.</TableHead>}
+                {colSettings.isVisible('apps') && <TableHead className="font-bold text-[11px] text-foreground/70 tracking-wider uppercase py-3 text-center" style={{width: colSettings.getWidth('apps')}}>Scr./App.</TableHead>}
                 {colSettings.isVisible('mfai') && <TableHead className="font-bold text-[11px] text-foreground/70 tracking-wider uppercase py-3 text-center" style={{width: colSettings.getWidth('mfai')}}>MF AI Potential</TableHead>}
                 {colSettings.isVisible('actions') && <TableHead className="font-bold text-[11px] text-foreground/70 tracking-wider uppercase py-3 text-right" style={{width: colSettings.getWidth('actions')}}>Actions</TableHead>}
               </TableRow>
