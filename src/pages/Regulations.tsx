@@ -30,6 +30,7 @@ import {
 } from '@/lib/api';
 
 export default function Regulations() {
+  const colSettings = useColumnSettings('regulations', REG_COLUMNS);
   const navigate = useNavigate();
   const [processes, setProcesses] = useState<BusinessProcess[]>([]);
   const [steps, setSteps] = useState<ProcessStep[]>([]);

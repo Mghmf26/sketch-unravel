@@ -31,6 +31,7 @@ import {
 } from '@/lib/api';
 
 export default function Incidents() {
+  const colSettings = useColumnSettings('incidents', INCIDENT_COLUMNS);
   const navigate = useNavigate();
   const [processes, setProcesses] = useState<BusinessProcess[]>([]);
   const [steps, setSteps] = useState<ProcessStep[]>([]);

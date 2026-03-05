@@ -31,6 +31,7 @@ import {
 } from '@/lib/api';
 
 export default function RisksControls() {
+  const colSettings = useColumnSettings('risks', RISK_COLUMNS);
   const navigate = useNavigate();
   const [processes, setProcesses] = useState<BusinessProcess[]>([]);
   const [steps, setSteps] = useState<ProcessStep[]>([]);
