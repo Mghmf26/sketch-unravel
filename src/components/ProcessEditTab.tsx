@@ -361,7 +361,8 @@ export default function ProcessEditTab({ processId }: ProcessEditTabProps) {
                             />
                           </div>
 
-                          {/* Step Type (Critical/Mechanical/Decisional) */}
+                          {/* Step Type (Critical/Mechanical/Decisional) - only for in-scope steps */}
+                          {step.type === 'in-scope' && (
                           <div className="flex items-center gap-2 text-xs">
                             <span className="text-muted-foreground font-medium">Step Type:</span>
                             <InlineSelect
@@ -371,6 +372,7 @@ export default function ProcessEditTab({ processId }: ProcessEditTabProps) {
                             />
                             {step.step_type && <StepTypeBadge stepType={step.step_type as any} />}
                           </div>
+                          )}
 
                           {/* Risks & Controls */}
                           {canAccessModule('risks') && (
