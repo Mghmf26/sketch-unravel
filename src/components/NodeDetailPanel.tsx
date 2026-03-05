@@ -846,26 +846,35 @@ export default function NodeDetailPanel({ node, risks, controls, regulations, in
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2"><Monitor className="h-5 w-5 text-sky-500" /> Add Application / Screen</DialogTitle>
-          <DialogDescription>Link an application or screen to this step.</DialogDescription>
+          <DialogDescription>Add a standalone application or a screen with linked apps.</DialogDescription>
         </DialogHeader>
         <div className="grid gap-3 py-2">
           <div className="grid gap-1.5">
-            <Label>Application Name *</Label>
-            <Input value={appForm.name} onChange={e => setAppForm(f => ({ ...f, name: e.target.value }))} placeholder="e.g. SAP FI, Oracle EBS" />
-          </div>
-          <div className="grid gap-1.5">
-            <Label>Screen / Module Name</Label>
-            <Input value={appForm.screen_name} onChange={e => setAppForm(f => ({ ...f, screen_name: e.target.value }))} placeholder="e.g. Transaction VA01" />
-          </div>
-          <div className="grid gap-1.5">
-            <Label>Type</Label>
-            <Select value={appForm.app_type} onValueChange={v => setAppForm(f => ({ ...f, app_type: v }))}>
+            <Label>What are you adding?</Label>
+            <Select value={appForm.app_type} onValueChange={v => setAppForm(f => ({ ...f, app_type: v, parent_id: v === 'screen' ? '' : f.parent_id }))}>
               <SelectTrigger><SelectValue /></SelectTrigger>
               <SelectContent>
-                {['application', 'screen', 'module', 'service', 'database'].map(o => <SelectItem key={o} value={o} className="capitalize">{o}</SelectItem>)}
+                <SelectItem value="application">Application</SelectItem>
+                <SelectItem value="screen">Screen</SelectItem>
               </SelectContent>
             </Select>
           </div>
+          <div className="grid gap-1.5">
+            <Label>{appForm.app_type === 'screen' ? 'Screen Name' : 'Application Name'} *</Label>
+            <Input value={appForm.name} onChange={e => setAppForm(f => ({ ...f, name: e.target.value }))} placeholder={appForm.app_type === 'screen' ? 'e.g. Invoice Entry Screen' : 'e.g. SAP FI, Oracle EBS'} />
+          </div>
+          {appForm.app_type === 'application' && stepApps.filter(a => a.app_type === 'screen' && !a.parent_id).length > 0 && (
+            <div className="grid gap-1.5">
+              <Label>Link to Screen (optional)</Label>
+              <Select value={appForm.parent_id} onValueChange={v => setAppForm(f => ({ ...f, parent_id: v }))}>
+                <SelectTrigger><SelectValue placeholder="Standalone application" /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="">Standalone (no screen)</SelectItem>
+                  {stepApps.filter(a => a.app_type === 'screen' && !a.parent_id).map(s => <SelectItem key={s.id} value={s.id}>{s.name}</SelectItem>)}
+                </SelectContent>
+              </Select>
+            </div>
+          )}
           <div className="grid gap-1.5">
             <Label>Description</Label>
             <Textarea value={appForm.description} onChange={e => setAppForm(f => ({ ...f, description: e.target.value }))} placeholder="Optional description..." />
@@ -874,7 +883,7 @@ export default function NodeDetailPanel({ node, risks, controls, regulations, in
         <DialogFooter>
           <Button variant="outline" onClick={() => setAddDialog(null)}>Cancel</Button>
           <Button onClick={handleAddApplication} disabled={saving || !appForm.name.trim()}>
-            {saving && <Loader2 className="mr-2 h-4 w-4 animate-spin" />} Add Application
+            {saving && <Loader2 className="mr-2 h-4 w-4 animate-spin" />} Add {appForm.app_type === 'screen' ? 'Screen' : 'Application'}
           </Button>
         </DialogFooter>
       </DialogContent>
