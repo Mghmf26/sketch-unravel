@@ -1,7 +1,7 @@
 import { memo, useState, useCallback, useRef, useEffect } from 'react';
 import { Handle, Position, type NodeProps } from '@xyflow/react';
 import type { NodeType } from '@/types/epc';
-import { Trash2, ShieldAlert, Shield, BookOpen, AlertTriangle } from 'lucide-react';
+import { Trash2, ShieldAlert, ShieldCheck, Scale, AlertCircle } from 'lucide-react';
 
 interface EditableEPCNodeData {
   label: string;
@@ -200,9 +200,9 @@ function EditableEPCNode({ id, data, selected }: NodeProps) {
   const indicatorRow = (
     <div className="flex items-center gap-1 mt-1.5">
       <RelationDot count={d.riskCount || 0} color="#f97316" icon={ShieldAlert} label="Risks" onClick={() => handleIndicatorClick('risks')} />
-      <RelationDot count={d.controlCount || 0} color="#3b82f6" icon={Shield} label="Controls" onClick={() => handleIndicatorClick('controls')} />
-      <RelationDot count={d.regulationCount || 0} color="#8b5cf6" icon={BookOpen} label="Regulations" onClick={() => handleIndicatorClick('regulations')} />
-      <RelationDot count={d.incidentCount || 0} color="#ef4444" icon={AlertTriangle} label="Incidents" onClick={() => handleIndicatorClick('incidents')} />
+      <RelationDot count={d.controlCount || 0} color="#3b82f6" icon={ShieldCheck} label="Controls" onClick={() => handleIndicatorClick('controls')} />
+      <RelationDot count={d.regulationCount || 0} color="#8b5cf6" icon={Scale} label="Regulations" onClick={() => handleIndicatorClick('regulations')} />
+      <RelationDot count={d.incidentCount || 0} color="#ef4444" icon={AlertCircle} label="Incidents" onClick={() => handleIndicatorClick('incidents')} />
     </div>
   );
 
