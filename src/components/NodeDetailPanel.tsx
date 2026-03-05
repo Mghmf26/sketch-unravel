@@ -585,36 +585,82 @@ export default function NodeDetailPanel({ node, risks, controls, regulations, in
           {/* Applications Tab */}
           <TabsContent value="applications" className="mt-0 space-y-2">
             <div className="flex items-center justify-between mb-1">
-              <span className="text-xs font-semibold text-muted-foreground">{stepApps.length} Application{stepApps.length !== 1 ? 's' : ''}</span>
-              <Button size="sm" variant="ghost" className="h-6 text-xs gap-1" onClick={() => { setAppForm({ name: '', screen_name: '', description: '', app_type: 'application' }); setAddDialog('application'); }}>
-                <Plus className="h-3 w-3" /> Add App
+              <span className="text-xs font-semibold text-muted-foreground">{stepApps.length} item{stepApps.length !== 1 ? 's' : ''}</span>
+              <Button size="sm" variant="ghost" className="h-6 text-xs gap-1" onClick={() => { setAppForm({ name: '', description: '', app_type: 'application', parent_id: '' }); setAddDialog('application'); }}>
+                <Plus className="h-3 w-3" /> Add
               </Button>
             </div>
             {stepApps.length === 0 ? (
-              <p className="text-xs text-muted-foreground text-center py-8">No applications linked to this step</p>
-            ) : stepApps.map(app => (
-              <div key={app.id} className="p-3 rounded-lg border bg-sky-50/50 space-y-1.5 group">
-                <div className="flex items-center gap-2">
-                  <Monitor className="h-3.5 w-3.5 text-sky-500" />
-                  <div className="flex-1">
-                    <EditableField label="Name" value={app.name}
-                      onSave={val => saveField(() => updateStepApplication(app.id, { name: val }), 'App updated')} />
+              <p className="text-xs text-muted-foreground text-center py-8">No applications or screens linked to this step</p>
+            ) : (
+              <>
+                {/* Screens with nested apps */}
+                {stepApps.filter(a => a.app_type === 'screen' && !a.parent_id).map(screen => {
+                  const childApps = stepApps.filter(a => a.parent_id === screen.id);
+                  return (
+                    <div key={screen.id} className="p-3 rounded-lg border bg-sky-50/50 space-y-2 group">
+                      <div className="flex items-center gap-2">
+                        <Monitor className="h-3.5 w-3.5 text-sky-500" />
+                        <div className="flex-1">
+                          <EditableField label="Screen" value={screen.name}
+                            onSave={val => saveField(() => updateStepApplication(screen.id, { name: val }), 'Screen updated')} />
+                        </div>
+                        <Badge className="border-0 bg-sky-100 text-sky-700 text-[9px]">Screen</Badge>
+                        <Button variant="ghost" size="icon" className="h-5 w-5 opacity-0 group-hover:opacity-100 text-destructive" onClick={() => handleDeleteItem('application', screen.id)}>
+                          <Trash2 className="h-3 w-3" />
+                        </Button>
+                      </div>
+                      <Button size="sm" variant="ghost" className="h-5 text-[10px] gap-0.5 text-sky-600"
+                        onClick={() => { setAppForm({ name: '', description: '', app_type: 'application', parent_id: screen.id }); setAddDialog('application'); }}>
+                        <Plus className="h-2.5 w-2.5" /> Add App to Screen
+                      </Button>
+                      {childApps.map(app => (
+                        <div key={app.id} className="ml-4 pl-3 border-l-2 border-sky-200 p-2 rounded border bg-card space-y-1 group/child">
+                          <div className="flex items-center gap-2">
+                            <Monitor className="h-3 w-3 text-sky-400" />
+                            <div className="flex-1">
+                              <EditableField label="Application" value={app.name}
+                                onSave={val => saveField(() => updateStepApplication(app.id, { name: val }), 'App updated')} />
+                            </div>
+                            <Badge variant="outline" className="text-[8px]">App</Badge>
+                            <Button variant="ghost" size="icon" className="h-4 w-4 opacity-0 group-hover/child:opacity-100 text-destructive" onClick={() => handleDeleteItem('application', app.id)}>
+                              <Trash2 className="h-2.5 w-2.5" />
+                            </Button>
+                          </div>
+                          {app.description && (
+                            <EditableField label="Description" value={app.description} multiline
+                              onSave={val => saveField(() => updateStepApplication(app.id, { description: val }), 'Updated')} />
+                          )}
+                          {derivedProcessId && <EntityNotesSection entityType="application" entityId={app.id} processId={derivedProcessId} />}
+                        </div>
+                      ))}
+                      {derivedProcessId && <EntityNotesSection entityType="application" entityId={screen.id} processId={derivedProcessId} />}
+                    </div>
+                  );
+                })}
+                {/* Standalone applications */}
+                {stepApps.filter(a => a.app_type !== 'screen' && !a.parent_id).map(app => (
+                  <div key={app.id} className="p-3 rounded-lg border bg-sky-50/50 space-y-1.5 group">
+                    <div className="flex items-center gap-2">
+                      <Monitor className="h-3.5 w-3.5 text-sky-500" />
+                      <div className="flex-1">
+                        <EditableField label="Application" value={app.name}
+                          onSave={val => saveField(() => updateStepApplication(app.id, { name: val }), 'App updated')} />
+                      </div>
+                      <Badge variant="outline" className="text-[9px] capitalize">{app.app_type}</Badge>
+                      <Button variant="ghost" size="icon" className="h-5 w-5 opacity-0 group-hover:opacity-100 text-destructive" onClick={() => handleDeleteItem('application', app.id)}>
+                        <Trash2 className="h-3 w-3" />
+                      </Button>
+                    </div>
+                    {app.description && (
+                      <EditableField label="Description" value={app.description} multiline
+                        onSave={val => saveField(() => updateStepApplication(app.id, { description: val }), 'Description updated')} />
+                    )}
+                    {derivedProcessId && <EntityNotesSection entityType="application" entityId={app.id} processId={derivedProcessId} />}
                   </div>
-                  <Badge variant="outline" className="text-[9px]">{app.app_type}</Badge>
-                  <Button variant="ghost" size="icon" className="h-5 w-5 opacity-0 group-hover:opacity-100 text-destructive" onClick={() => handleDeleteItem('application', app.id)}>
-                    <Trash2 className="h-3 w-3" />
-                  </Button>
-                </div>
-                {app.screen_name && (
-                  <div className="text-xs text-muted-foreground">Screen: {app.screen_name}</div>
-                )}
-                {app.description && (
-                  <EditableField label="Description" value={app.description} multiline
-                    onSave={val => saveField(() => updateStepApplication(app.id, { description: val }), 'Description updated')} />
-                )}
-                {derivedProcessId && <EntityNotesSection entityType="application" entityId={app.id} processId={derivedProcessId} />}
-              </div>
-            ))}
+                ))}
+              </>
+            )}
           </TabsContent>
         </ScrollArea>
       </Tabs>
