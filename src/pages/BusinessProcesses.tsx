@@ -2,6 +2,23 @@ import { useEffect, useState, useMemo, useCallback } from 'react';
 import { fetchStepApplications, type StepApplication } from '@/lib/api-applications';
 import { useNavigate } from 'react-router-dom';
 import { Eye, Trash2, Plus, Search, FileSpreadsheet, AlertTriangle, Scale, AlertCircle, Cpu, ShieldAlert, Link2, Network, Layers, ArrowUpRight, Filter, BarChart3, Monitor } from 'lucide-react';
+import { useColumnSettings, type ColumnDef } from '@/hooks/useColumnSettings';
+import { ColumnSettingsDropdown } from '@/components/ColumnSettingsDropdown';
+
+const BP_COLUMNS: ColumnDef[] = [
+  { key: 'name', label: 'Process Name', defaultVisible: true, minWidth: 150 },
+  { key: 'client', label: 'Client', defaultVisible: true, minWidth: 80 },
+  { key: 'owner', label: 'Owner', defaultVisible: true, minWidth: 80 },
+  { key: 'dept', label: 'Department', defaultVisible: true, minWidth: 80 },
+  { key: 'steps', label: 'Steps', defaultVisible: true, minWidth: 50 },
+  { key: 'risks', label: 'Risks', defaultVisible: true, minWidth: 50 },
+  { key: 'controls', label: 'Controls', defaultVisible: true, minWidth: 50 },
+  { key: 'incidents', label: 'Incidents', defaultVisible: true, minWidth: 50 },
+  { key: 'regs', label: 'Regulations', defaultVisible: true, minWidth: 50 },
+  { key: 'apps', label: 'Apps', defaultVisible: true, minWidth: 50 },
+  { key: 'mfai', label: 'MF AI Potential', defaultVisible: true, minWidth: 80 },
+  { key: 'actions', label: 'Actions', defaultVisible: true, minWidth: 80 },
+];
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
@@ -52,6 +69,8 @@ export default function BusinessProcesses() {
   }, []);
 
   useEffect(() => { reload(); }, [reload]);
+
+  const colSettings = useColumnSettings('business-processes', BP_COLUMNS);
 
   const clientMap = useMemo(() => {
     const m: Record<string, string> = {};
@@ -161,8 +180,11 @@ export default function BusinessProcesses() {
                 </SelectContent>
               </Select>
             </div>
-            <div className="text-xs text-muted-foreground self-center shrink-0">
-              {filtered.length} of {processes.length} processes
+            <div className="flex items-center gap-2">
+              <div className="text-xs text-muted-foreground shrink-0">
+                {filtered.length} of {processes.length} processes
+              </div>
+              <ColumnSettingsDropdown {...colSettings} />
             </div>
           </div>
         </CardContent>
@@ -174,24 +196,24 @@ export default function BusinessProcesses() {
           <Table>
             <TableHeader>
               <TableRow className="bg-muted/50 hover:bg-muted/50 border-b-2 border-border">
-                <TableHead className="font-bold text-[11px] text-foreground/70 tracking-wider uppercase py-3">Process Name</TableHead>
-                <TableHead className="font-bold text-[11px] text-foreground/70 tracking-wider uppercase py-3">Client</TableHead>
-                <TableHead className="font-bold text-[11px] text-foreground/70 tracking-wider uppercase py-3">Owner</TableHead>
-                <TableHead className="font-bold text-[11px] text-foreground/70 tracking-wider uppercase py-3">Dept.</TableHead>
-                <TableHead className="font-bold text-[11px] text-foreground/70 tracking-wider uppercase py-3 text-center">Steps</TableHead>
-                <TableHead className="font-bold text-[11px] text-foreground/70 tracking-wider uppercase py-3 text-center">Risks</TableHead>
-                <TableHead className="font-bold text-[11px] text-foreground/70 tracking-wider uppercase py-3 text-center">Controls</TableHead>
-                <TableHead className="font-bold text-[11px] text-foreground/70 tracking-wider uppercase py-3 text-center">Incidents</TableHead>
-                <TableHead className="font-bold text-[11px] text-foreground/70 tracking-wider uppercase py-3 text-center">Regs.</TableHead>
-                <TableHead className="font-bold text-[11px] text-foreground/70 tracking-wider uppercase py-3 text-center">Apps</TableHead>
-                <TableHead className="font-bold text-[11px] text-foreground/70 tracking-wider uppercase py-3 text-center">MF AI Potential</TableHead>
-                <TableHead className="font-bold text-[11px] text-foreground/70 tracking-wider uppercase py-3 text-right">Actions</TableHead>
+                {colSettings.isVisible('name') && <TableHead className="font-bold text-[11px] text-foreground/70 tracking-wider uppercase py-3" style={{width: colSettings.getWidth('name')}}>Process Name</TableHead>}
+                {colSettings.isVisible('client') && <TableHead className="font-bold text-[11px] text-foreground/70 tracking-wider uppercase py-3" style={{width: colSettings.getWidth('client')}}>Client</TableHead>}
+                {colSettings.isVisible('owner') && <TableHead className="font-bold text-[11px] text-foreground/70 tracking-wider uppercase py-3" style={{width: colSettings.getWidth('owner')}}>Owner</TableHead>}
+                {colSettings.isVisible('dept') && <TableHead className="font-bold text-[11px] text-foreground/70 tracking-wider uppercase py-3" style={{width: colSettings.getWidth('dept')}}>Dept.</TableHead>}
+                {colSettings.isVisible('steps') && <TableHead className="font-bold text-[11px] text-foreground/70 tracking-wider uppercase py-3 text-center" style={{width: colSettings.getWidth('steps')}}>Steps</TableHead>}
+                {colSettings.isVisible('risks') && <TableHead className="font-bold text-[11px] text-foreground/70 tracking-wider uppercase py-3 text-center" style={{width: colSettings.getWidth('risks')}}>Risks</TableHead>}
+                {colSettings.isVisible('controls') && <TableHead className="font-bold text-[11px] text-foreground/70 tracking-wider uppercase py-3 text-center" style={{width: colSettings.getWidth('controls')}}>Controls</TableHead>}
+                {colSettings.isVisible('incidents') && <TableHead className="font-bold text-[11px] text-foreground/70 tracking-wider uppercase py-3 text-center" style={{width: colSettings.getWidth('incidents')}}>Incidents</TableHead>}
+                {colSettings.isVisible('regs') && <TableHead className="font-bold text-[11px] text-foreground/70 tracking-wider uppercase py-3 text-center" style={{width: colSettings.getWidth('regs')}}>Regs.</TableHead>}
+                {colSettings.isVisible('apps') && <TableHead className="font-bold text-[11px] text-foreground/70 tracking-wider uppercase py-3 text-center" style={{width: colSettings.getWidth('apps')}}>Apps</TableHead>}
+                {colSettings.isVisible('mfai') && <TableHead className="font-bold text-[11px] text-foreground/70 tracking-wider uppercase py-3 text-center" style={{width: colSettings.getWidth('mfai')}}>MF AI Potential</TableHead>}
+                {colSettings.isVisible('actions') && <TableHead className="font-bold text-[11px] text-foreground/70 tracking-wider uppercase py-3 text-right" style={{width: colSettings.getWidth('actions')}}>Actions</TableHead>}
               </TableRow>
             </TableHeader>
             <TableBody>
               {filtered.length === 0 ? (
                 <TableRow>
-                 <TableCell colSpan={12} className="text-center py-20">
+                 <TableCell colSpan={colSettings.visibleColumns.length} className="text-center py-20">
                     <div className="flex flex-col items-center gap-4">
                       <div className="h-16 w-16 rounded-2xl bg-muted/50 flex items-center justify-center">
                         <FileSpreadsheet className="h-7 w-7 text-muted-foreground/40" />
@@ -212,53 +234,48 @@ export default function BusinessProcesses() {
                   const mfqAvg = c.mfq.length > 0 ? Math.round(c.mfq.reduce((s, q) => s + Number(q.confidence), 0) / c.mfq.length) : 0;
                   return (
                     <TableRow key={p.id} className="group hover:bg-primary/[0.02] transition-colors border-b border-border/50">
-                      <TableCell>
-                        <button
-                          onClick={() => navigate(`/process-view/${p.id}`)}
-                          className="text-left group/name"
-                        >
+                      {colSettings.isVisible('name') && <TableCell>
+                        <button onClick={() => navigate(`/process-view/${p.id}`)} className="text-left group/name">
                           <span className="font-semibold text-foreground group-hover/name:text-primary transition-colors">{p.process_name}</span>
-                          {p.description && (
-                            <p className="text-[11px] text-muted-foreground line-clamp-1 mt-0.5 max-w-[250px]">{p.description}</p>
-                          )}
+                          {p.description && <p className="text-[11px] text-muted-foreground line-clamp-1 mt-0.5 max-w-[250px]">{p.description}</p>}
                         </button>
-                      </TableCell>
-                      <TableCell className="text-sm">
+                      </TableCell>}
+                      {colSettings.isVisible('client') && <TableCell className="text-sm">
                         {p.client_id && clientMap[p.client_id] ? (
                           <Badge variant="secondary" className="text-[10px] font-semibold">{clientMap[p.client_id]}</Badge>
                         ) : (
                           <button onClick={() => openDialog('link', p)} className="text-[11px] text-primary hover:underline cursor-pointer font-medium">+ Link</button>
                         )}
-                      </TableCell>
-                      <TableCell className="text-muted-foreground text-sm">{p.owner || '—'}</TableCell>
-                      <TableCell className="text-muted-foreground text-sm">{p.department || '—'}</TableCell>
-                      <TableCell className="text-center">
+                      </TableCell>}
+                      {colSettings.isVisible('owner') && <TableCell className="text-muted-foreground text-sm">{p.owner || '—'}</TableCell>}
+                      {colSettings.isVisible('dept') && <TableCell className="text-muted-foreground text-sm">{p.department || '—'}</TableCell>}
+                      {colSettings.isVisible('steps') && <TableCell className="text-center">
                         <span className="inline-flex items-center justify-center h-7 w-7 rounded-md bg-muted text-xs font-bold text-foreground">{c.steps}</span>
-                      </TableCell>
-                      <TableCell className="text-center">
+                      </TableCell>}
+                      {colSettings.isVisible('risks') && <TableCell className="text-center">
                         <button onClick={() => openDialog('risks', p)} className="inline-flex items-center justify-center h-7 min-w-[28px] rounded-md bg-destructive/10 text-xs font-bold text-destructive hover:bg-destructive/20 transition-colors px-1.5 cursor-pointer">{c.risks}</button>
-                      </TableCell>
-                      <TableCell className="text-center">
+                      </TableCell>}
+                      {colSettings.isVisible('controls') && <TableCell className="text-center">
                         <span className="inline-flex items-center justify-center h-7 w-7 rounded-md bg-primary/10 text-xs font-bold text-primary">{c.controls}</span>
-                      </TableCell>
-                      <TableCell className="text-center">
+                      </TableCell>}
+                      {colSettings.isVisible('incidents') && <TableCell className="text-center">
                         <button onClick={() => openDialog('incidents', p)} className="inline-flex items-center justify-center h-7 min-w-[28px] rounded-md bg-orange-500/10 text-xs font-bold text-orange-600 hover:bg-orange-500/20 transition-colors px-1.5 cursor-pointer">{c.incidents}</button>
-                      </TableCell>
-                      <TableCell className="text-center">
+                      </TableCell>}
+                      {colSettings.isVisible('regs') && <TableCell className="text-center">
                         <span className="inline-flex items-center justify-center h-7 min-w-[28px] rounded-md bg-muted text-xs font-bold text-foreground px-1.5">{c.regulations}</span>
-                      </TableCell>
-                      <TableCell className="text-center">
+                      </TableCell>}
+                      {colSettings.isVisible('apps') && <TableCell className="text-center">
                         <span className="inline-flex items-center justify-center h-7 min-w-[28px] rounded-md bg-sky-500/10 text-xs font-bold text-sky-600 px-1.5">{c.apps}</span>
-                      </TableCell>
-                      <TableCell className="text-center">
+                      </TableCell>}
+                      {colSettings.isVisible('mfai') && <TableCell className="text-center">
                         <button onClick={() => openDialog('mfq', p)} className="cursor-pointer group/score">
                           <div className="flex flex-col items-center gap-1">
                             <span className="text-xs font-bold text-foreground">{mfqAvg}%</span>
                             <Progress value={mfqAvg} className="h-1 w-10" />
                           </div>
                         </button>
-                      </TableCell>
-                      <TableCell>
+                      </TableCell>}
+                      {colSettings.isVisible('actions') && <TableCell>
                         <div className="flex items-center justify-end gap-1 opacity-50 group-hover:opacity-100 transition-opacity">
                           <Tooltip><TooltipTrigger asChild>
                             <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => navigate(`/process-view/${p.id}`)}>
@@ -276,7 +293,7 @@ export default function BusinessProcesses() {
                             </Button>
                           </TooltipTrigger><TooltipContent>Delete</TooltipContent></Tooltip>
                         </div>
-                      </TableCell>
+                      </TableCell>}
                     </TableRow>
                   );
                 })

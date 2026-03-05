@@ -1,5 +1,17 @@
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useColumnSettings, type ColumnDef } from '@/hooks/useColumnSettings';
+import { ColumnSettingsDropdown } from '@/components/ColumnSettingsDropdown';
+
+const REG_COLUMNS: ColumnDef[] = [
+  { key: 'client', label: 'Client', defaultVisible: true, minWidth: 80 },
+  { key: 'process', label: 'Process', defaultVisible: true, minWidth: 100 },
+  { key: 'step', label: 'Step', defaultVisible: true, minWidth: 80 },
+  { key: 'regulation', label: 'Regulation', defaultVisible: true, minWidth: 120 },
+  { key: 'authority', label: 'Authority', defaultVisible: true, minWidth: 80 },
+  { key: 'status', label: 'Status', defaultVisible: true, minWidth: 60 },
+  { key: 'actions', label: 'Actions', defaultVisible: true, minWidth: 60 },
+];
 import { ArrowLeft, Scale, CheckCircle, AlertTriangle, XCircle, Plus, Trash2, Pencil, Search, X } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -18,6 +30,7 @@ import {
 } from '@/lib/api';
 
 export default function Regulations() {
+  const colSettings = useColumnSettings('regulations', REG_COLUMNS);
   const navigate = useNavigate();
   const [processes, setProcesses] = useState<BusinessProcess[]>([]);
   const [steps, setSteps] = useState<ProcessStep[]>([]);
@@ -147,6 +160,7 @@ export default function Regulations() {
             <X className="h-3 w-3 mr-1" /> Clear
           </Button>
         )}
+        <ColumnSettingsDropdown {...colSettings} />
       </div>
 
       <Card className="border shadow-sm overflow-hidden">
@@ -160,19 +174,19 @@ export default function Regulations() {
           <Table>
             <TableHeader>
               <TableRow className="bg-muted/20 hover:bg-muted/20">
-                <TableHead className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider py-2.5 px-3">Client</TableHead>
-                <TableHead className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider py-2.5 px-3">Process</TableHead>
-                <TableHead className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider py-2.5 px-3">Step</TableHead>
-                <TableHead className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider py-2.5 px-3">Regulation</TableHead>
-                <TableHead className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider py-2.5 px-3">Authority</TableHead>
-                <TableHead className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider py-2.5 px-3 text-center">Status</TableHead>
-                <TableHead className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider py-2.5 px-3 text-right">Actions</TableHead>
+                {colSettings.isVisible('client') && <TableHead className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider py-2.5 px-3" style={{width: colSettings.getWidth('client')}}>Client</TableHead>}
+                {colSettings.isVisible('process') && <TableHead className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider py-2.5 px-3" style={{width: colSettings.getWidth('process')}}>Process</TableHead>}
+                {colSettings.isVisible('step') && <TableHead className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider py-2.5 px-3" style={{width: colSettings.getWidth('step')}}>Step</TableHead>}
+                {colSettings.isVisible('regulation') && <TableHead className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider py-2.5 px-3" style={{width: colSettings.getWidth('regulation')}}>Regulation</TableHead>}
+                {colSettings.isVisible('authority') && <TableHead className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider py-2.5 px-3" style={{width: colSettings.getWidth('authority')}}>Authority</TableHead>}
+                {colSettings.isVisible('status') && <TableHead className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider py-2.5 px-3 text-center" style={{width: colSettings.getWidth('status')}}>Status</TableHead>}
+                {colSettings.isVisible('actions') && <TableHead className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider py-2.5 px-3 text-right" style={{width: colSettings.getWidth('actions')}}>Actions</TableHead>}
               </TableRow>
             </TableHeader>
             <TableBody>
               {filtered.length === 0 ? (
                 <TableRow>
-                  <TableCell colSpan={7} className="text-center py-16 text-sm text-muted-foreground">
+                  <TableCell colSpan={colSettings.visibleColumns.length} className="text-center py-16 text-sm text-muted-foreground">
                     {hasFilters ? 'No regulations match the current filters.' : 'No regulations linked yet.'}
                   </TableCell>
                 </TableRow>
@@ -181,23 +195,23 @@ export default function Regulations() {
                   const proc = processMap[r.process_id];
                   return (
                     <TableRow key={r.id} className="group hover:bg-muted/30">
-                      <TableCell className="text-xs text-muted-foreground py-2.5 px-3 whitespace-nowrap">{proc?.client_id ? clientMap[proc.client_id] || '—' : '—'}</TableCell>
-                      <TableCell className="text-xs font-medium text-foreground py-2.5 px-3 whitespace-nowrap">{proc?.process_name || '—'}</TableCell>
-                      <TableCell className="py-2.5 px-3"><Badge variant="outline" className="text-[10px] font-normal">{stepMap[r.step_id] || '—'}</Badge></TableCell>
-                      <TableCell className="py-2.5 px-3">
+                      {colSettings.isVisible('client') && <TableCell className="text-xs text-muted-foreground py-2.5 px-3 whitespace-nowrap">{proc?.client_id ? clientMap[proc.client_id] || '—' : '—'}</TableCell>}
+                      {colSettings.isVisible('process') && <TableCell className="text-xs font-medium text-foreground py-2.5 px-3 whitespace-nowrap">{proc?.process_name || '—'}</TableCell>}
+                      {colSettings.isVisible('step') && <TableCell className="py-2.5 px-3"><Badge variant="outline" className="text-[10px] font-normal">{stepMap[r.step_id] || '—'}</Badge></TableCell>}
+                      {colSettings.isVisible('regulation') && <TableCell className="py-2.5 px-3">
                         <div>
                           <p className="text-xs font-medium text-foreground">{r.name}</p>
                           {r.description && <p className="text-[10px] text-muted-foreground truncate max-w-[220px] mt-0.5">{r.description}</p>}
                         </div>
-                      </TableCell>
-                      <TableCell className="text-xs text-muted-foreground py-2.5 px-3 whitespace-nowrap">{r.authority || '—'}</TableCell>
-                      <TableCell className="text-center py-2.5 px-3"><ComplianceBadge value={r.compliance_status} /></TableCell>
-                      <TableCell className="text-right py-2.5 px-3">
+                      </TableCell>}
+                      {colSettings.isVisible('authority') && <TableCell className="text-xs text-muted-foreground py-2.5 px-3 whitespace-nowrap">{r.authority || '—'}</TableCell>}
+                      {colSettings.isVisible('status') && <TableCell className="text-center py-2.5 px-3"><ComplianceBadge value={r.compliance_status} /></TableCell>}
+                      {colSettings.isVisible('actions') && <TableCell className="text-right py-2.5 px-3">
                         <div className="flex items-center justify-end gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity">
                           <Button variant="ghost" size="icon" className="h-6 w-6" onClick={() => setEditReg(r)}><Pencil className="h-3 w-3" /></Button>
                           <Button variant="ghost" size="icon" className="h-6 w-6 hover:text-destructive" onClick={async () => { await deleteRegulation(r.id); reload(); }}><Trash2 className="h-3 w-3" /></Button>
                         </div>
-                      </TableCell>
+                      </TableCell>}
                     </TableRow>
                   );
                 })
