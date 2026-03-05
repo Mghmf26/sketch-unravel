@@ -79,6 +79,9 @@ export interface MainframeImport {
   status: string;
   last_sync: string | null;
   created_at: string;
+  flow_id: string | null;
+  flow_node_id: string | null;
+  file_url: string | null;
 }
 
 export interface MFQuestion {

@@ -1,6 +1,6 @@
 import { memo, useState, useRef, useEffect } from 'react';
 import { Handle, Position, type NodeProps } from '@xyflow/react';
-import { Trash2 } from 'lucide-react';
+import { Trash2, Database } from 'lucide-react';
 import { MF_NODE_TYPE_META, type MFNodeType } from '@/lib/api-mainframe-flows';
 
 interface MFNodeData {
@@ -8,8 +8,10 @@ interface MFNodeData {
   nodeType: MFNodeType;
   nodeId: string;
   description: string;
+  dataSourceCount?: number;
   onDelete: (id: string) => void;
   onLabelChange: (id: string, label: string) => void;
+  onAttachDataSource?: (nodeId: string) => void;
   [key: string]: unknown;
 }
 
@@ -42,6 +44,20 @@ function MFCustomNode({ data }: NodeProps) {
           style={{ borderColor: meta.color, color: meta.color, backgroundColor: meta.badgeBg }}>
           {meta.label}
         </span>
+        {/* Data source indicator */}
+        {(d.dataSourceCount ?? 0) > 0 && (
+          <span className="text-[9px] font-bold px-1.5 py-0.5 rounded-full bg-blue-100 text-blue-700 border border-blue-300 flex items-center gap-0.5"
+            title={`${d.dataSourceCount} data source(s)`}>
+            <Database className="h-2.5 w-2.5" /> {d.dataSourceCount}
+          </span>
+        )}
+        {d.onAttachDataSource && (
+          <button onClick={() => d.onAttachDataSource?.(d.nodeId)}
+            className="opacity-0 group-hover:opacity-100 transition-opacity h-5 w-5 flex items-center justify-center rounded hover:bg-blue-100"
+            title="Attach data source">
+            <Database className="h-3 w-3 text-blue-600" />
+          </button>
+        )}
         <button onClick={() => d.onDelete(d.nodeId)}
           className="opacity-0 group-hover:opacity-100 transition-opacity h-5 w-5 flex items-center justify-center rounded hover:bg-destructive/20">
           <Trash2 className="h-3 w-3 text-destructive" />
