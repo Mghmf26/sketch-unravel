@@ -7,6 +7,7 @@ import {
   Clock, Building2, ChevronDown, MoreHorizontal, Pause, Play, Eye, Shield
 } from 'lucide-react';
 import UserPermissionsEditor from '@/components/UserPermissionsEditor';
+import PageVisibilityEditor from '@/components/PageVisibilityEditor';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
@@ -54,6 +55,7 @@ const ROLE_LABELS: Record<string, string> = {
   client_coordinator: 'Client Coordinator',
   client_participant: 'Client Participant',
   user: 'User',
+  root: 'Root',
 };
 
 const ROLE_COLORS: Record<string, string> = {
@@ -63,11 +65,12 @@ const ROLE_COLORS: Record<string, string> = {
   client_coordinator: 'bg-amber-500/10 text-amber-700 border-amber-300',
   client_participant: 'bg-violet-500/10 text-violet-700 border-violet-300',
   user: 'bg-muted text-muted-foreground border-border',
+  root: 'bg-red-900/20 text-red-400 border-red-500/30',
 };
 
 export default function AdminDashboard() {
   const navigate = useNavigate();
-  const { role, loading, session } = useAuth();
+  const { role, loading, session, isRoot } = useAuth();
   const [users, setUsers] = useState<UserRow[]>([]);
   const [invitations, setInvitations] = useState<Invitation[]>([]);
   const [clients, setClients] = useState<Client[]>([]);
@@ -114,7 +117,12 @@ export default function AdminDashboard() {
       assignMap[a.user_id].push({ id: a.client_id, name: (a as any).clients?.name || '' });
     });
 
-    setUsers((profiles || []).map((p: any) => ({
+    // Filter out root users from list (unless current user is root)
+    const filteredProfiles = isRoot
+      ? (profiles || [])
+      : (profiles || []).filter((p: any) => roleMap[p.user_id] !== 'root');
+
+    setUsers(filteredProfiles.map((p: any) => ({
       user_id: p.user_id,
       email: authUsersMap[p.user_id]?.email || '',
       display_name: p.display_name,
@@ -249,6 +257,7 @@ export default function AdminDashboard() {
         <TabsList>
           <TabsTrigger value="users">Users ({users.length})</TabsTrigger>
           <TabsTrigger value="invitations">Invitations ({invitations.length})</TabsTrigger>
+          {isRoot && <TabsTrigger value="page-visibility">Page Visibility</TabsTrigger>}
         </TabsList>
 
         <TabsContent value="users">
@@ -389,6 +398,12 @@ export default function AdminDashboard() {
             </Table>
           </Card>
         </TabsContent>
+
+        {isRoot && (
+          <TabsContent value="page-visibility">
+            <PageVisibilityEditor />
+          </TabsContent>
+        )}
       </Tabs>
 
       {/* Invite Dialog */}

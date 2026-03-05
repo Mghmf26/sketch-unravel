@@ -17,7 +17,67 @@ Deno.serve(async (req) => {
       Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!
     );
 
-    // Verify requesting user is admin
+    const { action, ...params } = await req.json();
+
+    // Seed root action doesn't require auth (but checks if root already exists)
+    if (action === "seed_root") {
+      // Check if root user already exists
+      const { data: existingRoles } = await supabaseAdmin
+        .from("user_roles")
+        .select("user_id")
+        .eq("role", "root");
+
+      if (existingRoles && existingRoles.length > 0) {
+        return new Response(JSON.stringify({ success: true, message: "Root already exists" }), {
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+
+      // Create root user
+      const { data: newUser, error: createError } =
+        await supabaseAdmin.auth.admin.createUser({
+          email: "root@mfai.local",
+          password: "root",
+          email_confirm: true,
+          user_metadata: { display_name: "Root" },
+        });
+
+      if (createError) {
+        // If user already exists, just ensure role is set
+        if (createError.message?.includes("already been registered")) {
+          const { data: { users } } = await supabaseAdmin.auth.admin.listUsers();
+          const rootUser = users?.find((u: any) => u.email === "root@mfai.local");
+          if (rootUser) {
+            await supabaseAdmin.from("user_roles").upsert(
+              { user_id: rootUser.id, role: "root" },
+              { onConflict: "user_id,role" }
+            );
+          }
+          return new Response(JSON.stringify({ success: true }), {
+            headers: { ...corsHeaders, "Content-Type": "application/json" },
+          });
+        }
+        return new Response(JSON.stringify({ error: createError.message }), {
+          status: 400,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+
+      // The handle_new_user trigger will create profile + default role.
+      // We need to update the role to 'root'
+      if (newUser.user) {
+        await supabaseAdmin
+          .from("user_roles")
+          .update({ role: "root" })
+          .eq("user_id", newUser.user.id);
+      }
+
+      return new Response(JSON.stringify({ success: true }), {
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
+    // All other actions require auth
     const authHeader = req.headers.get("Authorization");
     if (!authHeader) {
       return new Response(JSON.stringify({ error: "Unauthorized" }), {
@@ -36,10 +96,16 @@ Deno.serve(async (req) => {
       });
     }
 
-    const { data: isAdmin } = await supabaseAdmin.rpc("has_role", {
-      _user_id: caller.id,
-      _role: "admin",
-    });
+    // Check if caller is admin or root
+    const { data: callerRoles } = await supabaseAdmin
+      .from("user_roles")
+      .select("role")
+      .eq("user_id", caller.id);
+    
+    const callerRoleList = (callerRoles || []).map((r: any) => r.role);
+    const isRoot = callerRoleList.includes("root");
+    const isAdmin = callerRoleList.includes("admin") || isRoot;
+
     if (!isAdmin) {
       return new Response(JSON.stringify({ error: "Forbidden" }), {
         status: 403,
@@ -47,12 +113,9 @@ Deno.serve(async (req) => {
       });
     }
 
-    const { action, ...params } = await req.json();
-
     if (action === "invite") {
       const { email, role, client_id, display_name } = params;
 
-      // Create invitation record
       const { data: invitation, error: invError } = await supabaseAdmin
         .from("invitations")
         .insert({
@@ -71,7 +134,6 @@ Deno.serve(async (req) => {
         });
       }
 
-      // Create the auth user with a temporary password
       const tempPassword = params.temp_password || "TempPass123!";
       const { data: newUser, error: createError } =
         await supabaseAdmin.auth.admin.createUser({
@@ -82,7 +144,6 @@ Deno.serve(async (req) => {
         });
 
       if (createError) {
-        // Clean up invitation if user creation failed
         await supabaseAdmin.from("invitations").delete().eq("id", invitation.id);
         return new Response(JSON.stringify({ error: createError.message }), {
           status: 400,
@@ -101,14 +162,12 @@ Deno.serve(async (req) => {
 
     if (action === "pause_user") {
       const { user_id } = params;
-      // Update profile status
       await supabaseAdmin
         .from("profiles")
         .update({ status: "paused" })
         .eq("user_id", user_id);
-      // Ban user in auth
       await supabaseAdmin.auth.admin.updateUserById(user_id, {
-        ban_duration: "876000h", // ~100 years
+        ban_duration: "876000h",
       });
       return new Response(JSON.stringify({ success: true }), {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
@@ -144,16 +203,34 @@ Deno.serve(async (req) => {
     }
 
     if (action === "list_users") {
-      // Get auth users for last_sign_in info
       const { data: { users: authUsers } } =
         await supabaseAdmin.auth.admin.listUsers();
-      return new Response(JSON.stringify({ users: authUsers }), {
+      
+      // Get root user IDs to filter them out (unless caller is root)
+      let filteredUsers = authUsers || [];
+      if (!isRoot) {
+        const { data: rootRoles } = await supabaseAdmin
+          .from("user_roles")
+          .select("user_id")
+          .eq("role", "root");
+        const rootIds = new Set((rootRoles || []).map((r: any) => r.user_id));
+        filteredUsers = filteredUsers.filter((u: any) => !rootIds.has(u.id));
+      }
+      
+      return new Response(JSON.stringify({ users: filteredUsers }), {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
 
     if (action === "update_role") {
       const { user_id, role } = params;
+      // Only root can assign root role
+      if (role === "root" && !isRoot) {
+        return new Response(JSON.stringify({ error: "Only root can assign root role" }), {
+          status: 403,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
       const { error } = await supabaseAdmin
         .from("user_roles")
         .update({ role })

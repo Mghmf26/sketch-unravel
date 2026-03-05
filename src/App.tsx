@@ -32,6 +32,8 @@ import MainframeScenarioAnalysis from "./pages/MainframeScenarioAnalysis";
 import MainframeAIAnalysis from "./pages/MainframeAIAnalysis";
 import MainframeFlowHub from "./pages/MainframeFlowHub";
 import ClientReports from "./pages/ClientReports";
+import OnPremiseEcosystem from "./pages/OnPremiseEcosystem";
+import CloudEcosystem from "./pages/CloudEcosystem";
 import EnrollMFA from "./pages/EnrollMFA";
 import VerifyMFA from "./pages/VerifyMFA";
 import NotFound from "./pages/NotFound";
@@ -39,17 +41,19 @@ import NotFound from "./pages/NotFound";
 const queryClient = new QueryClient();
 
 const ProtectedRoute = ({ children, pageSlug }: { children: React.ReactNode; pageSlug?: string }) => {
-  const { user, loading, role, mfaEnabled, mfaVerified, refreshMFA } = useAuth();
+  const { user, loading, role, mfaEnabled, mfaVerified, refreshMFA, isRoot } = useAuth();
   const { canAccessPage } = usePermissions();
   if (loading) return null;
   if (!user) return <Navigate to="/auth" replace />;
 
-  if (mfaEnabled && !mfaVerified) {
-    return <VerifyMFA onVerified={() => refreshMFA()} />;
-  }
-
-  if (!mfaEnabled) {
-    return <EnrollMFA onEnrolled={() => refreshMFA()} />;
+  // MFA is mandatory for all users EXCEPT root (optional for root)
+  if (!isRoot) {
+    if (mfaEnabled && !mfaVerified) {
+      return <VerifyMFA onVerified={() => refreshMFA()} />;
+    }
+    if (!mfaEnabled) {
+      return <EnrollMFA onEnrolled={() => refreshMFA()} />;
+    }
   }
 
   // Page-level permission check for participants
@@ -108,6 +112,8 @@ const App = () => (
             <Route path="/mainframe-scenario-analysis" element={<ProtectedRoute pageSlug="analysis"><MainframeScenarioAnalysis /></ProtectedRoute>} />
             <Route path="/mainframe-ai-analysis" element={<ProtectedRoute pageSlug="analysis"><MainframeAIAnalysis /></ProtectedRoute>} />
             <Route path="/client-reports" element={<ProtectedRoute pageSlug="client-reports"><ClientReports /></ProtectedRoute>} />
+            <Route path="/on-premise/*" element={<ProtectedRoute pageSlug="on-premise"><OnPremiseEcosystem /></ProtectedRoute>} />
+            <Route path="/cloud/*" element={<ProtectedRoute pageSlug="cloud"><CloudEcosystem /></ProtectedRoute>} />
             <Route path="/new" element={<ProtectedRoute pageSlug="data-entry"><DataEntry /></ProtectedRoute>} />
             <Route path="/upload" element={<ProtectedRoute pageSlug="upload"><UploadExtract /></ProtectedRoute>} />
             <Route path="/edit/:id" element={<ProtectedRoute pageSlug="data-entry"><DataEntry /></ProtectedRoute>} />

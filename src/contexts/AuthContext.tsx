@@ -21,6 +21,7 @@ interface AuthContextType {
   mfaVerified: boolean;
   currentLevel: AuthenticatorAssuranceLevels | null;
   nextLevel: AuthenticatorAssuranceLevels | null;
+  isRoot: boolean;
   signOut: () => Promise<void>;
   refreshProfile: () => Promise<void>;
   refreshMFA: () => Promise<void>;
@@ -38,6 +39,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [mfaVerified, setMfaVerified] = useState(false);
   const [currentLevel, setCurrentLevel] = useState<AuthenticatorAssuranceLevels | null>(null);
   const [nextLevel, setNextLevel] = useState<AuthenticatorAssuranceLevels | null>(null);
+  const [isRoot, setIsRoot] = useState(false);
 
   const fetchProfileAndRole = async (userId: string) => {
     const [{ data: p }, { data: roles }] = await Promise.all([
@@ -46,8 +48,16 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     ]);
     setProfile(p as Profile | null);
     const roleList = (roles || []) as { role: string }[];
-    const isAdmin = roleList.some(r => r.role === 'admin');
-    setRole(isAdmin ? 'admin' : (roleList[0]?.role ?? 'user'));
+    const hasRoot = roleList.some(r => r.role === 'root');
+    const hasAdmin = roleList.some(r => r.role === 'admin');
+    setIsRoot(hasRoot);
+    if (hasRoot) {
+      setRole('admin'); // root acts as admin in the UI
+    } else if (hasAdmin) {
+      setRole('admin');
+    } else {
+      setRole(roleList[0]?.role ?? 'user');
+    }
   };
 
   const refreshMFA = async () => {
@@ -55,9 +65,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     if (error || !data) return;
     setCurrentLevel(data.currentLevel);
     setNextLevel(data.nextLevel);
-    // User has MFA enrolled if nextLevel is aal2
     setMfaEnabled(data.nextLevel === 'aal2');
-    // User has verified MFA this session if currentLevel is aal2
     setMfaVerified(data.currentLevel === 'aal2');
   };
 
@@ -81,6 +89,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       } else {
         setProfile(null);
         setRole(null);
+        setIsRoot(false);
         setMfaEnabled(false);
         setMfaVerified(false);
         setCurrentLevel(null);
@@ -114,6 +123,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setSession(null);
     setProfile(null);
     setRole(null);
+    setIsRoot(false);
     setMfaEnabled(false);
     setMfaVerified(false);
   };
@@ -122,6 +132,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     <AuthContext.Provider value={{
       user, session, profile, role, loading,
       mfaEnabled, mfaVerified, currentLevel, nextLevel,
+      isRoot,
       signOut, refreshProfile, refreshMFA,
     }}>
       {children}
