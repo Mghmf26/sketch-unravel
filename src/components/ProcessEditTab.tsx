@@ -522,6 +522,32 @@ export default function ProcessEditTab({ processId }: ProcessEditTabProps) {
                               {stepRaci.length === 0 && <p className="text-[10px] text-muted-foreground italic ml-4">No RACI assignments</p>}
                             </div>
                           )}
+
+                          {/* Applications */}
+                          <div className="space-y-2">
+                            <div className="flex items-center gap-1.5 justify-between">
+                              <div className="flex items-center gap-1.5">
+                                <Monitor className="h-3 w-3 text-sky-500" />
+                                <span className="text-[11px] font-semibold text-sky-700">Applications ({stepApps.length})</span>
+                              </div>
+                              <Button variant="ghost" size="sm" className="h-5 text-[10px] text-sky-600" onClick={() => { setContextStepId(step.id); setAddDialog('application'); }}>
+                                <Plus className="h-3 w-3 mr-0.5" /> Add
+                              </Button>
+                            </div>
+                            {stepApps.map(app => (
+                              <div key={app.id} className="ml-4 pl-3 border-l-2 border-sky-200 flex items-center gap-2 group/app py-1">
+                                <InlineEdit value={app.name} onSave={v => updateStepApplication(app.id, { name: v }).then(reload)} className="text-sm font-medium" />
+                                <Badge variant="outline" className="text-[9px] capitalize">{app.app_type}</Badge>
+                                {app.screen_name && <span className="text-[10px] text-muted-foreground">Screen: {app.screen_name}</span>}
+                                <span className="flex-1" />
+                                <Button variant="ghost" size="icon" className="h-5 w-5 opacity-0 group-hover/app:opacity-100 text-muted-foreground hover:text-destructive"
+                                  onClick={() => deleteStepApplication(app.id).then(reload)}>
+                                  <Trash2 className="h-2.5 w-2.5" />
+                                </Button>
+                              </div>
+                            ))}
+                            {stepApps.length === 0 && <p className="text-[10px] text-muted-foreground italic ml-4">No applications</p>}
+                          </div>
                         </div>
                       )}
                     </div>
