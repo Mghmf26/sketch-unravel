@@ -169,6 +169,7 @@ export default function Incidents() {
             <X className="h-3 w-3 mr-1" /> Clear
           </Button>
         )}
+        <ColumnSettingsDropdown {...colSettings} />
       </div>
 
       <Card className="border shadow-sm overflow-hidden">
@@ -182,20 +183,20 @@ export default function Incidents() {
           <Table>
             <TableHeader>
               <TableRow className="bg-muted/20 hover:bg-muted/20">
-                <TableHead className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider py-2.5 px-3">Client</TableHead>
-                <TableHead className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider py-2.5 px-3">Process</TableHead>
-                <TableHead className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider py-2.5 px-3">Step</TableHead>
-                <TableHead className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider py-2.5 px-3">Title</TableHead>
-                <TableHead className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider py-2.5 px-3 text-center">Severity</TableHead>
-                <TableHead className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider py-2.5 px-3 text-center">Status</TableHead>
-                <TableHead className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider py-2.5 px-3">Date</TableHead>
-                <TableHead className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider py-2.5 px-3 text-right">Actions</TableHead>
+                {colSettings.isVisible('client') && <TableHead className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider py-2.5 px-3" style={{width: colSettings.getWidth('client')}}>Client</TableHead>}
+                {colSettings.isVisible('process') && <TableHead className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider py-2.5 px-3" style={{width: colSettings.getWidth('process')}}>Process</TableHead>}
+                {colSettings.isVisible('step') && <TableHead className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider py-2.5 px-3" style={{width: colSettings.getWidth('step')}}>Step</TableHead>}
+                {colSettings.isVisible('title') && <TableHead className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider py-2.5 px-3" style={{width: colSettings.getWidth('title')}}>Title</TableHead>}
+                {colSettings.isVisible('severity') && <TableHead className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider py-2.5 px-3 text-center" style={{width: colSettings.getWidth('severity')}}>Severity</TableHead>}
+                {colSettings.isVisible('status') && <TableHead className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider py-2.5 px-3 text-center" style={{width: colSettings.getWidth('status')}}>Status</TableHead>}
+                {colSettings.isVisible('date') && <TableHead className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider py-2.5 px-3" style={{width: colSettings.getWidth('date')}}>Date</TableHead>}
+                {colSettings.isVisible('actions') && <TableHead className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider py-2.5 px-3 text-right" style={{width: colSettings.getWidth('actions')}}>Actions</TableHead>}
               </TableRow>
             </TableHeader>
             <TableBody>
               {filtered.length === 0 ? (
                 <TableRow>
-                  <TableCell colSpan={8} className="text-center py-16 text-sm text-muted-foreground">
+                  <TableCell colSpan={colSettings.visibleColumns.length} className="text-center py-16 text-sm text-muted-foreground">
                     {hasFilters ? 'No incidents match the current filters.' : 'No incidents reported yet.'}
                   </TableCell>
                 </TableRow>
@@ -204,29 +205,29 @@ export default function Incidents() {
                   const proc = processMap[i.process_id];
                   return (
                     <TableRow key={i.id} className="group hover:bg-muted/30">
-                      <TableCell className="text-xs text-muted-foreground py-2.5 px-3 whitespace-nowrap">{proc?.client_id ? clientMap[proc.client_id] || '—' : '—'}</TableCell>
-                      <TableCell className="text-xs font-medium text-foreground py-2.5 px-3 whitespace-nowrap">{proc?.process_name || '—'}</TableCell>
-                      <TableCell className="py-2.5 px-3"><Badge variant="outline" className="text-[10px] font-normal">{stepMap[i.step_id] || '—'}</Badge></TableCell>
-                      <TableCell className="py-2.5 px-3">
+                      {colSettings.isVisible('client') && <TableCell className="text-xs text-muted-foreground py-2.5 px-3 whitespace-nowrap">{proc?.client_id ? clientMap[proc.client_id] || '—' : '—'}</TableCell>}
+                      {colSettings.isVisible('process') && <TableCell className="text-xs font-medium text-foreground py-2.5 px-3 whitespace-nowrap">{proc?.process_name || '—'}</TableCell>}
+                      {colSettings.isVisible('step') && <TableCell className="py-2.5 px-3"><Badge variant="outline" className="text-[10px] font-normal">{stepMap[i.step_id] || '—'}</Badge></TableCell>}
+                      {colSettings.isVisible('title') && <TableCell className="py-2.5 px-3">
                         <div>
                           <p className="text-xs font-medium text-foreground">{i.title}</p>
                           {i.description && <p className="text-[10px] text-muted-foreground truncate max-w-[200px] mt-0.5">{i.description}</p>}
                         </div>
-                      </TableCell>
-                      <TableCell className="text-center py-2.5 px-3">
+                      </TableCell>}
+                      {colSettings.isVisible('severity') && <TableCell className="text-center py-2.5 px-3">
                         <Badge className={`text-[10px] border-0 font-medium capitalize ${i.severity === 'critical' || i.severity === 'high' ? 'bg-destructive/10 text-destructive' : i.severity === 'medium' ? 'bg-yellow-500/10 text-yellow-600' : 'bg-primary/10 text-primary'}`}>{i.severity}</Badge>
-                      </TableCell>
-                      <TableCell className="text-center py-2.5 px-3">
+                      </TableCell>}
+                      {colSettings.isVisible('status') && <TableCell className="text-center py-2.5 px-3">
                         <button onClick={() => toggleStatus(i)} className="cursor-pointer">
                           <Badge variant="outline" className={`text-[10px] font-medium capitalize ${i.status === 'open' ? 'border-destructive/30 text-destructive' : i.status === 'investigating' ? 'border-yellow-500/30 text-yellow-600' : 'border-primary/30 text-primary'}`}>{i.status}</Badge>
                         </button>
-                      </TableCell>
-                      <TableCell className="text-xs text-muted-foreground py-2.5 px-3 whitespace-nowrap">{new Date(i.date).toLocaleDateString()}</TableCell>
-                      <TableCell className="text-right py-2.5 px-3">
+                      </TableCell>}
+                      {colSettings.isVisible('date') && <TableCell className="text-xs text-muted-foreground py-2.5 px-3 whitespace-nowrap">{new Date(i.date).toLocaleDateString()}</TableCell>}
+                      {colSettings.isVisible('actions') && <TableCell className="text-right py-2.5 px-3">
                         <div className="opacity-0 group-hover:opacity-100 transition-opacity">
                           <Button variant="ghost" size="icon" className="h-6 w-6 hover:text-destructive" onClick={async () => { await deleteIncident(i.id); reload(); }}><Trash2 className="h-3 w-3" /></Button>
                         </div>
-                      </TableCell>
+                      </TableCell>}
                     </TableRow>
                   );
                 })
