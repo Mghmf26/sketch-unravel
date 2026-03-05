@@ -30,6 +30,7 @@ import ProcessView from "./pages/ProcessView";
 import BusinessScenarioAnalysis from "./pages/BusinessScenarioAnalysis";
 import MainframeScenarioAnalysis from "./pages/MainframeScenarioAnalysis";
 import MainframeAIAnalysis from "./pages/MainframeAIAnalysis";
+import MainframeFlowHub from "./pages/MainframeFlowHub";
 import ClientReports from "./pages/ClientReports";
 import EnrollMFA from "./pages/EnrollMFA";
 import VerifyMFA from "./pages/VerifyMFA";
@@ -99,6 +100,7 @@ const App = () => (
             <Route path="/regulations" element={<ProtectedRoute pageSlug="regulations"><Regulations /></ProtectedRoute>} />
             <Route path="/incidents" element={<ProtectedRoute pageSlug="incidents"><Incidents /></ProtectedRoute>} />
             <Route path="/imports" element={<ProtectedRoute pageSlug="mainframe-imports"><MainframeImports /></ProtectedRoute>} />
+            <Route path="/mainframe-flows" element={<ProtectedRoute pageSlug="mainframe-imports"><MainframeFlowHub /></ProtectedRoute>} />
             <Route path="/processing-analysis" element={<ProtectedRoute pageSlug="mainframe-imports"><ProcessingAnalysis /></ProtectedRoute>} />
             <Route path="/analytics" element={<ProtectedRoute pageSlug="visual-analytics"><VisualAnalytics /></ProtectedRoute>} />
             <Route path="/ai-reports" element={<ProtectedRoute pageSlug="ai-reports"><AIReports /></ProtectedRoute>} />
