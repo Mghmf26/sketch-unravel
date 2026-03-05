@@ -14,6 +14,7 @@ const RISK_COLUMNS: ColumnDef[] = [
   { key: 'actions', label: 'Actions', defaultVisible: true, minWidth: 60 },
 ];
 import { ArrowLeft, ShieldAlert, Shield, AlertTriangle, Plus, Trash2, Pencil, Search, X } from 'lucide-react';
+import { StepTypeBadge } from '@/components/StepTypeBadge';
 import { ConfirmDialog } from '@/components/ConfirmDialog';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -215,7 +216,12 @@ export default function RisksControls() {
                     <TableRow key={r.id} className="group hover:bg-muted/30">
                       {colSettings.isVisible('client') && <TableCell className="text-xs text-muted-foreground py-2.5 px-3 whitespace-nowrap">{proc?.client_id ? clientMap[proc.client_id] || '—' : '—'}</TableCell>}
                       {colSettings.isVisible('process') && <TableCell className="text-xs font-medium text-foreground py-2.5 px-3 whitespace-nowrap">{proc?.process_name || '—'}</TableCell>}
-                      {colSettings.isVisible('step') && <TableCell className="py-2.5 px-3"><Badge variant="outline" className="text-[10px] font-normal">{stepMap[r.step_id] || '—'}</Badge></TableCell>}
+                      {colSettings.isVisible('step') && <TableCell className="py-2.5 px-3">
+                        <div className="flex items-center gap-1.5">
+                          <Badge variant="outline" className="text-[10px] font-normal">{stepMap[r.step_id] || '—'}</Badge>
+                          {(() => { const s = steps.find(s => s.id === r.step_id); return s?.step_type ? <StepTypeBadge stepType={s.step_type as any} size="xs" /> : null; })()}
+                        </div>
+                      </TableCell>}
                       {colSettings.isVisible('description') && <TableCell className="text-xs text-foreground/80 py-2.5 px-3 max-w-[280px] truncate">{r.description}</TableCell>}
                       {colSettings.isVisible('likelihood') && <TableCell className="text-center py-2.5 px-3"><SeverityBadge value={r.likelihood} /></TableCell>}
                       {colSettings.isVisible('impact') && <TableCell className="text-center py-2.5 px-3"><SeverityBadge value={r.impact} /></TableCell>}
