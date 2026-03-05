@@ -1,6 +1,7 @@
 import { useEffect, useState, useMemo, useCallback } from 'react';
+import { fetchStepApplications, type StepApplication } from '@/lib/api-applications';
 import { useNavigate } from 'react-router-dom';
-import { Eye, Trash2, Plus, Search, FileSpreadsheet, AlertTriangle, Scale, AlertCircle, Cpu, ShieldAlert, Link2, Network, Layers, ArrowUpRight, Filter, BarChart3 } from 'lucide-react';
+import { Eye, Trash2, Plus, Search, FileSpreadsheet, AlertTriangle, Scale, AlertCircle, Cpu, ShieldAlert, Link2, Network, Layers, ArrowUpRight, Filter, BarChart3, Monitor } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
@@ -35,18 +36,19 @@ export default function BusinessProcesses() {
   const [incidents, setIncidents] = useState<Incident[]>([]);
   const [regulations, setRegulations] = useState<Regulation[]>([]);
   const [mfQuestions, setMfQuestions] = useState<MFQuestion[]>([]);
+  const [applications, setApplications] = useState<StepApplication[]>([]);
   const [search, setSearch] = useState('');
   const [clientFilter, setClientFilter] = useState('all');
   const [dialog, setDialog] = useState<DialogType>(null);
   const [selectedProcess, setSelectedProcess] = useState<BusinessProcess | null>(null);
 
   const reload = useCallback(async () => {
-    const [p, c, s, r, ctrl, i, reg, mfq] = await Promise.all([
+    const [p, c, s, r, ctrl, i, reg, mfq, apps] = await Promise.all([
       fetchProcesses(), fetchClients(), fetchSteps(), fetchRisks(), fetchAllControls(),
-      fetchIncidents(), fetchRegulations(), fetchMFQuestions(),
+      fetchIncidents(), fetchRegulations(), fetchMFQuestions(), fetchStepApplications(),
     ]);
     setProcesses(p); setClients(c); setSteps(s); setRisks(r); setControls(ctrl);
-    setIncidents(i); setRegulations(reg); setMfQuestions(mfq);
+    setIncidents(i); setRegulations(reg); setMfQuestions(mfq); setApplications(apps);
   }, []);
 
   useEffect(() => { reload(); }, [reload]);
@@ -85,6 +87,7 @@ export default function BusinessProcesses() {
     controls: controls.filter(c => risks.some(r => r.id === c.risk_id && r.process_id === processId)).length,
     incidents: incidents.filter(i => i.process_id === processId).length,
     regulations: regulations.filter(r => r.process_id === processId).length,
+    apps: applications.filter(a => a.process_id === processId).length,
     mfq: mfQuestions.filter(q => q.process_id === processId),
   });
 
@@ -180,6 +183,7 @@ export default function BusinessProcesses() {
                 <TableHead className="font-bold text-[11px] text-foreground/70 tracking-wider uppercase py-3 text-center">Controls</TableHead>
                 <TableHead className="font-bold text-[11px] text-foreground/70 tracking-wider uppercase py-3 text-center">Incidents</TableHead>
                 <TableHead className="font-bold text-[11px] text-foreground/70 tracking-wider uppercase py-3 text-center">Regs.</TableHead>
+                <TableHead className="font-bold text-[11px] text-foreground/70 tracking-wider uppercase py-3 text-center">Apps</TableHead>
                 <TableHead className="font-bold text-[11px] text-foreground/70 tracking-wider uppercase py-3 text-center">MF AI Potential</TableHead>
                 <TableHead className="font-bold text-[11px] text-foreground/70 tracking-wider uppercase py-3 text-right">Actions</TableHead>
               </TableRow>
@@ -187,7 +191,7 @@ export default function BusinessProcesses() {
             <TableBody>
               {filtered.length === 0 ? (
                 <TableRow>
-                  <TableCell colSpan={11} className="text-center py-20">
+                 <TableCell colSpan={12} className="text-center py-20">
                     <div className="flex flex-col items-center gap-4">
                       <div className="h-16 w-16 rounded-2xl bg-muted/50 flex items-center justify-center">
                         <FileSpreadsheet className="h-7 w-7 text-muted-foreground/40" />
@@ -241,7 +245,10 @@ export default function BusinessProcesses() {
                         <button onClick={() => openDialog('incidents', p)} className="inline-flex items-center justify-center h-7 min-w-[28px] rounded-md bg-orange-500/10 text-xs font-bold text-orange-600 hover:bg-orange-500/20 transition-colors px-1.5 cursor-pointer">{c.incidents}</button>
                       </TableCell>
                       <TableCell className="text-center">
-                        <button onClick={() => openDialog('regulations', p)} className="inline-flex items-center justify-center h-7 min-w-[28px] rounded-md bg-muted text-xs font-bold text-foreground hover:bg-muted/80 transition-colors px-1.5 cursor-pointer">{c.regulations}</button>
+                        <span className="inline-flex items-center justify-center h-7 min-w-[28px] rounded-md bg-muted text-xs font-bold text-foreground px-1.5">{c.regulations}</span>
+                      </TableCell>
+                      <TableCell className="text-center">
+                        <span className="inline-flex items-center justify-center h-7 min-w-[28px] rounded-md bg-sky-500/10 text-xs font-bold text-sky-600 px-1.5">{c.apps}</span>
                       </TableCell>
                       <TableCell className="text-center">
                         <button onClick={() => openDialog('mfq', p)} className="cursor-pointer group/score">

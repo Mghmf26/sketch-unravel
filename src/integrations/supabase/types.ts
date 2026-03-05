@@ -101,10 +101,14 @@ export type Database = {
           contact_phone: string | null
           created_at: string
           engagement_mode: string | null
+          engagement_period_end: string | null
+          engagement_period_start: string | null
+          entity_type: string | null
           id: string
           industry: string | null
           name: string
           notes: string | null
+          report_issuance_date: string | null
           status: string
           updated_at: string
           wbs_code: string | null
@@ -116,10 +120,14 @@ export type Database = {
           contact_phone?: string | null
           created_at?: string
           engagement_mode?: string | null
+          engagement_period_end?: string | null
+          engagement_period_start?: string | null
+          entity_type?: string | null
           id?: string
           industry?: string | null
           name: string
           notes?: string | null
+          report_issuance_date?: string | null
           status?: string
           updated_at?: string
           wbs_code?: string | null
@@ -131,10 +139,14 @@ export type Database = {
           contact_phone?: string | null
           created_at?: string
           engagement_mode?: string | null
+          engagement_period_end?: string | null
+          engagement_period_start?: string | null
+          entity_type?: string | null
           id?: string
           industry?: string | null
           name?: string
           notes?: string | null
+          report_issuance_date?: string | null
           status?: string
           updated_at?: string
           wbs_code?: string | null

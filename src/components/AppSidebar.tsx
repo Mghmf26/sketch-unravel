@@ -46,7 +46,6 @@ const menuGroups: MenuGroup[] = [
     title: 'Portfolio Management',
     icon: LayoutDashboard,
     children: [
-      { title: 'Admin Dashboard', url: '/admin', icon: ShieldCheck, pageSlug: '__admin__' },
       { title: 'Overview', url: '/', icon: LayoutDashboard, pageSlug: 'dashboard' },
       { title: 'Clients / Engagements', url: '/clients', icon: Users, pageSlug: 'clients' },
     ],
@@ -145,8 +144,6 @@ export function AppSidebar() {
               {menuGroups.map((group) => {
                 // Filter children based on permissions
                 const visibleChildren = group.children.filter(item => {
-                  // Admin Dashboard only visible to admins
-                  if (item.pageSlug === '__admin__') return isAdmin;
                   return canAccessPage(item.pageSlug || '');
                 });
                 if (visibleChildren.length === 0) return null;

@@ -57,6 +57,12 @@ interface Client {
   status: string;
   created_at: string;
   updated_at: string;
+  engagement_mode?: string;
+  wbs_code?: string;
+  engagement_period_start?: string | null;
+  engagement_period_end?: string | null;
+  report_issuance_date?: string | null;
+  entity_type?: string | null;
 }
 
 const emptyForm = {
@@ -70,6 +76,10 @@ const emptyForm = {
   status: 'active',
   engagement_mode: 'external_audit',
   wbs_code: '',
+  engagement_period_start: '',
+  engagement_period_end: '',
+  report_issuance_date: '',
+  entity_type: 'private',
 };
 
 const industries = [
@@ -127,8 +137,12 @@ export default function Clients() {
       address: c.address || '',
       notes: c.notes || '',
       status: c.status,
-      engagement_mode: (c as any).engagement_mode || 'audit',
+      engagement_mode: (c as any).engagement_mode || 'external_audit',
       wbs_code: (c as any).wbs_code || '',
+      engagement_period_start: (c as any).engagement_period_start || '',
+      engagement_period_end: (c as any).engagement_period_end || '',
+      report_issuance_date: (c as any).report_issuance_date || '',
+      entity_type: (c as any).entity_type || 'private',
     });
     setDialogOpen(true);
   };
@@ -150,6 +164,10 @@ export default function Clients() {
       status: form.status,
       engagement_mode: form.engagement_mode,
       wbs_code: form.wbs_code || null,
+      engagement_period_start: form.engagement_period_start || null,
+      engagement_period_end: form.engagement_period_end || null,
+      report_issuance_date: form.report_issuance_date || null,
+      entity_type: form.entity_type || 'private',
     };
 
     if (editingClient) {
@@ -358,84 +376,128 @@ export default function Clients() {
         </div>
       )}
 
-      {/* Add/Edit Dialog */}
       <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
-        <DialogContent className="sm:max-w-lg">
+        <DialogContent className="sm:max-w-2xl max-h-[85vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>{editingClient ? 'Edit Client' : 'Add New Client'}</DialogTitle>
             <DialogDescription>
               {editingClient ? 'Update client information below.' : 'Fill in the client details to add them to your platform.'}
             </DialogDescription>
           </DialogHeader>
-          <div className="grid gap-4 py-2">
-            <div className="grid gap-1.5">
-              <Label htmlFor="name">Client Name *</Label>
-              <Input id="name" placeholder="e.g. Acme Corporation" value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} />
+          <div className="space-y-6 py-2">
+            {/* Section 1: Client Information */}
+            <div>
+              <h3 className="text-sm font-semibold text-foreground mb-3 flex items-center gap-2">
+                <Building2 className="h-4 w-4 text-primary" /> Client Information
+              </h3>
+              <div className="grid gap-4 pl-6 border-l-2 border-primary/20">
+                <div className="grid gap-1.5">
+                  <Label htmlFor="name">Client Name *</Label>
+                  <Input id="name" placeholder="e.g. Acme Corporation" value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} />
+                </div>
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="grid gap-1.5">
+                    <Label htmlFor="industry">Industry</Label>
+                    <Select value={form.industry} onValueChange={(v) => setForm({ ...form, industry: v })}>
+                      <SelectTrigger><SelectValue placeholder="Select industry" /></SelectTrigger>
+                      <SelectContent>
+                        {industries.map((ind) => (
+                          <SelectItem key={ind} value={ind}>{ind}</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div className="grid gap-1.5">
+                    <Label>Entity Type</Label>
+                    <Select value={form.entity_type} onValueChange={(v) => setForm({ ...form, entity_type: v })}>
+                      <SelectTrigger><SelectValue /></SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="private">Private</SelectItem>
+                        <SelectItem value="public">Public</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                </div>
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="grid gap-1.5">
+                    <Label htmlFor="status">Status</Label>
+                    <Select value={form.status} onValueChange={(v) => setForm({ ...form, status: v })}>
+                      <SelectTrigger><SelectValue /></SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="active">Active</SelectItem>
+                        <SelectItem value="inactive">Inactive</SelectItem>
+                        <SelectItem value="prospect">Prospect</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div className="grid gap-1.5">
+                    <Label htmlFor="contact_person">Contact Person</Label>
+                    <Input id="contact_person" placeholder="John Doe" value={form.contact_person} onChange={(e) => setForm({ ...form, contact_person: e.target.value })} />
+                  </div>
+                </div>
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="grid gap-1.5">
+                    <Label htmlFor="contact_email">Email</Label>
+                    <Input id="contact_email" type="email" placeholder="john@acme.com" value={form.contact_email} onChange={(e) => setForm({ ...form, contact_email: e.target.value })} />
+                  </div>
+                  <div className="grid gap-1.5">
+                    <Label htmlFor="contact_phone">Phone</Label>
+                    <Input id="contact_phone" placeholder="+1 234 567 890" value={form.contact_phone} onChange={(e) => setForm({ ...form, contact_phone: e.target.value })} />
+                  </div>
+                </div>
+                <div className="grid gap-1.5">
+                  <Label htmlFor="address">Address</Label>
+                  <Input id="address" placeholder="123 Main St, City" value={form.address} onChange={(e) => setForm({ ...form, address: e.target.value })} />
+                </div>
+                <div className="grid gap-1.5">
+                  <Label htmlFor="notes">Notes</Label>
+                  <Textarea id="notes" placeholder="Additional notes..." value={form.notes} onChange={(e) => setForm({ ...form, notes: e.target.value })} rows={2} />
+                </div>
+              </div>
             </div>
-            <div className="grid grid-cols-2 gap-4">
-              <div className="grid gap-1.5">
-                <Label htmlFor="industry">Industry</Label>
-                <Select value={form.industry} onValueChange={(v) => setForm({ ...form, industry: v })}>
-                  <SelectTrigger><SelectValue placeholder="Select industry" /></SelectTrigger>
-                  <SelectContent>
-                    {industries.map((ind) => (
-                      <SelectItem key={ind} value={ind}>{ind}</SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+
+            {/* Section 2: Engagement Details */}
+            <div>
+              <h3 className="text-sm font-semibold text-foreground mb-3 flex items-center gap-2">
+                <Briefcase className="h-4 w-4 text-primary" /> Engagement Details
+              </h3>
+              <div className="grid gap-4 pl-6 border-l-2 border-primary/20">
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="grid gap-1.5">
+                    <Label>Engagement Mode</Label>
+                    <Select value={form.engagement_mode} onValueChange={(v) => setForm({ ...form, engagement_mode: v })}>
+                      <SelectTrigger><SelectValue /></SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="external_audit">External Audit</SelectItem>
+                        <SelectItem value="internal_audit">Internal Audit</SelectItem>
+                        <SelectItem value="assurance">Assurance</SelectItem>
+                        <SelectItem value="advisory">Advisory</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div className="grid gap-1.5">
+                    <Label htmlFor="wbs_code">WBS Code</Label>
+                    <Input id="wbs_code" placeholder="e.g. WBS-2026-001" value={form.wbs_code} onChange={(e) => setForm({ ...form, wbs_code: e.target.value })} />
+                  </div>
+                </div>
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="grid gap-1.5">
+                    <Label>Engagement Period Start</Label>
+                    <Input type="date" value={form.engagement_period_start} onChange={(e) => setForm({ ...form, engagement_period_start: e.target.value })} />
+                  </div>
+                  <div className="grid gap-1.5">
+                    <Label>Engagement Period End</Label>
+                    <Input type="date" value={form.engagement_period_end} onChange={(e) => setForm({ ...form, engagement_period_end: e.target.value })} />
+                  </div>
+                </div>
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="grid gap-1.5">
+                    <Label>Estimated Report Issuance Date</Label>
+                    <Input type="date" value={form.report_issuance_date} onChange={(e) => setForm({ ...form, report_issuance_date: e.target.value })} />
+                  </div>
+                  <div />
+                </div>
               </div>
-              <div className="grid gap-1.5">
-                <Label htmlFor="status">Status</Label>
-                <Select value={form.status} onValueChange={(v) => setForm({ ...form, status: v })}>
-                  <SelectTrigger><SelectValue /></SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="active">Active</SelectItem>
-                    <SelectItem value="inactive">Inactive</SelectItem>
-                    <SelectItem value="prospect">Prospect</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-            </div>
-            <div className="grid gap-1.5">
-              <Label>Engagement Mode</Label>
-              <Select value={form.engagement_mode} onValueChange={(v) => setForm({ ...form, engagement_mode: v })}>
-                <SelectTrigger><SelectValue /></SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="external_audit">External Audit</SelectItem>
-                  <SelectItem value="internal_audit">Internal Audit</SelectItem>
-                  <SelectItem value="assurance">Assurance</SelectItem>
-                  <SelectItem value="advisory">Advisory</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-            <div className="grid grid-cols-2 gap-4">
-              <div className="grid gap-1.5">
-                <Label htmlFor="wbs_code">WBS Code</Label>
-                <Input id="wbs_code" placeholder="e.g. WBS-2026-001" value={form.wbs_code} onChange={(e) => setForm({ ...form, wbs_code: e.target.value })} />
-              </div>
-              <div className="grid gap-1.5" />
-              <div className="grid gap-1.5">
-                <Label htmlFor="contact_person">Contact Person</Label>
-                <Input id="contact_person" placeholder="John Doe" value={form.contact_person} onChange={(e) => setForm({ ...form, contact_person: e.target.value })} />
-              </div>
-              <div className="grid gap-1.5">
-                <Label htmlFor="contact_email">Email</Label>
-                <Input id="contact_email" type="email" placeholder="john@acme.com" value={form.contact_email} onChange={(e) => setForm({ ...form, contact_email: e.target.value })} />
-              </div>
-            </div>
-            <div className="grid grid-cols-2 gap-4">
-              <div className="grid gap-1.5">
-                <Label htmlFor="contact_phone">Phone</Label>
-                <Input id="contact_phone" placeholder="+1 234 567 890" value={form.contact_phone} onChange={(e) => setForm({ ...form, contact_phone: e.target.value })} />
-              </div>
-              <div className="grid gap-1.5">
-                <Label htmlFor="address">Address</Label>
-                <Input id="address" placeholder="123 Main St, City" value={form.address} onChange={(e) => setForm({ ...form, address: e.target.value })} />
-              </div>
-            </div>
-            <div className="grid gap-1.5">
-              <Label htmlFor="notes">Notes</Label>
-              <Textarea id="notes" placeholder="Additional notes about this client..." value={form.notes} onChange={(e) => setForm({ ...form, notes: e.target.value })} rows={3} />
             </div>
           </div>
           <DialogFooter>

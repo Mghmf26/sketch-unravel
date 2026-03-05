@@ -203,14 +203,12 @@ function EntityNotesSection({ entityType, entityId, processId }: { entityType: s
           <Button size="sm" variant="ghost" className="h-5 text-[10px] gap-0.5" onClick={() => setShowAddComment(true)}>
             <Plus className="h-2.5 w-2.5" /> Note
           </Button>
-          <label className="cursor-pointer">
-            <Button size="sm" variant="ghost" className="h-5 text-[10px] gap-0.5 pointer-events-none" tabIndex={-1}>
-              <Paperclip className="h-2.5 w-2.5" /> {uploading ? '...' : 'File'}
-            </Button>
-            <input ref={fileInputRef} type="file" className="hidden"
-              accept=".pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx,.xml,.html,.csv,.txt,.json,.png,.jpg,.jpeg"
-              onChange={handleFileUpload} disabled={uploading} />
-          </label>
+          <Button size="sm" variant="ghost" className="h-5 text-[10px] gap-0.5" onClick={() => fileInputRef.current?.click()} disabled={uploading}>
+            <Paperclip className="h-2.5 w-2.5" /> {uploading ? '...' : 'File'}
+          </Button>
+          <input ref={fileInputRef} type="file" className="hidden"
+            accept=".pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx,.xml,.html,.csv,.txt,.json,.png,.jpg,.jpeg"
+            onChange={handleFileUpload} disabled={uploading} />
         </div>
       </div>
 

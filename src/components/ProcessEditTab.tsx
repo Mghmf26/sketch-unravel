@@ -2,7 +2,7 @@ import { useState, useEffect, useCallback } from 'react';
 import {
   Plus, Trash2, ArrowRight, ShieldAlert, ShieldCheck, Scale,
   AlertCircle, Database, HelpCircle, ChevronDown, ChevronRight, Pencil, Users,
-  Check, X, Save
+  Check, X, Save, Monitor
 } from 'lucide-react';
 import { usePermissions } from '@/hooks/usePermissions';
 import { Button } from '@/components/ui/button';
@@ -32,6 +32,7 @@ import {
   type ProcessStep, type StepConnection, type Risk, type Control,
   type Regulation, type Incident, type MainframeImport, type MFQuestion, type StepRaci,
 } from '@/lib/api';
+import { fetchStepApplications, insertStepApplication, updateStepApplication, deleteStepApplication, type StepApplication } from '@/lib/api-applications';
 
 interface ProcessEditTabProps {
   processId: string;
@@ -66,7 +67,7 @@ function getTypeStyle(type: string) {
   return typeColors[type] || typeColors['in-scope'];
 }
 
-type AddDialog = 'step' | 'risk' | 'control' | 'regulation' | 'incident' | 'import' | 'mfq' | 'connection' | 'raci' | null;
+type AddDialog = 'step' | 'risk' | 'control' | 'regulation' | 'incident' | 'import' | 'mfq' | 'connection' | 'raci' | 'application' | null;
 
 // Inline editable text field
 function InlineEdit({ value, onSave, className = '', multiline = false }: {
@@ -143,6 +144,7 @@ export default function ProcessEditTab({ processId }: ProcessEditTabProps) {
   const [incidents, setIncidents] = useState<Incident[]>([]);
   const [imports, setImports] = useState<MainframeImport[]>([]);
   const [mfQuestions, setMfQuestions] = useState<MFQuestion[]>([]);
+  const [applications, setApplications] = useState<StepApplication[]>([]);
   const [raciEntries, setRaciEntries] = useState<StepRaci[]>([]);
   const [addDialog, setAddDialog] = useState<AddDialog>(null);
   const [contextStepId, setContextStepId] = useState<string | null>(null);
@@ -169,12 +171,12 @@ export default function ProcessEditTab({ processId }: ProcessEditTabProps) {
   const collapseAllSteps = () => setExpandedSteps(new Set());
 
   const reload = useCallback(async () => {
-    const [s, c, r, ctrl, reg, inc, imp, mfq, raci] = await Promise.all([
+    const [s, c, r, ctrl, reg, inc, imp, mfq, raci, apps] = await Promise.all([
       fetchSteps(processId), fetchStepConnections(processId),
       fetchRisks(processId), fetchAllControls(),
       fetchRegulations(processId), fetchIncidents(processId),
       fetchMainframeImports(processId), fetchMFQuestions(processId),
-      fetchStepRaci(processId),
+      fetchStepRaci(processId), fetchStepApplications(processId),
     ]);
     setSteps(s);
     setConnections(c);
@@ -186,6 +188,7 @@ export default function ProcessEditTab({ processId }: ProcessEditTabProps) {
     setImports(imp);
     setMfQuestions(mfq);
     setRaciEntries(raci);
+    setApplications(apps);
   }, [processId]);
 
   useEffect(() => { reload(); }, [reload]);
@@ -219,6 +222,7 @@ export default function ProcessEditTab({ processId }: ProcessEditTabProps) {
   const getStepRegulations = (stepId: string) => regulations.filter(r => r.step_id === stepId);
   const getStepIncidents = (stepId: string) => incidents.filter(i => i.step_id === stepId);
   const getStepRaci = (stepId: string) => raciEntries.filter(r => r.step_id === stepId);
+  const getStepApps = (stepId: string) => applications.filter(a => a.step_id === stepId);
   const getRiskControls = (riskId: string) => controls.filter(c => c.risk_id === riskId);
 
   const countRelations = (stepId: string) => {
@@ -226,13 +230,14 @@ export default function ProcessEditTab({ processId }: ProcessEditTabProps) {
     const reg = getStepRegulations(stepId).length;
     const inc = getStepIncidents(stepId).length;
     const raci = getStepRaci(stepId).length;
-    return r + reg + inc + raci;
+    const apps = getStepApps(stepId).length;
+    return r + reg + inc + raci + apps;
   };
 
   return (
     <div className="space-y-3">
       {/* Summary Bar */}
-      <div className="grid grid-cols-4 md:grid-cols-8 gap-2">
+      <div className="grid grid-cols-4 md:grid-cols-9 gap-2">
         {[
           { label: 'Steps', count: steps.length, dot: 'bg-emerald-500' },
           { label: 'Interfaces', count: steps.filter(s => s.type === 'interface').length, dot: 'bg-slate-400' },
@@ -241,6 +246,7 @@ export default function ProcessEditTab({ processId }: ProcessEditTabProps) {
           { label: 'Controls', count: controls.length, dot: 'bg-blue-500' },
           { label: 'Regulations', count: regulations.length, dot: 'bg-purple-500' },
           { label: 'Incidents', count: incidents.length, dot: 'bg-red-500' },
+          { label: 'Apps', count: applications.length, dot: 'bg-sky-500' },
           { label: 'RACI', count: raciEntries.length, dot: 'bg-cyan-500' },
         ].map(m => (
           <div key={m.label} className="flex items-center gap-2 p-2 rounded-lg border bg-card">
@@ -273,6 +279,7 @@ export default function ProcessEditTab({ processId }: ProcessEditTabProps) {
                 {steps.length === 0 && <p className="text-xs text-muted-foreground text-center py-6">No steps defined</p>}
                 {steps.map(step => {
                   const isExpanded = expandedSteps.has(step.id);
+                  const stepApps = getStepApps(step.id);
                   const stepRisks = getStepRisks(step.id);
                   const stepRegs = getStepRegulations(step.id);
                   const stepIncs = getStepIncidents(step.id);
@@ -321,6 +328,10 @@ export default function ProcessEditTab({ processId }: ProcessEditTabProps) {
                             <Users className="h-3 w-3 text-cyan-500" />
                           </Button>
                           )}
+                          <Button variant="ghost" size="icon" className="h-6 w-6" title="Add Application"
+                            onClick={() => { setContextStepId(step.id); setAddDialog('application'); }}>
+                            <Monitor className="h-3 w-3 text-sky-500" />
+                          </Button>
                           <Button variant="ghost" size="icon" className="h-6 w-6 text-muted-foreground hover:text-destructive"
                             onClick={() => { if (confirm('Delete this step?')) deleteStep(step.id).then(reload); }}>
                             <Trash2 className="h-3 w-3" />
@@ -511,6 +522,32 @@ export default function ProcessEditTab({ processId }: ProcessEditTabProps) {
                               {stepRaci.length === 0 && <p className="text-[10px] text-muted-foreground italic ml-4">No RACI assignments</p>}
                             </div>
                           )}
+
+                          {/* Applications */}
+                          <div className="space-y-2">
+                            <div className="flex items-center gap-1.5 justify-between">
+                              <div className="flex items-center gap-1.5">
+                                <Monitor className="h-3 w-3 text-sky-500" />
+                                <span className="text-[11px] font-semibold text-sky-700">Applications ({stepApps.length})</span>
+                              </div>
+                              <Button variant="ghost" size="sm" className="h-5 text-[10px] text-sky-600" onClick={() => { setContextStepId(step.id); setAddDialog('application'); }}>
+                                <Plus className="h-3 w-3 mr-0.5" /> Add
+                              </Button>
+                            </div>
+                            {stepApps.map(app => (
+                              <div key={app.id} className="ml-4 pl-3 border-l-2 border-sky-200 flex items-center gap-2 group/app py-1">
+                                <InlineEdit value={app.name} onSave={v => updateStepApplication(app.id, { name: v }).then(reload)} className="text-sm font-medium" />
+                                <Badge variant="outline" className="text-[9px] capitalize">{app.app_type}</Badge>
+                                {app.screen_name && <span className="text-[10px] text-muted-foreground">Screen: {app.screen_name}</span>}
+                                <span className="flex-1" />
+                                <Button variant="ghost" size="icon" className="h-5 w-5 opacity-0 group-hover/app:opacity-100 text-muted-foreground hover:text-destructive"
+                                  onClick={() => deleteStepApplication(app.id).then(reload)}>
+                                  <Trash2 className="h-2.5 w-2.5" />
+                                </Button>
+                              </div>
+                            ))}
+                            {stepApps.length === 0 && <p className="text-[10px] text-muted-foreground italic ml-4">No applications</p>}
+                          </div>
                         </div>
                       )}
                     </div>
@@ -654,6 +691,9 @@ export default function ProcessEditTab({ processId }: ProcessEditTabProps) {
       )}
       {addDialog === 'raci' && contextStepId && (
         <AddRaciDialog processId={processId} stepId={contextStepId} onClose={() => { setAddDialog(null); setContextStepId(null); }} onRefresh={reload} />
+      )}
+      {addDialog === 'application' && contextStepId && (
+        <AddApplicationDialog processId={processId} stepId={contextStepId} onClose={() => { setAddDialog(null); setContextStepId(null); }} onRefresh={reload} />
       )}
     </div>
   );
@@ -944,6 +984,43 @@ function AddRaciDialog({ processId, stepId, onClose, onRefresh }: { processId: s
             <div className="grid gap-1.5"><Label>Consulted</Label><Input value={consulted} onChange={e => setConsulted(e.target.value)} placeholder="Person / team" /></div>
             <div className="grid gap-1.5"><Label>Informed</Label><Input value={informed} onChange={e => setInformed(e.target.value)} placeholder="Person / team" /></div>
           </div>
+        </div>
+        <DialogFooter><Button variant="outline" onClick={onClose}>Cancel</Button><Button onClick={submit}>Add</Button></DialogFooter>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
+function AddApplicationDialog({ processId, stepId, onClose, onRefresh }: { processId: string; stepId: string; onClose: () => void; onRefresh: () => void }) {
+  const [name, setName] = useState('');
+  const [screenName, setScreenName] = useState('');
+  const [appType, setAppType] = useState('application');
+  const [desc, setDesc] = useState('');
+  const submit = async () => {
+    if (!name.trim()) return;
+    await insertStepApplication({ process_id: processId, step_id: stepId, name: name.trim(), screen_name: screenName || null, app_type: appType, description: desc || null });
+    toast({ title: `${appType === 'screen' ? 'Screen' : 'Application'} added` }); onRefresh(); onClose();
+  };
+  return (
+    <Dialog open onOpenChange={onClose}>
+      <DialogContent className="sm:max-w-md">
+        <DialogHeader><DialogTitle className="flex items-center gap-2"><Monitor className="h-5 w-5 text-sky-500" /> Add Application / Screen</DialogTitle></DialogHeader>
+        <div className="grid gap-3 py-2">
+          <div className="grid gap-1.5">
+            <Label>Type</Label>
+            <Select value={appType} onValueChange={setAppType}>
+              <SelectTrigger><SelectValue /></SelectTrigger>
+              <SelectContent>
+                <SelectItem value="application">Application</SelectItem>
+                <SelectItem value="screen">Screen</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+          <div className="grid gap-1.5"><Label>Name *</Label><Input value={name} onChange={e => setName(e.target.value)} placeholder={appType === 'screen' ? 'Screen name...' : 'Application name...'} /></div>
+          {appType === 'application' && (
+            <div className="grid gap-1.5"><Label>Screen Name (optional)</Label><Input value={screenName} onChange={e => setScreenName(e.target.value)} placeholder="e.g. Main Dashboard" /></div>
+          )}
+          <div className="grid gap-1.5"><Label>Description</Label><Textarea value={desc} onChange={e => setDesc(e.target.value)} placeholder="Optional description..." /></div>
         </div>
         <DialogFooter><Button variant="outline" onClick={onClose}>Cancel</Button><Button onClick={submit}>Add</Button></DialogFooter>
       </DialogContent>
