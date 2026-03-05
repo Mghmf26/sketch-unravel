@@ -2,6 +2,7 @@ import { useEffect, useState, useMemo, useCallback } from 'react';
 import { fetchStepApplications, type StepApplication } from '@/lib/api-applications';
 import { useNavigate } from 'react-router-dom';
 import { Eye, Trash2, Plus, Search, FileSpreadsheet, AlertTriangle, Scale, AlertCircle, Cpu, ShieldAlert, Link2, Network, Layers, ArrowUpRight, Filter, BarChart3, Monitor } from 'lucide-react';
+import { ConfirmDialog } from '@/components/ConfirmDialog';
 import { useColumnSettings, type ColumnDef } from '@/hooks/useColumnSettings';
 import { ColumnSettingsDropdown } from '@/components/ColumnSettingsDropdown';
 
@@ -15,7 +16,7 @@ const BP_COLUMNS: ColumnDef[] = [
   { key: 'controls', label: 'Controls', defaultVisible: true, minWidth: 50 },
   { key: 'incidents', label: 'Incidents', defaultVisible: true, minWidth: 50 },
   { key: 'regs', label: 'Regulations', defaultVisible: true, minWidth: 50 },
-  { key: 'apps', label: 'Apps', defaultVisible: true, minWidth: 50 },
+  { key: 'apps', label: 'Int./App.', defaultVisible: true, minWidth: 50 },
   { key: 'mfai', label: 'MF AI Potential', defaultVisible: true, minWidth: 80 },
   { key: 'actions', label: 'Actions', defaultVisible: true, minWidth: 80 },
 ];
@@ -58,7 +59,7 @@ export default function BusinessProcesses() {
   const [clientFilter, setClientFilter] = useState('all');
   const [dialog, setDialog] = useState<DialogType>(null);
   const [selectedProcess, setSelectedProcess] = useState<BusinessProcess | null>(null);
-
+  const [confirmDelete, setConfirmDelete] = useState<BusinessProcess | null>(null);
   const reload = useCallback(async () => {
     const [p, c, s, r, ctrl, i, reg, mfq, apps] = await Promise.all([
       fetchProcesses(), fetchClients(), fetchSteps(), fetchRisks(), fetchAllControls(),
@@ -86,10 +87,17 @@ export default function BusinessProcesses() {
     });
   }, [processes, search, clientFilter]);
 
-  const handleDelete = async (id: string, name: string) => {
-    await deleteProcess(id);
-    toast({ title: 'Deleted', description: `"${name}" has been removed.` });
-    reload();
+  const handleDelete = async (process: BusinessProcess) => {
+    setConfirmDelete(process);
+  };
+
+  const executeDelete = async () => {
+    if (confirmDelete) {
+      await deleteProcess(confirmDelete.id);
+      toast({ title: 'Deleted', description: `"${confirmDelete.process_name}" has been removed.` });
+      reload();
+    }
+    setConfirmDelete(null);
   };
 
   const openDialog = (type: DialogType, process?: BusinessProcess) => {
@@ -115,6 +123,7 @@ export default function BusinessProcesses() {
   const totalRisks = risks.length;
   const totalIncidents = incidents.length;
   const totalRegulations = regulations.length;
+  const totalApps = applications.length;
 
   return (
     <div className="p-6 lg:p-8 space-y-6 max-w-[95rem]">
@@ -137,13 +146,14 @@ export default function BusinessProcesses() {
       </div>
 
       {/* KPI Summary Cards */}
-      <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
+      <div className="grid grid-cols-2 md:grid-cols-6 gap-3">
         {[
           { label: 'Total Processes', value: processes.length, icon: Network, color: 'text-primary' },
           { label: 'Steps', value: totalSteps, icon: Layers, color: 'text-primary' },
           { label: 'Active Risks', value: totalRisks, icon: AlertTriangle, color: 'text-destructive' },
           { label: 'Open Incidents', value: totalIncidents, icon: AlertCircle, color: 'text-orange-600' },
           { label: 'Regulations', value: totalRegulations, icon: Scale, color: 'text-primary' },
+          { label: 'Int./App.', value: totalApps, icon: Monitor, color: 'text-sky-600' },
         ].map((kpi) => (
           <Card key={kpi.label} className="border bg-card hover:shadow-md transition-shadow">
             <CardContent className="p-4 flex items-center gap-3">
@@ -205,7 +215,7 @@ export default function BusinessProcesses() {
                 {colSettings.isVisible('controls') && <TableHead className="font-bold text-[11px] text-foreground/70 tracking-wider uppercase py-3 text-center" style={{width: colSettings.getWidth('controls')}}>Controls</TableHead>}
                 {colSettings.isVisible('incidents') && <TableHead className="font-bold text-[11px] text-foreground/70 tracking-wider uppercase py-3 text-center" style={{width: colSettings.getWidth('incidents')}}>Incidents</TableHead>}
                 {colSettings.isVisible('regs') && <TableHead className="font-bold text-[11px] text-foreground/70 tracking-wider uppercase py-3 text-center" style={{width: colSettings.getWidth('regs')}}>Regs.</TableHead>}
-                {colSettings.isVisible('apps') && <TableHead className="font-bold text-[11px] text-foreground/70 tracking-wider uppercase py-3 text-center" style={{width: colSettings.getWidth('apps')}}>Apps</TableHead>}
+                {colSettings.isVisible('apps') && <TableHead className="font-bold text-[11px] text-foreground/70 tracking-wider uppercase py-3 text-center" style={{width: colSettings.getWidth('apps')}}>Int./App.</TableHead>}
                 {colSettings.isVisible('mfai') && <TableHead className="font-bold text-[11px] text-foreground/70 tracking-wider uppercase py-3 text-center" style={{width: colSettings.getWidth('mfai')}}>MF AI Potential</TableHead>}
                 {colSettings.isVisible('actions') && <TableHead className="font-bold text-[11px] text-foreground/70 tracking-wider uppercase py-3 text-right" style={{width: colSettings.getWidth('actions')}}>Actions</TableHead>}
               </TableRow>
@@ -288,7 +298,7 @@ export default function BusinessProcesses() {
                             </Button>
                           </TooltipTrigger><TooltipContent>Link/Edit</TooltipContent></Tooltip>
                           <Tooltip><TooltipTrigger asChild>
-                            <Button variant="ghost" size="icon" className="h-8 w-8 hover:text-destructive" onClick={() => handleDelete(p.id, p.process_name)}>
+                            <Button variant="ghost" size="icon" className="h-8 w-8 hover:text-destructive" onClick={() => handleDelete(p)}>
                               <Trash2 className="h-4 w-4" />
                             </Button>
                           </TooltipTrigger><TooltipContent>Delete</TooltipContent></Tooltip>
@@ -310,6 +320,14 @@ export default function BusinessProcesses() {
       {dialog === 'incidents' && selectedProcess && <IncidentsDialog process={selectedProcess} steps={steps.filter(s => s.process_id === selectedProcess.id)} items={incidents.filter(i => i.process_id === selectedProcess.id)} onClose={closeDialog} onRefresh={reload} />}
       {dialog === 'regulations' && selectedProcess && <RegulationsDialog process={selectedProcess} steps={steps.filter(s => s.process_id === selectedProcess.id)} items={regulations.filter(r => r.process_id === selectedProcess.id)} onClose={closeDialog} onRefresh={reload} />}
       {dialog === 'mfq' && selectedProcess && <MFQDialog process={selectedProcess} items={mfQuestions.filter(q => q.process_id === selectedProcess.id)} onClose={closeDialog} onRefresh={reload} />}
+      <ConfirmDialog
+        open={!!confirmDelete}
+        title="Delete Process"
+        description={`Are you sure you want to delete "${confirmDelete?.process_name || ''}"? All related steps, risks, controls, and other data will be permanently removed.`}
+        confirmLabel="Delete"
+        onConfirm={executeDelete}
+        onCancel={() => setConfirmDelete(null)}
+      />
     </div>
   );
 }
