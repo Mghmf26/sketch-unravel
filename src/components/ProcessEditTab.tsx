@@ -306,13 +306,13 @@ export default function ProcessEditTab({ processId }: ProcessEditTabProps) {
                           {canAccessModule('regulations') && (
                           <Button variant="ghost" size="icon" className="h-6 w-6" title="Add Regulation"
                             onClick={() => { setContextStepId(step.id); setAddDialog('regulation'); }}>
-                            <BookOpen className="h-3 w-3 text-purple-500" />
+                            <Scale className="h-3 w-3 text-purple-500" />
                           </Button>
                           )}
                           {canAccessModule('incidents') && (
                           <Button variant="ghost" size="icon" className="h-6 w-6" title="Add Incident"
                             onClick={() => { setContextStepId(step.id); setAddDialog('incident'); }}>
-                            <AlertTriangle className="h-3 w-3 text-red-500" />
+                            <AlertCircle className="h-3 w-3 text-red-500" />
                           </Button>
                           )}
                           {canAccessModule('raci') && (
@@ -378,7 +378,7 @@ export default function ProcessEditTab({ processId }: ProcessEditTabProps) {
                                       <div className="flex gap-1 opacity-0 group-hover/risk:opacity-100 transition-opacity">
                                         <Button variant="ghost" size="icon" className="h-5 w-5" title="Add Control"
                                           onClick={() => { setContextRiskId(risk.id); setAddDialog('control'); }}>
-                                          <Shield className="h-3 w-3 text-blue-500" />
+                                          <ShieldCheck className="h-3 w-3 text-blue-500" />
                                         </Button>
                                         <Button variant="ghost" size="icon" className="h-5 w-5 text-muted-foreground hover:text-destructive"
                                           onClick={() => deleteRisk(risk.id).then(reload)}>
@@ -391,7 +391,7 @@ export default function ProcessEditTab({ processId }: ProcessEditTabProps) {
                                       <div className="ml-3 pl-3 border-l-2 border-blue-200 space-y-1">
                                         {ctrls.map(ctrl => (
                                           <div key={ctrl.id} className="flex items-center gap-2 text-xs py-1 group/ctrl">
-                                            <Shield className="h-3 w-3 text-blue-400 shrink-0" />
+                                            <ShieldCheck className="h-3 w-3 text-blue-400 shrink-0" />
                                             <InlineEdit value={ctrl.name} onSave={v => updateControl(ctrl.id, { name: v }).then(reload)} className="font-medium" />
                                             <InlineSelect value={ctrl.type || 'preventive'} options={[{ value: 'preventive', label: 'Preventive' }, { value: 'detective', label: 'Detective' }, { value: 'corrective', label: 'Corrective' }]}
                                               onSave={v => updateControl(ctrl.id, { type: v }).then(reload)} />
@@ -419,7 +419,7 @@ export default function ProcessEditTab({ processId }: ProcessEditTabProps) {
                             <div className="space-y-2">
                               <div className="flex items-center gap-1.5 justify-between">
                                 <div className="flex items-center gap-1.5">
-                                  <BookOpen className="h-3 w-3 text-purple-500" />
+                                  <Scale className="h-3 w-3 text-purple-500" />
                                   <span className="text-[11px] font-semibold text-purple-700">Regulations ({stepRegs.length})</span>
                                 </div>
                                 <Button variant="ghost" size="sm" className="h-5 text-[10px] text-purple-600" onClick={() => { setContextStepId(step.id); setAddDialog('regulation'); }}>
@@ -450,7 +450,7 @@ export default function ProcessEditTab({ processId }: ProcessEditTabProps) {
                             <div className="space-y-2">
                               <div className="flex items-center gap-1.5 justify-between">
                                 <div className="flex items-center gap-1.5">
-                                  <AlertTriangle className="h-3 w-3 text-red-500" />
+                                  <AlertCircle className="h-3 w-3 text-red-500" />
                                   <span className="text-[11px] font-semibold text-red-700">Incidents ({stepIncs.length})</span>
                                 </div>
                                 <Button variant="ghost" size="sm" className="h-5 text-[10px] text-red-600" onClick={() => { setContextStepId(step.id); setAddDialog('incident'); }}>
