@@ -187,8 +187,6 @@ export async function applyTemplateMatrix(matrixId: string, templateKey?: string
 
 /** @deprecated use applyTemplateMatrix */
 export const applyStandardMatrix = (matrixId: string) => applyTemplateMatrix(matrixId, 'iso31000');
-
-export async function saveCellAcceptability(
   matrixId: string,
   impactLevel: string,
   frequencyLevel: string,
