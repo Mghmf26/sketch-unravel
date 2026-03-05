@@ -120,7 +120,7 @@ function toFlowElements(
 
 export default function DiagramCanvasEditor({
   nodes: initialNodes, connections: initialConnections,
-  risks = [], controls = [], regulations = [], incidents = [],
+  risks = [], controls = [], regulations = [], incidents = [], applications = [],
   processId, onChange, onDataChanged
 }: DiagramCanvasEditorProps) {
   // Local working state (not saved until user clicks Save)
@@ -230,7 +230,7 @@ export default function DiagramCanvasEditor({
     onIndicatorClick: handleIndicatorClick,
   }), [handleDeleteNode, handleLabelChange, handleTypeChange, handleNodeClick, handleIndicatorClick]);
 
-  const initial = useMemo(() => toFlowElements(workingNodes, workingConns, risks, controls, regulations, incidents, callbacks), []);
+  const initial = useMemo(() => toFlowElements(workingNodes, workingConns, risks, controls, regulations, incidents, applications, callbacks), []);
   const [flowNodes, setFlowNodes, onNodesChange] = useNodesState(initial.nodes);
   const [flowEdges, setFlowEdges, onEdgesChange] = useEdgesState(initial.edges);
 
@@ -238,7 +238,7 @@ export default function DiagramCanvasEditor({
   const prevWorkingRef = useRef({ nodes: workingNodes, connections: workingConns });
   if (workingNodes !== prevWorkingRef.current.nodes || workingConns !== prevWorkingRef.current.connections) {
     prevWorkingRef.current = { nodes: workingNodes, connections: workingConns };
-    const { nodes: ln, edges: le } = toFlowElements(workingNodes, workingConns, risks, controls, regulations, incidents, callbacks);
+    const { nodes: ln, edges: le } = toFlowElements(workingNodes, workingConns, risks, controls, regulations, incidents, applications, callbacks);
     const posMap = new Map(flowNodes.map(n => [n.id, n.position]));
     const merged = ln.map(n => ({ ...n, position: posMap.get(n.id) || n.position }));
     setFlowNodes(merged);
@@ -284,10 +284,10 @@ export default function DiagramCanvasEditor({
   }, [pushHistory]);
 
   const autoLayout = useCallback(() => {
-    const { nodes: ln, edges: le } = toFlowElements(workingNodesRef.current, workingConnsRef.current, risks, controls, regulations, incidents, callbacks);
+    const { nodes: ln, edges: le } = toFlowElements(workingNodesRef.current, workingConnsRef.current, risks, controls, regulations, incidents, applications, callbacks);
     setFlowNodes(ln);
     setFlowEdges(le);
-  }, [callbacks, setFlowNodes, setFlowEdges, risks, controls, regulations, incidents]);
+  }, [callbacks, setFlowNodes, setFlowEdges, risks, controls, regulations, incidents, applications]);
 
   const onEdgeDoubleClick = useCallback((_event: React.MouseEvent, edge: Edge) => {
     const newLabel = prompt('Connection label (e.g. Yes, No, or leave empty):', (edge.label as string) || '');
