@@ -187,8 +187,6 @@ export async function applyTemplateMatrix(matrixId: string, templateKey?: string
 
 /** @deprecated use applyTemplateMatrix */
 export const applyStandardMatrix = (matrixId: string) => applyTemplateMatrix(matrixId, 'iso31000');
-  frequencyLevel: string,
-  acceptable: boolean,
 ) {
   // Upsert the cell
   const { error } = await supabase
