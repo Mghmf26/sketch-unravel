@@ -1077,7 +1077,7 @@ function AddApplicationDialog({ processId, stepId, parentScreenId, screens, onCl
               <Select value={parentId} onValueChange={setParentId}>
                 <SelectTrigger><SelectValue placeholder="Standalone application" /></SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="">Standalone (no screen)</SelectItem>
+                  <SelectItem value="__none__">Standalone (no screen)</SelectItem>
                   {screens.map(s => <SelectItem key={s.id} value={s.id}>{s.name}</SelectItem>)}
                 </SelectContent>
               </Select>

@@ -878,7 +878,7 @@ export default function NodeDetailPanel({ node, risks, controls, regulations, in
               <Select value={appForm.parent_id} onValueChange={v => setAppForm(f => ({ ...f, parent_id: v }))}>
                 <SelectTrigger><SelectValue placeholder="Standalone application" /></SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="">Standalone (no screen)</SelectItem>
+                  <SelectItem value="__none__">Standalone (no screen)</SelectItem>
                   {stepApps.filter(a => a.app_type === 'screen' && !a.parent_id).map(s => <SelectItem key={s.id} value={s.id}>{s.name}</SelectItem>)}
                 </SelectContent>
               </Select>
