@@ -344,8 +344,15 @@ export default function NodeDetailPanel({ node, risks, controls, regulations, in
     setSaving(false);
   };
 
-  const handleDeleteItem = async (type: string, id: string) => {
-    if (!confirm(`Delete this ${type}?`)) return;
+  const [pendingDelete, setPendingDelete] = useState<{ type: string; id: string; label: string } | null>(null);
+
+  const handleDeleteItem = async (type: string, id: string, label?: string) => {
+    setPendingDelete({ type, id, label: label || type });
+  };
+
+  const executeDelete = async () => {
+    if (!pendingDelete) return;
+    const { type, id } = pendingDelete;
     try {
       if (type === 'risk') await deleteRisk(id);
       else if (type === 'control') await deleteControl(id);
@@ -355,6 +362,7 @@ export default function NodeDetailPanel({ node, risks, controls, regulations, in
       toast({ title: `${type.charAt(0).toUpperCase() + type.slice(1)} deleted` });
       onDataChanged?.();
     } catch { toast({ title: 'Delete failed', variant: 'destructive' }); }
+    setPendingDelete(null);
   };
 
   return (
