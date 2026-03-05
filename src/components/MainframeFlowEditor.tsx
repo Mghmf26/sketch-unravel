@@ -207,9 +207,25 @@ export default function MainframeFlowEditor({ processId, initialStepId, initialF
     pushHistory(`Renamed to "${label}"`, un, workingConnsRef.current);
   }, [pushHistory]);
 
-  const handleAttachDataSource = useCallback((nodeId: string) => {
+  const handleAttachDataSource = useCallback(async (nodeId: string) => {
+    // Auto-save the flow first so the node exists in the DB (FK constraint)
+    if (hasChanges && selectedFlowId) {
+      try {
+        await saveMFFlowDiagram(
+          selectedFlowId,
+          workingNodesRef.current.map(n => ({ id: n.id, label: n.label, node_type: n.nodeType, description: n.description })),
+          workingConnsRef.current.map(c => ({ id: c.id, source: c.source, target: c.target, label: c.label, connectionType: c.connectionType })),
+        );
+        setHasChanges(false);
+        toast({ title: 'Flow auto-saved before attaching data source' });
+      } catch (err) {
+        console.error(err);
+        toast({ title: 'Save failed — cannot attach data source until flow is saved', variant: 'destructive' });
+        return;
+      }
+    }
     setAttachNodeId(nodeId);
-  }, []);
+  }, [hasChanges, selectedFlowId]);
 
   const callbacks = useMemo(() => ({
     onDelete: handleDeleteNode,
