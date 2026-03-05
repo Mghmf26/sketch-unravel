@@ -54,6 +54,7 @@ const ROLE_LABELS: Record<string, string> = {
   client_coordinator: 'Client Coordinator',
   client_participant: 'Client Participant',
   user: 'User',
+  root: 'Root',
 };
 
 const ROLE_COLORS: Record<string, string> = {
@@ -63,6 +64,7 @@ const ROLE_COLORS: Record<string, string> = {
   client_coordinator: 'bg-amber-500/10 text-amber-700 border-amber-300',
   client_participant: 'bg-violet-500/10 text-violet-700 border-violet-300',
   user: 'bg-muted text-muted-foreground border-border',
+  root: 'bg-red-900/20 text-red-400 border-red-500/30',
 };
 
 export default function AdminDashboard() {
