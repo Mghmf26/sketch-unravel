@@ -24,7 +24,6 @@ export interface RiskMatrixCell {
 // Level label lookups
 export const LEVEL_LABELS: Record<string, string> = {
   VL: 'Very Low', L: 'Low', M: 'Medium', H: 'High', VH: 'Very High',
-  // 4x4 Operational
   Rare: 'Rare', Possible: 'Possible', Likely: 'Likely', 'Almost Certain': 'Almost Certain',
   Minor: 'Minor', Moderate: 'Moderate', Major: 'Major', Severe: 'Severe',
 };
@@ -86,6 +85,8 @@ export const STANDARD_TEMPLATES: RiskMatrixTemplate[] = [
 export const STANDARD_IMPACT_LEVELS = STANDARD_TEMPLATES[0].impactLevels;
 export const STANDARD_FREQUENCY_LEVELS = STANDARD_TEMPLATES[0].frequencyLevels;
 export const STANDARD_ACCEPTABLE_CELLS = STANDARD_TEMPLATES[0].acceptableCells;
+
+// ─── Data access ────────────────────────────────────────────────────
 
 export async function fetchRiskMatrix(processId: string): Promise<RiskMatrix | null> {
   const { data } = await supabase
@@ -187,34 +188,3 @@ export async function applyTemplateMatrix(matrixId: string, templateKey?: string
 
 /** @deprecated use applyTemplateMatrix */
 export const applyStandardMatrix = (matrixId: string) => applyTemplateMatrix(matrixId, 'iso31000');
-  const { error } = await supabase
-    .from('risk_matrix_cells')
-    .upsert(
-      { matrix_id: matrixId, impact_level: impactLevel, frequency_level: frequencyLevel, acceptable },
-      { onConflict: 'matrix_id,impact_level,frequency_level' }
-    );
-  if (error) throw error;
-}
-
-export async function applyStandardMatrix(matrixId: string) {
-  // Delete all existing cells
-  await supabase.from('risk_matrix_cells').delete().eq('matrix_id', matrixId);
-
-  // Insert standard cells
-  const cells = [];
-  for (const impact of STANDARD_IMPACT_LEVELS) {
-    for (const freq of STANDARD_FREQUENCY_LEVELS) {
-      const acceptable = STANDARD_ACCEPTABLE_CELLS.some(
-        ([i, f]) => i === impact && f === freq
-      );
-      cells.push({
-        matrix_id: matrixId,
-        impact_level: impact,
-        frequency_level: freq,
-        acceptable,
-      });
-    }
-  }
-  const { error } = await supabase.from('risk_matrix_cells').insert(cells);
-  if (error) throw error;
-}
