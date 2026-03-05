@@ -990,3 +990,40 @@ function AddRaciDialog({ processId, stepId, onClose, onRefresh }: { processId: s
     </Dialog>
   );
 }
+
+function AddApplicationDialog({ processId, stepId, onClose, onRefresh }: { processId: string; stepId: string; onClose: () => void; onRefresh: () => void }) {
+  const [name, setName] = useState('');
+  const [screenName, setScreenName] = useState('');
+  const [appType, setAppType] = useState('application');
+  const [desc, setDesc] = useState('');
+  const submit = async () => {
+    if (!name.trim()) return;
+    await insertStepApplication({ process_id: processId, step_id: stepId, name: name.trim(), screen_name: screenName || null, app_type: appType, description: desc || null });
+    toast({ title: `${appType === 'screen' ? 'Screen' : 'Application'} added` }); onRefresh(); onClose();
+  };
+  return (
+    <Dialog open onOpenChange={onClose}>
+      <DialogContent className="sm:max-w-md">
+        <DialogHeader><DialogTitle className="flex items-center gap-2"><Monitor className="h-5 w-5 text-sky-500" /> Add Application / Screen</DialogTitle></DialogHeader>
+        <div className="grid gap-3 py-2">
+          <div className="grid gap-1.5">
+            <Label>Type</Label>
+            <Select value={appType} onValueChange={setAppType}>
+              <SelectTrigger><SelectValue /></SelectTrigger>
+              <SelectContent>
+                <SelectItem value="application">Application</SelectItem>
+                <SelectItem value="screen">Screen</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+          <div className="grid gap-1.5"><Label>Name *</Label><Input value={name} onChange={e => setName(e.target.value)} placeholder={appType === 'screen' ? 'Screen name...' : 'Application name...'} /></div>
+          {appType === 'application' && (
+            <div className="grid gap-1.5"><Label>Screen Name (optional)</Label><Input value={screenName} onChange={e => setScreenName(e.target.value)} placeholder="e.g. Main Dashboard" /></div>
+          )}
+          <div className="grid gap-1.5"><Label>Description</Label><Textarea value={desc} onChange={e => setDesc(e.target.value)} placeholder="Optional description..." /></div>
+        </div>
+        <DialogFooter><Button variant="outline" onClick={onClose}>Cancel</Button><Button onClick={submit}>Add</Button></DialogFooter>
+      </DialogContent>
+    </Dialog>
+  );
+}
