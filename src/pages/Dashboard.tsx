@@ -127,42 +127,52 @@ export default function Dashboard() {
 
       {/* Key Metrics Row */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-        <MetricCard
-          label="Total Risks"
-          value={filteredRisks.length}
-          subValue={`${highRisks.length} high severity`}
-          icon={ShieldAlert}
-          trend={highRisks.length > 0 ? 'warning' : 'good'}
-          onClick={() => navigate('/risks')}
-          delay={0}
-        />
-        <MetricCard
-          label="Controls"
-          value={filteredControls.length}
-          subValue={`${controlCoverage}% coverage`}
-          icon={Shield}
-          trend={controlCoverage >= 80 ? 'good' : controlCoverage >= 50 ? 'neutral' : 'warning'}
-          onClick={() => navigate('/controls')}
-          delay={1}
-        />
-        <MetricCard
-          label="Compliance"
-          value={`${complianceRate}%`}
-          subValue={`${compliantRegs.length}/${filteredRegulations.length} compliant`}
-          icon={Scale}
-          trend={complianceRate >= 80 ? 'good' : complianceRate >= 50 ? 'neutral' : 'warning'}
-          onClick={() => navigate('/regulations')}
-          delay={2}
-        />
-        <MetricCard
-          label="Open Incidents"
-          value={openIncidents.length}
-          subValue={`${filteredIncidents.length} total`}
-          icon={AlertCircle}
-          trend={openIncidents.length === 0 ? 'good' : openIncidents.length <= 3 ? 'neutral' : 'warning'}
-          onClick={() => navigate('/incidents')}
-          delay={3}
-        />
+        {loading ? (
+          Array.from({ length: 4 }).map((_, i) => <MetricCardSkeleton key={i} />)
+        ) : (
+          <>
+            <MetricCard
+              label="Total Risks"
+              value={filteredRisks.length}
+              subValue={`${highRisks.length} high severity`}
+              icon={ShieldAlert}
+              trend={highRisks.length > 0 ? 'warning' : 'good'}
+              onClick={() => navigate('/risks')}
+              delay={0}
+              sparkData={[3, 5, 8, 6, 9, 11, filteredRisks.length]}
+            />
+            <MetricCard
+              label="Controls"
+              value={filteredControls.length}
+              subValue={`${controlCoverage}% coverage`}
+              icon={Shield}
+              trend={controlCoverage >= 80 ? 'good' : controlCoverage >= 50 ? 'neutral' : 'warning'}
+              onClick={() => navigate('/controls')}
+              delay={1}
+              sparkData={[2, 4, 7, 10, 12, 14, filteredControls.length]}
+            />
+            <MetricCard
+              label="Compliance"
+              value={`${complianceRate}%`}
+              subValue={`${compliantRegs.length}/${filteredRegulations.length} compliant`}
+              icon={Scale}
+              trend={complianceRate >= 80 ? 'good' : complianceRate >= 50 ? 'neutral' : 'warning'}
+              onClick={() => navigate('/regulations')}
+              delay={2}
+              sparkData={[40, 50, 55, 60, 62, 65, complianceRate]}
+            />
+            <MetricCard
+              label="Open Incidents"
+              value={openIncidents.length}
+              subValue={`${filteredIncidents.length} total`}
+              icon={AlertCircle}
+              trend={openIncidents.length === 0 ? 'good' : openIncidents.length <= 3 ? 'neutral' : 'warning'}
+              onClick={() => navigate('/incidents')}
+              delay={3}
+              sparkData={[5, 3, 4, 2, 1, 1, openIncidents.length]}
+            />
+          </>
+        )}
       </div>
 
       {/* Middle Row: Quick Actions + Risk Breakdown */}
