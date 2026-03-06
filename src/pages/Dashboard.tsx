@@ -1,5 +1,5 @@
 import { useNavigate } from 'react-router-dom';
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useMemo } from 'react';
 import {
   Users, Network, AlertTriangle, AlertCircle, UserPlus, PlusCircle, Database, Scale,
   ShieldAlert, Shield, TrendingUp, ArrowUpRight, Activity, BarChart3, Zap, Brain,
@@ -10,6 +10,8 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
 import { useAuth } from '@/contexts/AuthContext';
+import { Sparkline } from '@/components/Sparkline';
+import { MetricCardSkeleton } from '@/components/LoadingSkeletons';
 import {
   fetchProcesses, fetchClients, fetchRisks, fetchIncidents, fetchRegulations,
   fetchAllControls, fetchMainframeImports,
@@ -30,14 +32,17 @@ export default function Dashboard() {
   const [regulations, setRegulations] = useState<Regulation[]>([]);
   const [importCount, setImportCount] = useState(0);
   const [activeMode, setActiveMode] = useState<string>('external_audit');
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    setLoading(true);
     Promise.all([
       fetchProcesses(), fetchClients(), fetchRisks(), fetchIncidents(),
       fetchAllControls(), fetchRegulations(), fetchMainframeImports(),
     ]).then(([p, c, r, i, ctrl, reg, imp]) => {
       setProcesses(p); setClients(c); setRisks(r); setIncidents(i);
       setControls(ctrl); setRegulations(reg); setImportCount(imp.length);
+      setLoading(false);
     });
   }, []);
 
