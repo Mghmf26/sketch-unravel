@@ -11,7 +11,7 @@ serve(async (req) => {
   }
 
   try {
-    const { processes, risks, controls, incidents, regulations, mfImports, mfQuestions } = await req.json();
+    const { processes, steps, risks, controls, incidents, regulations, mfImports, mfQuestions, applications, mfFlows, mfFlowNodes } = await req.json();
 
     const prompt = `You are a senior mainframe risk and business process consultant. Analyze the following data and produce a structured JSON report with exactly 4 sections. Each section must have: title, badge, badgeVariant (one of: default, secondary, destructive, outline), and items (array of 4 actionable insight strings).
 
@@ -22,13 +22,17 @@ The 4 sections must be:
 4. "AI-Recommended Next Steps" (badge: "ACTIONABLE", badgeVariant: "outline") — provide concrete next actions based on data maturity.
 
 DATA CONTEXT:
-- Business Processes (${processes.length}): ${JSON.stringify(processes.slice(0, 10).map((p: any) => ({ name: p.process_name, department: p.department, owner: p.owner })))}
-- Risks (${risks.length}): ${JSON.stringify(risks.slice(0, 15).map((r: any) => ({ description: r.description, likelihood: r.likelihood, impact: r.impact })))}
-- Controls (${controls.length}): ${JSON.stringify(controls.slice(0, 15).map((c: any) => ({ name: c.name, type: c.type, effectiveness: c.effectiveness })))}
-- Incidents (${incidents.length}): ${JSON.stringify(incidents.slice(0, 10).map((i: any) => ({ title: i.title, severity: i.severity, status: i.status })))}
-- Regulations (${regulations.length}): ${JSON.stringify(regulations.slice(0, 10).map((r: any) => ({ name: r.name, compliance_status: r.compliance_status, authority: r.authority })))}
-- Mainframe Imports (${mfImports.length}): ${JSON.stringify(mfImports.slice(0, 10).map((m: any) => ({ source_name: m.source_name, source_type: m.source_type, dataset_name: m.dataset_name })))}
-- MF Q&A (${mfQuestions.length}): ${JSON.stringify(mfQuestions.slice(0, 5).map((q: any) => ({ question: q.question, category: q.category })))}
+- Business Processes (${processes?.length || 0}): ${JSON.stringify((processes || []).slice(0, 10).map((p: any) => ({ name: p.process_name, department: p.department, owner: p.owner })))}
+- Process Steps (${steps?.length || 0}): ${JSON.stringify((steps || []).slice(0, 20).map((s: any) => ({ label: s.label, type: s.type, step_type: s.step_type })))}
+- Risks (${risks?.length || 0}): ${JSON.stringify((risks || []).slice(0, 15).map((r: any) => ({ description: r.description, likelihood: r.likelihood, impact: r.impact })))}
+- Controls (${controls?.length || 0}): ${JSON.stringify((controls || []).slice(0, 15).map((c: any) => ({ name: c.name, type: c.type, effectiveness: c.effectiveness })))}
+- Incidents (${incidents?.length || 0}): ${JSON.stringify((incidents || []).slice(0, 10).map((i: any) => ({ title: i.title, severity: i.severity, status: i.status })))}
+- Regulations (${regulations?.length || 0}): ${JSON.stringify((regulations || []).slice(0, 10).map((r: any) => ({ name: r.name, compliance_status: r.compliance_status, authority: r.authority })))}
+- Screens/Applications (${applications?.length || 0}): ${JSON.stringify((applications || []).slice(0, 15).map((a: any) => ({ name: a.name, app_type: a.app_type, screen_name: a.screen_name })))}
+- Mainframe Flows (${mfFlows?.length || 0}): ${JSON.stringify((mfFlows || []).slice(0, 10).map((f: any) => ({ name: f.name, description: f.description })))}
+- MF Flow Nodes (${mfFlowNodes?.length || 0}): ${JSON.stringify((mfFlowNodes || []).slice(0, 15).map((n: any) => ({ label: n.label, node_type: n.node_type })))}
+- Mainframe Imports (${mfImports?.length || 0}): ${JSON.stringify((mfImports || []).slice(0, 10).map((m: any) => ({ source_name: m.source_name, source_type: m.source_type, dataset_name: m.dataset_name })))}
+- MF Q&A (${mfQuestions?.length || 0}): ${JSON.stringify((mfQuestions || []).slice(0, 5).map((q: any) => ({ question: q.question, category: q.category })))}
 
 Respond ONLY with a valid JSON array of 4 section objects. No markdown, no code fences.`;
 
