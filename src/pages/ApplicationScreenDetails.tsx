@@ -117,7 +117,6 @@ export default function ApplicationScreenDetails() {
       <PageHeader
         title="Application & Screen Details"
         description="Comprehensive view of all applications and screens linked to business process steps."
-        icon={Monitor}
       />
 
       {/* Stats */}

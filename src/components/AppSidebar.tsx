@@ -65,6 +65,7 @@ const menuGroups: MenuGroup[] = [
       { title: 'Controls', url: '/controls', icon: ShieldCheck, pageSlug: 'controls' },
       { title: 'Regulations', url: '/regulations', icon: Scale, pageSlug: 'regulations' },
       { title: 'Incidents', url: '/incidents', icon: AlertCircle, pageSlug: 'incidents' },
+      { title: 'Application & Screen Details', url: '/application-screen-details', icon: Monitor, pageSlug: 'processes' },
     ],
   },
   {
