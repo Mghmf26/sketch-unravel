@@ -1,6 +1,6 @@
 import { useEffect, useState, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { ArrowLeft, Brain, Sparkles, TrendingUp, ShieldAlert, DollarSign, Lightbulb, Loader2, Filter } from 'lucide-react';
+import { ArrowLeft, Brain, Sparkles, TrendingUp, ShieldAlert, DollarSign, Lightbulb, Loader2, Filter, Download } from 'lucide-react';
 import { PageHeader } from '@/components/PageHeader';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from '@/hooks/use-toast';
@@ -15,6 +15,7 @@ import {
   fetchProcesses, fetchClients, fetchRisks, fetchAllControls, fetchIncidents, fetchRegulations, fetchMFQuestions, fetchMainframeImports,
   type BusinessProcess, type Risk, type Control, type Incident, type Regulation, type MFQuestion, type MainframeImport, type Client,
 } from '@/lib/api';
+import { exportReportToPDF } from '@/lib/pdf-export';
 
 interface InsightSection {
   title: string;
@@ -217,10 +218,33 @@ export default function AIReports() {
 
       {report && (
         <div className="space-y-6">
-          <div className="flex items-center gap-2">
-            <Sparkles className="h-4 w-4 text-primary" />
-            <h2 className="text-lg font-semibold text-foreground">AI Analysis Report</h2>
-            <Badge variant="outline" className="text-[10px] tracking-wider">GENERATED</Badge>
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <Sparkles className="h-4 w-4 text-primary" />
+              <h2 className="text-lg font-semibold text-foreground">AI Analysis Report</h2>
+              <Badge variant="outline" className="text-[10px] tracking-wider">GENERATED</Badge>
+            </div>
+            <Button
+              variant="outline"
+              size="sm"
+              className="gap-2"
+              onClick={() => {
+                const clientName = selectedClientId !== 'all'
+                  ? clients.find(c => c.id === selectedClientId)?.name
+                  : undefined;
+                exportReportToPDF({
+                  title: 'AI-Powered Analysis Report',
+                  subtitle: 'Intelligent analysis of business processes, mainframe data, risks, controls, regulations, and incidents',
+                  generatedAt: new Date(),
+                  clientName,
+                  scopeSummary: `${processes.length} Processes · ${risks.length} Risks · ${controls.length} Controls · ${incidents.length} Incidents · ${regulations.length} Regulations · ${mfImports.length} MF Sources`,
+                  sections: report.map(s => ({ title: s.title, badge: s.badge, items: s.items })),
+                });
+                toast({ title: 'PDF exported', description: 'Report downloaded successfully.' });
+              }}
+            >
+              <Download className="h-4 w-4" /> Export PDF
+            </Button>
           </div>
           {report.map((section, idx) => (
             <Card key={idx} className="border shadow-sm">
