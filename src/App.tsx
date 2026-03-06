@@ -34,6 +34,7 @@ import MainframeFlowHub from "./pages/MainframeFlowHub";
 import ClientReports from "./pages/ClientReports";
 import OnPremiseEcosystem from "./pages/OnPremiseEcosystem";
 import CloudEcosystem from "./pages/CloudEcosystem";
+import ActivityLog from "./pages/ActivityLog";
 import EnrollMFA from "./pages/EnrollMFA";
 import VerifyMFA from "./pages/VerifyMFA";
 import NotFound from "./pages/NotFound";
@@ -115,6 +116,7 @@ const App = () => {
             <Route path="/client-reports" element={<ProtectedRoute pageSlug="client-reports"><ClientReports /></ProtectedRoute>} />
             <Route path="/on-premise/*" element={<ProtectedRoute pageSlug="on-premise"><OnPremiseEcosystem /></ProtectedRoute>} />
             <Route path="/cloud/*" element={<ProtectedRoute pageSlug="cloud"><CloudEcosystem /></ProtectedRoute>} />
+            <Route path="/activity-log" element={<ProtectedRoute pageSlug="dashboard"><ActivityLog /></ProtectedRoute>} />
             <Route path="/new" element={<ProtectedRoute pageSlug="data-entry"><DataEntry /></ProtectedRoute>} />
             <Route path="/upload" element={<ProtectedRoute pageSlug="upload"><UploadExtract /></ProtectedRoute>} />
             <Route path="/edit/:id" element={<ProtectedRoute pageSlug="data-entry"><DataEntry /></ProtectedRoute>} />
