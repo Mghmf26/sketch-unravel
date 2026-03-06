@@ -658,37 +658,156 @@ export default function ProcessEditTab({ processId }: ProcessEditTabProps) {
         </Card>
       </Collapsible>
 
-      {/* Mainframe Imports */}
+      {/* MF Data Sources — Hierarchical View */}
       <Collapsible open={openSections.imports} onOpenChange={() => toggleSection('imports')}>
         <Card>
           <CardHeader className="py-2 px-4">
-            <SectionHeader icon={Database} title="Mainframe Imports" count={imports.length} sectionKey="imports"
+            <SectionHeader icon={Database} title="MF Data Sources" count={imports.length} sectionKey="imports"
               onAdd={() => setAddDialog('import')} />
           </CardHeader>
           <CollapsibleContent>
             <CardContent className="p-0">
-              <div className="divide-y">
-                {imports.length === 0 && <p className="text-xs text-muted-foreground text-center py-6">No mainframe imports</p>}
-                {imports.map(imp => (
-                  <div key={imp.id} className="px-4 py-2.5 flex items-center gap-3 hover:bg-muted/30 group">
-                    <div className="flex-1 min-w-0">
-                      <p className="text-sm font-medium">{imp.source_name}</p>
-                      <div className="flex gap-2 mt-1">
-                        <Badge variant="outline" className="text-[9px]">{imp.source_type}</Badge>
-                        {imp.dataset_name && <Badge variant="outline" className="text-[9px]">{imp.dataset_name}</Badge>}
-                        <Badge variant="outline" className="text-[9px]">{imp.record_count} records</Badge>
-                        <Badge className={`text-[9px] border-0 ${imp.status === 'active' ? 'bg-emerald-100 text-emerald-700' : 'bg-yellow-100 text-yellow-700'}`}>
-                          {imp.status}
-                        </Badge>
-                      </div>
-                    </div>
-                    <Button variant="ghost" size="icon" className="h-6 w-6 opacity-0 group-hover:opacity-100 text-muted-foreground hover:text-destructive"
-                      onClick={() => deleteMainframeImport(imp.id).then(reload)}>
-                      <Trash2 className="h-3 w-3" />
-                    </Button>
-                  </div>
-                ))}
-              </div>
+              {imports.length === 0 ? (
+                <p className="text-xs text-muted-foreground text-center py-6">No MF data sources</p>
+              ) : (
+                <div className="divide-y">
+                  {/* Group imports by step */}
+                  {(() => {
+                    const inScopeSteps = steps.filter(s => s.type === 'in-scope');
+                    const unlinkedImports = imports.filter(i => !i.step_id);
+                    
+                    return (
+                      <>
+                        {inScopeSteps.map(step => {
+                          const stepImports = imports.filter(i => i.step_id === step.id);
+                          const stepFlows = mfFlows.filter(f => f.step_id === step.id);
+                          if (stepImports.length === 0 && stepFlows.length === 0) return null;
+                          
+                          return (
+                            <div key={step.id} className="border-l-4 border-emerald-300">
+                              {/* Step header */}
+                              <div className="px-4 py-2 bg-emerald-50/50 flex items-center gap-2">
+                                <TypeBadge type="in-scope" />
+                                <span className="text-xs font-semibold flex-1">{step.label}</span>
+                                <Badge variant="secondary" className="text-[9px]">{stepImports.length} source(s)</Badge>
+                                {stepFlows.length > 0 && <Badge className="text-[9px] border-0 bg-blue-100 text-blue-700">{stepFlows.length} flow(s)</Badge>}
+                              </div>
+                              
+                              {/* Mainframe Flows under this step */}
+                              {stepFlows.map(flow => {
+                                const flowNodes = mfFlowNodes.filter(n => n.flow_id === flow.id);
+                                const flowImports = stepImports.filter(i => i.flow_id === flow.id);
+                                
+                                return (
+                                  <div key={flow.id} className="ml-6 border-l-2 border-blue-200">
+                                    <div className="px-3 py-1.5 flex items-center gap-2 bg-blue-50/30">
+                                      <Cpu className="h-3 w-3 text-blue-500" />
+                                      <span className="text-[11px] font-semibold text-blue-700">{flow.name}</span>
+                                      {flowNodes.length > 0 && <Badge variant="outline" className="text-[8px]">{flowNodes.length} nodes</Badge>}
+                                    </div>
+                                    
+                                    {/* Imports linked to specific flow nodes */}
+                                    {flowNodes.map(node => {
+                                      const nodeImports = flowImports.filter(i => i.flow_node_id === node.id);
+                                      if (nodeImports.length === 0) return null;
+                                      const meta = MF_NODE_TYPE_META[node.node_type as keyof typeof MF_NODE_TYPE_META];
+                                      
+                                      return (
+                                        <div key={node.id} className="ml-4 border-l-2 border-slate-200">
+                                          <div className="px-3 py-1 flex items-center gap-2">
+                                            <Link2 className="h-2.5 w-2.5 text-muted-foreground" />
+                                            <span className="text-[10px] font-medium" style={{ color: meta?.color }}>{node.label}</span>
+                                            {meta && <Badge variant="outline" className="text-[8px]" style={{ borderColor: meta.color, color: meta.color }}>{meta.label}</Badge>}
+                                          </div>
+                                          {nodeImports.map(imp => (
+                                            <div key={imp.id} className="ml-6 px-3 py-1.5 flex items-center gap-2 hover:bg-muted/30 group">
+                                              <Database className="h-3 w-3 text-amber-500 shrink-0" />
+                                              <span className="text-xs font-medium">{imp.source_name}</span>
+                                              <Badge variant="outline" className="text-[8px]">{imp.source_type}</Badge>
+                                              {imp.dataset_name && <Badge variant="outline" className="text-[8px]">{imp.dataset_name}</Badge>}
+                                              <Badge variant="outline" className="text-[8px]">{imp.record_count} rec.</Badge>
+                                              <Badge className={`text-[8px] border-0 ${imp.status === 'active' ? 'bg-emerald-100 text-emerald-700' : 'bg-yellow-100 text-yellow-700'}`}>{imp.status}</Badge>
+                                              <span className="flex-1" />
+                                              <Button variant="ghost" size="icon" className="h-5 w-5 opacity-0 group-hover:opacity-100 text-muted-foreground hover:text-destructive"
+                                                onClick={() => deleteMainframeImport(imp.id).then(reload)}>
+                                                <Trash2 className="h-2.5 w-2.5" />
+                                              </Button>
+                                            </div>
+                                          ))}
+                                        </div>
+                                      );
+                                    })}
+                                    
+                                    {/* Imports linked to flow but no specific node */}
+                                    {flowImports.filter(i => !i.flow_node_id).map(imp => (
+                                      <div key={imp.id} className="ml-4 px-3 py-1.5 flex items-center gap-2 hover:bg-muted/30 group">
+                                        <Database className="h-3 w-3 text-amber-500 shrink-0" />
+                                        <span className="text-xs font-medium">{imp.source_name}</span>
+                                        <Badge variant="outline" className="text-[8px]">{imp.source_type}</Badge>
+                                        {imp.dataset_name && <Badge variant="outline" className="text-[8px]">{imp.dataset_name}</Badge>}
+                                        <Badge variant="outline" className="text-[8px]">{imp.record_count} rec.</Badge>
+                                        <Badge className={`text-[8px] border-0 ${imp.status === 'active' ? 'bg-emerald-100 text-emerald-700' : 'bg-yellow-100 text-yellow-700'}`}>{imp.status}</Badge>
+                                        <span className="flex-1" />
+                                        <Button variant="ghost" size="icon" className="h-5 w-5 opacity-0 group-hover:opacity-100 text-muted-foreground hover:text-destructive"
+                                          onClick={() => deleteMainframeImport(imp.id).then(reload)}>
+                                          <Trash2 className="h-2.5 w-2.5" />
+                                        </Button>
+                                      </div>
+                                    ))}
+                                  </div>
+                                );
+                              })}
+                              
+                              {/* Imports linked to step but no flow */}
+                              {stepImports.filter(i => !i.flow_id).map(imp => (
+                                <div key={imp.id} className="ml-6 px-3 py-2 flex items-center gap-2 hover:bg-muted/30 group">
+                                  <Database className="h-3 w-3 text-amber-500 shrink-0" />
+                                  <span className="text-xs font-medium">{imp.source_name}</span>
+                                  <Badge variant="outline" className="text-[9px]">{imp.source_type}</Badge>
+                                  {imp.dataset_name && <Badge variant="outline" className="text-[9px]">{imp.dataset_name}</Badge>}
+                                  <Badge variant="outline" className="text-[9px]">{imp.record_count} records</Badge>
+                                  <Badge className={`text-[9px] border-0 ${imp.status === 'active' ? 'bg-emerald-100 text-emerald-700' : 'bg-yellow-100 text-yellow-700'}`}>{imp.status}</Badge>
+                                  <span className="flex-1" />
+                                  <Button variant="ghost" size="icon" className="h-5 w-5 opacity-0 group-hover:opacity-100 text-muted-foreground hover:text-destructive"
+                                    onClick={() => deleteMainframeImport(imp.id).then(reload)}>
+                                    <Trash2 className="h-2.5 w-2.5" />
+                                  </Button>
+                                </div>
+                              ))}
+                            </div>
+                          );
+                        })}
+                        
+                        {/* Unlinked imports (no step) */}
+                        {unlinkedImports.length > 0 && (
+                          <div className="border-l-4 border-slate-300">
+                            <div className="px-4 py-2 bg-slate-50/50 flex items-center gap-2">
+                              <Badge variant="outline" className="text-[9px]">Unlinked</Badge>
+                              <span className="text-xs font-semibold text-muted-foreground flex-1">Not linked to a step</span>
+                              <Badge variant="secondary" className="text-[9px]">{unlinkedImports.length} source(s)</Badge>
+                            </div>
+                            {unlinkedImports.map(imp => (
+                              <div key={imp.id} className="ml-6 px-3 py-2 flex items-center gap-2 hover:bg-muted/30 group">
+                                <Database className="h-3 w-3 text-amber-500 shrink-0" />
+                                <span className="text-xs font-medium">{imp.source_name}</span>
+                                <Badge variant="outline" className="text-[9px]">{imp.source_type}</Badge>
+                                {imp.dataset_name && <Badge variant="outline" className="text-[9px]">{imp.dataset_name}</Badge>}
+                                <Badge variant="outline" className="text-[9px]">{imp.record_count} records</Badge>
+                                <Badge className={`text-[9px] border-0 ${imp.status === 'active' ? 'bg-emerald-100 text-emerald-700' : 'bg-yellow-100 text-yellow-700'}`}>{imp.status}</Badge>
+                                <span className="flex-1" />
+                                <Button variant="ghost" size="icon" className="h-5 w-5 opacity-0 group-hover:opacity-100 text-muted-foreground hover:text-destructive"
+                                  onClick={() => deleteMainframeImport(imp.id).then(reload)}>
+                                  <Trash2 className="h-2.5 w-2.5" />
+                                </Button>
+                              </div>
+                            ))}
+                          </div>
+                        )}
+                      </>
+                    );
+                  })()}
+                </div>
+              )}
             </CardContent>
           </CollapsibleContent>
         </Card>
