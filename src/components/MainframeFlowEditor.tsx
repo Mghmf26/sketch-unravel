@@ -98,6 +98,7 @@ export default function MainframeFlowEditor({ processId, initialStepId, initialF
   workingConnsRef.current = workingConns;
 
   const [hasChanges, setHasChanges] = useState(false);
+  const [isAutoSaving, setIsAutoSaving] = useState(false);
   const [history, setHistory] = useState<HistoryEntry[]>([]);
   const [historyIndex, setHistoryIndex] = useState(-1);
   const [showHistory, setShowHistory] = useState(false);
