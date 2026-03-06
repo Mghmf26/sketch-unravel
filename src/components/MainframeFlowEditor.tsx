@@ -288,6 +288,12 @@ export default function MainframeFlowEditor({ processId, initialStepId, initialF
 
   const handleCreateFlow = async () => {
     if (!selectedStepId) return;
+    // Enforce one flow per step
+    const existing = flows.filter(f => f.step_id === selectedStepId);
+    if (existing.length > 0) {
+      toast({ title: 'This step already has a Mainframe Flow', description: 'Only one flow per step is allowed.', variant: 'destructive' });
+      return;
+    }
     try {
       const flow = await upsertMainframeFlow({ process_id: processId, step_id: selectedStepId });
       const updated = await fetchMainframeFlows(processId);
@@ -301,6 +307,7 @@ export default function MainframeFlowEditor({ processId, initialStepId, initialF
   };
 
   const stepFlows = flows.filter(f => f.step_id === selectedStepId);
+  const stepHasFlow = stepFlows.length > 0;
 
   if (loading) return <div className="p-8 text-muted-foreground">Loading...</div>;
 
@@ -322,7 +329,8 @@ export default function MainframeFlowEditor({ processId, initialStepId, initialF
               <SelectTrigger className="w-[250px]"><SelectValue placeholder={stepFlows.length === 0 ? 'No flows yet' : 'Select flow'} /></SelectTrigger>
               <SelectContent>{stepFlows.map(f => <SelectItem key={f.id} value={f.id}>{f.name}</SelectItem>)}</SelectContent>
             </Select>
-            <Button size="sm" variant="outline" onClick={handleCreateFlow} disabled={!selectedStepId}>
+            <Button size="sm" variant="outline" onClick={handleCreateFlow} disabled={!selectedStepId || stepHasFlow}
+              title={stepHasFlow ? 'This step already has a flow' : 'Create new flow'}>
               <Plus className="h-3.5 w-3.5 mr-1" /> New Flow
             </Button>
           </div>
