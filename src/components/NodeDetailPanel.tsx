@@ -275,7 +275,7 @@ export default function NodeDetailPanel({ node, risks, controls, regulations, in
   const [controlForm, setControlForm] = useState({ name: '', description: '', type: 'preventive', effectiveness: 'effective' });
   const [regulationForm, setRegulationForm] = useState({ name: '', description: '', authority: '', compliance_status: 'partial' });
   const [incidentForm, setIncidentForm] = useState({ title: '', description: '', severity: 'medium', status: 'open' });
-  const [appForm, setAppForm] = useState({ name: '', description: '', app_type: 'application', parent_id: '' });
+  const [appForm, setAppForm] = useState({ name: '', description: '', app_type: 'application', parent_id: '', application_owner: '', business_analyst_business: '', business_analyst_it: '', platform: '' });
 
   const derivedProcessId = processId || stepRisks[0]?.process_id || stepRegulations[0]?.process_id || stepIncidents[0]?.process_id || '';
 
@@ -337,6 +337,10 @@ export default function NodeDetailPanel({ node, risks, controls, regulations, in
         step_id: node.id, process_id: derivedProcessId, name: appForm.name.trim(), 
         description: appForm.description || null, app_type: appForm.app_type,
         parent_id: appForm.parent_id || null,
+        application_owner: appForm.application_owner || null,
+        business_analyst_business: appForm.business_analyst_business || null,
+        business_analyst_it: appForm.business_analyst_it || null,
+        platform: appForm.platform || null,
       } as any);
       toast({ title: 'Added' }); setAddDialog(null); 
       setAppForm({ name: '', description: '', app_type: 'application', parent_id: '' }); 
