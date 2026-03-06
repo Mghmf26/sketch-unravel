@@ -96,7 +96,7 @@ export default function Dashboard() {
 
       {/* Analysis Mode Selector */}
       <div className="space-y-3">
-        <h2 className="text-sm font-semibold text-foreground tracking-wide uppercase">Engagement Mode</h2>
+        <h2 className="section-header uppercase">Engagement Mode</h2>
         <div className="flex gap-3">
           {ENGAGEMENT_MODES.map(mode => (
             <Button
@@ -164,7 +164,7 @@ export default function Dashboard() {
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Quick Actions */}
         <div className="lg:col-span-1 space-y-3">
-          <h2 className="text-sm font-semibold text-foreground tracking-wide uppercase">Quick Actions</h2>
+          <h2 className="section-header uppercase">Quick Actions</h2>
           <div className="space-y-2">
             {[
               { label: 'Add Client', desc: 'Register a new engagement', icon: UserPlus, path: '/clients', color: 'text-primary' },
@@ -191,11 +191,11 @@ export default function Dashboard() {
 
         {/* Industry Risk & Compliance Breakdown */}
         <div className="lg:col-span-2 space-y-4">
-          <h2 className="text-sm font-semibold text-foreground tracking-wide uppercase">Industry Risk & Compliance Overview</h2>
+          <h2 className="section-header uppercase">Industry Risk & Compliance Overview</h2>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             {/* Risk Severity Distribution */}
-            <Card className="border shadow-sm">
+            <Card variant="elevated" className="border">
               <CardHeader className="pb-3">
                 <CardTitle className="text-sm font-medium flex items-center gap-2">
                   <Activity className="h-4 w-4 text-primary" />
@@ -210,7 +210,7 @@ export default function Dashboard() {
             </Card>
 
             {/* Control Types */}
-            <Card className="border shadow-sm">
+            <Card variant="elevated" className="border">
               <CardHeader className="pb-3">
                 <CardTitle className="text-sm font-medium flex items-center gap-2">
                   <Shield className="h-4 w-4 text-primary" />
@@ -225,7 +225,7 @@ export default function Dashboard() {
             </Card>
 
             {/* Compliance Gauge */}
-            <Card className="border shadow-sm">
+            <Card variant="elevated" className="border">
               <CardHeader className="pb-3">
                 <CardTitle className="text-sm font-medium flex items-center gap-2">
                   <Scale className="h-4 w-4 text-primary" />
@@ -246,7 +246,7 @@ export default function Dashboard() {
             </Card>
 
             {/* Control Coverage */}
-            <Card className="border shadow-sm">
+            <Card variant="elevated" className="border">
               <CardHeader className="pb-3">
                 <CardTitle className="text-sm font-medium flex items-center gap-2">
                   <Zap className="h-4 w-4 text-primary" />
@@ -272,7 +272,7 @@ export default function Dashboard() {
       {/* Overall Portfolio AI Potential */}
       <div>
         <h2 className="text-sm font-semibold text-foreground tracking-wide uppercase mb-3">Overall Portfolio AI Potential</h2>
-        <Card className="border shadow-sm">
+        <Card variant="elevated" className="border">
           <CardContent className="p-6">
             <div className="flex items-center gap-3 mb-5">
               <div className="h-10 w-10 rounded-xl bg-primary/10 flex items-center justify-center">
