@@ -22,7 +22,7 @@ import {
 } from '@/lib/api';
 import { fetchStepApplications, type StepApplication } from '@/lib/api-applications';
 import { fetchMainframeFlows, fetchMFFlowNodes, type MainframeFlow, type MFFlowNode } from '@/lib/api-mainframe-flows';
-import { exportReportToPDF } from '@/lib/pdf-export';
+import { exportReportToPDF, type FullPDFReportData } from '@/lib/pdf-export';
 
 interface InsightSection {
   title: string;
@@ -394,13 +394,27 @@ export default function AIReports() {
                 size="sm"
                 className="gap-2 text-xs"
                 onClick={() => {
+                  const client = selectedClientId !== 'all' ? clients.find(c => c.id === selectedClientId) : undefined;
                   exportReportToPDF({
                     title: 'AI-Powered Analysis Report',
-                    subtitle: 'Intelligent analysis of business processes, mainframe data, risks, controls, regulations, and incidents',
+                    subtitle: 'Comprehensive analysis of business processes, mainframe infrastructure, risks, controls, compliance, and incidents',
                     generatedAt: generatedAt || new Date(),
-                    clientName,
-                    scopeSummary: `${processes.length} Processes · ${steps.length} Steps · ${risks.length} Risks · ${controls.length} Controls · ${incidents.length} Incidents · ${regulations.length} Regulations · ${applications.length} Scr./App. · ${mfImports.length} MF Sources`,
-                    sections: report.map(s => ({ title: s.title, badge: s.badge, items: s.items })),
+                    clientName: client?.name,
+                    clientIndustry: client?.industry || undefined,
+                    clientEngagementMode: (client as any)?.engagement_mode || undefined,
+                    clientContactPerson: client?.contact_person || undefined,
+                    scopeSummary: `${processes.length} Processes · ${steps.length} Steps · ${risks.length} Risks · ${controls.length} Controls · ${incidents.length} Incidents · ${regulations.length} Regulations · ${applications.length} Scr./App. · ${mfFlows.length} MF Flows · ${mfFlowNodes.length} MF Nodes · ${mfImports.length} MF Sources`,
+                    processes: processes.map(p => ({ ...p })),
+                    steps: steps.map(s => ({ ...s })),
+                    risks: risks.map(r => ({ ...r })),
+                    controls: controls.map(c => ({ ...c })),
+                    incidents: incidents.map(i => ({ ...i })),
+                    regulations: regulations.map(r => ({ ...r })),
+                    applications: applications.map(a => ({ ...a })),
+                    mfFlows: mfFlows.map(f => ({ ...f })),
+                    mfFlowNodes: mfFlowNodes.map(n => ({ ...n })),
+                    mfImports: mfImports.map(m => ({ ...m })),
+                    aiSections: report.map(s => ({ title: s.title, badge: s.badge, items: s.items })),
                   });
                   toast({ title: 'PDF exported', description: 'Report downloaded successfully.' });
                 }}
