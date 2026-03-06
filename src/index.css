@@ -157,9 +157,15 @@
     letter-spacing: 0.05em;
   }
 
-  /* Sidebar smooth transitions */
-  .sidebar-item-enter {
-    @apply transition-all duration-200 ease-out;
+  /* Sidebar glow on active items */
+  .sidebar-glow {
+    box-shadow: 0 0 12px -2px hsl(72 55% 50% / 0.25);
+  }
+
+  /* Sidebar smooth group expand/collapse */
+  .sidebar-group-content {
+    overflow: hidden;
+    transition: max-height 0.3s ease, opacity 0.25s ease;
   }
 
   /* Premium metric display */
