@@ -17,7 +17,7 @@ const BP_COLUMNS: ColumnDef[] = [
   { key: 'incidents', label: 'Incidents', defaultVisible: true, minWidth: 50 },
   { key: 'regs', label: 'Regulations', defaultVisible: true, minWidth: 50 },
   { key: 'apps', label: 'Scr./App.', defaultVisible: true, minWidth: 50 },
-  { key: 'mfai', label: 'MF AI Potential', defaultVisible: true, minWidth: 80 },
+  { key: 'mfai', label: 'BMF AI Potential', defaultVisible: true, minWidth: 80 },
   { key: 'actions', label: 'Actions', defaultVisible: true, minWidth: 80 },
 ];
 import { Button } from '@/components/ui/button';
@@ -216,7 +216,7 @@ export default function BusinessProcesses() {
                 {colSettings.isVisible('incidents') && <TableHead className="font-bold text-[11px] text-foreground/70 tracking-wider uppercase py-3 text-center" style={{width: colSettings.getWidth('incidents')}}>Incidents</TableHead>}
                 {colSettings.isVisible('regs') && <TableHead className="font-bold text-[11px] text-foreground/70 tracking-wider uppercase py-3 text-center" style={{width: colSettings.getWidth('regs')}}>Regs.</TableHead>}
                 {colSettings.isVisible('apps') && <TableHead className="font-bold text-[11px] text-foreground/70 tracking-wider uppercase py-3 text-center" style={{width: colSettings.getWidth('apps')}}>Scr./App.</TableHead>}
-                {colSettings.isVisible('mfai') && <TableHead className="font-bold text-[11px] text-foreground/70 tracking-wider uppercase py-3 text-center" style={{width: colSettings.getWidth('mfai')}}>MF AI Potential</TableHead>}
+                {colSettings.isVisible('mfai') && <TableHead className="font-bold text-[11px] text-foreground/70 tracking-wider uppercase py-3 text-center" style={{width: colSettings.getWidth('mfai')}}>BMF AI Potential</TableHead>}
                 {colSettings.isVisible('actions') && <TableHead className="font-bold text-[11px] text-foreground/70 tracking-wider uppercase py-3 text-right" style={{width: colSettings.getWidth('actions')}}>Actions</TableHead>}
               </TableRow>
             </TableHeader>

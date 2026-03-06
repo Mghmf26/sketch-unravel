@@ -65,7 +65,7 @@ export default function Dashboard() {
   const complianceRate = filteredRegulations.length > 0 ? Math.round((compliantRegs.length / filteredRegulations.length) * 100) : 0;
   const controlCoverage = filteredRisks.length > 0 ? Math.round((filteredRisks.filter(r => filteredControls.some(c => c.risk_id === r.id)).length / filteredRisks.length) * 100) : 0;
 
-  // MF AI Potential distribution
+  // BMF AI Potential distribution
   const potentialCounts = MF_AI_POTENTIAL_LEVELS.map(level => ({
     level,
     count: processes.filter(p => ((p as any).mf_ai_potential || 'medium') === level).length,

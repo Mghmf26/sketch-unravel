@@ -145,6 +145,7 @@ function EntityNotesSection({ entityType, entityId, processId }: { entityType: s
   const [loading, setLoading] = useState(true);
   const [newComment, setNewComment] = useState('');
   const [newConclusion, setNewConclusion] = useState('');
+  const [isConfidential, setIsConfidential] = useState(false);
   const [showAddComment, setShowAddComment] = useState(false);
   const [uploading, setUploading] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -178,7 +179,8 @@ function EntityNotesSection({ entityType, entityId, processId }: { entityType: s
       await insertEntityAttachment({
         entity_type: entityType, entity_id: entityId, process_id: processId,
         file_name: file.name, file_url: url, file_type: file.type, file_size: file.size,
-      });
+        is_confidential: isConfidential,
+      } as any);
       toast({ title: 'File uploaded' });
       load();
     } catch { toast({ title: 'Upload failed', variant: 'destructive' }); }
@@ -210,13 +212,17 @@ function EntityNotesSection({ entityType, entityId, processId }: { entityType: s
           <input ref={fileInputRef} type="file" className="hidden"
             accept=".pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx,.xml,.html,.csv,.txt,.json,.png,.jpg,.jpeg"
             onChange={handleFileUpload} disabled={uploading} />
+          <div className="flex items-center gap-1.5 ml-1">
+            <input type="checkbox" id={`confidential-${entityId}`} checked={isConfidential} onChange={e => setIsConfidential(e.target.checked)} className="h-3 w-3 rounded border-muted-foreground/40" />
+            <label htmlFor={`confidential-${entityId}`} className="text-[9px] text-muted-foreground cursor-pointer">Confidential</label>
+          </div>
         </div>
       </div>
 
       {showAddComment && (
         <div className="p-2 rounded border bg-muted/30 space-y-1.5">
           <Textarea value={newComment} onChange={e => setNewComment(e.target.value)} placeholder="Comment..." className="text-xs min-h-[40px]" />
-          <Textarea value={newConclusion} onChange={e => setNewConclusion(e.target.value)} placeholder="Conclusion (optional)..." className="text-xs min-h-[30px]" />
+          <Textarea value={newConclusion} onChange={e => setNewConclusion(e.target.value)} placeholder="Important insights (optional)..." className="text-xs min-h-[30px]" />
           <div className="flex gap-1 justify-end">
             <Button size="sm" variant="ghost" className="h-6 text-xs" onClick={() => setShowAddComment(false)}>Cancel</Button>
             <Button size="sm" className="h-6 text-xs" onClick={handleAddComment}>Save</Button>
@@ -227,7 +233,7 @@ function EntityNotesSection({ entityType, entityId, processId }: { entityType: s
       {comments.map(c => (
         <div key={c.id} className="p-2 rounded border bg-card text-xs space-y-1 group">
           {c.comment && <p>{c.comment}</p>}
-          {c.conclusion && <p className="font-semibold text-primary">Conclusion: {c.conclusion}</p>}
+          {c.conclusion && <p className="font-semibold text-primary">Important Insights: {c.conclusion}</p>}
           <div className="flex justify-between items-center">
             <span className="text-[9px] text-muted-foreground">{new Date(c.created_at).toLocaleDateString()}</span>
             <Button variant="ghost" size="icon" className="h-4 w-4 opacity-0 group-hover:opacity-100 text-destructive" onClick={() => handleDeleteComment(c.id)}>
@@ -242,6 +248,7 @@ function EntityNotesSection({ entityType, entityId, processId }: { entityType: s
           <FileText className="h-3.5 w-3.5 text-muted-foreground shrink-0" />
           <a href={a.file_url} target="_blank" rel="noopener noreferrer" className="flex-1 truncate text-primary hover:underline">{a.file_name}</a>
           <span className="text-[9px] text-muted-foreground shrink-0">{a.file_size ? `${Math.round(a.file_size / 1024)}KB` : ''}</span>
+          {(a as any).is_confidential && <Badge variant="outline" className="text-[8px] border-red-300 text-red-600">Confidential</Badge>}
           <Button variant="ghost" size="icon" className="h-4 w-4 opacity-0 group-hover:opacity-100 text-destructive shrink-0" onClick={() => handleDeleteAttachment(a.id)}>
             <Trash2 className="h-2.5 w-2.5" />
           </Button>

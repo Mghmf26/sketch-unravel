@@ -839,6 +839,77 @@ export default function ProcessEditTab({ processId }: ProcessEditTabProps) {
         </Card>
       </Collapsible>
 
+      {/* RACI (Process Level) */}
+      {canAccessModule('raci') && (
+      <Collapsible open={openSections.raci} onOpenChange={() => toggleSection('raci')}>
+        <Card>
+          <CardHeader className="py-2 px-4">
+            <SectionHeader icon={Users} title="RACI Roles / Functions" count={raciEntries.length} sectionKey="raci"
+              onAdd={() => setAddDialog('raci')} />
+          </CardHeader>
+          <CollapsibleContent>
+            <CardContent className="p-0">
+              {raciEntries.length === 0 ? (
+                <p className="text-xs text-muted-foreground text-center py-6">No RACI roles defined. Add roles at the process level, then link them to steps.</p>
+              ) : (
+                <div className="divide-y">
+                  {raciEntries.map(raci => {
+                    const linkedStepIds = raciStepLinks.filter(l => l.raci_id === raci.id).map(l => l.step_id);
+                    const linkedSteps = steps.filter(s => linkedStepIds.includes(s.id));
+                    const unlinkedSteps = steps.filter(s => s.type === 'in-scope' && !linkedStepIds.includes(s.id));
+                    return (
+                      <div key={raci.id} className="px-4 py-3 hover:bg-muted/30 group space-y-2">
+                        <div className="flex items-center gap-2">
+                          <InlineEdit value={raci.role_name} onSave={v => updateProcessRaci(raci.id, { role_name: v }).then(reload)} className="text-sm font-semibold" />
+                          <span className="flex-1" />
+                          <Button variant="ghost" size="icon" className="h-5 w-5 opacity-0 group-hover:opacity-100 text-muted-foreground hover:text-destructive"
+                            onClick={() => { if (confirm('Delete this RACI role?')) deleteProcessRaci(raci.id).then(reload); }}>
+                            <Trash2 className="h-2.5 w-2.5" />
+                          </Button>
+                        </div>
+                        <div className="flex gap-3 flex-wrap text-[10px]">
+                          {raci.responsible && <Badge className="border-0 bg-emerald-100 text-emerald-700 text-[9px]">R: {raci.responsible}</Badge>}
+                          {raci.accountable && <Badge className="border-0 bg-blue-100 text-blue-700 text-[9px]">A: {raci.accountable}</Badge>}
+                          {raci.consulted && <Badge className="border-0 bg-amber-100 text-amber-700 text-[9px]">C: {raci.consulted}</Badge>}
+                          {raci.informed && <Badge className="border-0 bg-purple-100 text-purple-700 text-[9px]">I: {raci.informed}</Badge>}
+                        </div>
+                        {/* Linked Steps */}
+                        <div className="mt-2">
+                          <span className="text-[10px] font-semibold text-muted-foreground uppercase">Linked Steps:</span>
+                          <div className="flex gap-1.5 flex-wrap mt-1">
+                            {linkedSteps.map(s => {
+                              const link = raciStepLinks.find(l => l.raci_id === raci.id && l.step_id === s.id);
+                              return (
+                                <Badge key={s.id} className="border-0 bg-cyan-100 text-cyan-700 text-[9px] gap-1 cursor-pointer hover:bg-red-100 hover:text-red-700 transition-colors"
+                                  onClick={() => { if (link && confirm(`Unlink "${s.label}" from this role?`)) deleteRaciStepLink(link.id).then(reload); }}>
+                                  {s.label} ×
+                                </Badge>
+                              );
+                            })}
+                            {linkedSteps.length === 0 && <span className="text-[10px] text-muted-foreground italic">No steps linked</span>}
+                          </div>
+                          {unlinkedSteps.length > 0 && (
+                            <Select onValueChange={v => insertRaciStepLink(raci.id, v).then(reload)}>
+                              <SelectTrigger className="h-6 text-[10px] w-auto min-w-[120px] mt-1 border-dashed">
+                                <SelectValue placeholder="+ Link step..." />
+                              </SelectTrigger>
+                              <SelectContent>
+                                {unlinkedSteps.map(s => <SelectItem key={s.id} value={s.id} className="text-xs">{s.label}</SelectItem>)}
+                              </SelectContent>
+                            </Select>
+                          )}
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
+            </CardContent>
+          </CollapsibleContent>
+        </Card>
+      </Collapsible>
+      )}
+
       {/* Add Dialogs */}
       {addDialog === 'step' && (
         <AddStepDialog processId={processId} onClose={() => setAddDialog(null)} onRefresh={reload} />
