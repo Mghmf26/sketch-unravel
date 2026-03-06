@@ -275,7 +275,7 @@ export default function NodeDetailPanel({ node, risks, controls, regulations, in
   const [controlForm, setControlForm] = useState({ name: '', description: '', type: 'preventive', effectiveness: 'effective' });
   const [regulationForm, setRegulationForm] = useState({ name: '', description: '', authority: '', compliance_status: 'partial' });
   const [incidentForm, setIncidentForm] = useState({ title: '', description: '', severity: 'medium', status: 'open' });
-  const [appForm, setAppForm] = useState({ name: '', description: '', app_type: 'application', parent_id: '' });
+  const [appForm, setAppForm] = useState({ name: '', description: '', app_type: 'application', parent_id: '', application_owner: '', business_analyst_business: '', business_analyst_it: '', platform: '' });
 
   const derivedProcessId = processId || stepRisks[0]?.process_id || stepRegulations[0]?.process_id || stepIncidents[0]?.process_id || '';
 
@@ -337,9 +337,13 @@ export default function NodeDetailPanel({ node, risks, controls, regulations, in
         step_id: node.id, process_id: derivedProcessId, name: appForm.name.trim(), 
         description: appForm.description || null, app_type: appForm.app_type,
         parent_id: appForm.parent_id || null,
+        application_owner: appForm.application_owner || null,
+        business_analyst_business: appForm.business_analyst_business || null,
+        business_analyst_it: appForm.business_analyst_it || null,
+        platform: appForm.platform || null,
       } as any);
       toast({ title: 'Added' }); setAddDialog(null); 
-      setAppForm({ name: '', description: '', app_type: 'application', parent_id: '' }); 
+      setAppForm({ name: '', description: '', app_type: 'application', parent_id: '', application_owner: '', business_analyst_business: '', business_analyst_it: '', platform: '' }); 
       onDataChanged?.();
     } catch { toast({ title: 'Failed to add', variant: 'destructive' }); }
     setSaving(false);
@@ -610,7 +614,7 @@ export default function NodeDetailPanel({ node, risks, controls, regulations, in
           <TabsContent value="applications" className="mt-0 space-y-2">
             <div className="flex items-center justify-between mb-1">
               <span className="text-xs font-semibold text-muted-foreground">{stepApps.length} item{stepApps.length !== 1 ? 's' : ''}</span>
-              <Button size="sm" variant="ghost" className="h-6 text-xs gap-1" onClick={() => { setAppForm({ name: '', description: '', app_type: 'application', parent_id: '' }); setAddDialog('application'); }}>
+              <Button size="sm" variant="ghost" className="h-6 text-xs gap-1" onClick={() => { setAppForm({ name: '', description: '', app_type: 'application', parent_id: '', application_owner: '', business_analyst_business: '', business_analyst_it: '', platform: '' }); setAddDialog('application'); }}>
                 <Plus className="h-3 w-3" /> Add
               </Button>
             </div>
@@ -635,7 +639,7 @@ export default function NodeDetailPanel({ node, risks, controls, regulations, in
                         </Button>
                       </div>
                       <Button size="sm" variant="ghost" className="h-5 text-[10px] gap-0.5 text-sky-600"
-                        onClick={() => { setAppForm({ name: '', description: '', app_type: 'application', parent_id: screen.id }); setAddDialog('application'); }}>
+                        onClick={() => { setAppForm({ name: '', description: '', app_type: 'application', parent_id: screen.id, application_owner: '', business_analyst_business: '', business_analyst_it: '', platform: '' }); setAddDialog('application'); }}>
                         <Plus className="h-2.5 w-2.5" /> Add App to Screen
                       </Button>
                       {childApps.map(app => (
@@ -902,6 +906,24 @@ export default function NodeDetailPanel({ node, risks, controls, regulations, in
           <div className="grid gap-1.5">
             <Label>Description</Label>
             <Textarea value={appForm.description} onChange={e => setAppForm(f => ({ ...f, description: e.target.value }))} placeholder="Optional description..." />
+          </div>
+          <div className="grid grid-cols-2 gap-3">
+            <div className="grid gap-1.5">
+              <Label>Application Owner</Label>
+              <Input value={appForm.application_owner} onChange={e => setAppForm(f => ({ ...f, application_owner: e.target.value }))} placeholder="e.g. John Smith" />
+            </div>
+            <div className="grid gap-1.5">
+              <Label>Platform</Label>
+              <Input value={appForm.platform} onChange={e => setAppForm(f => ({ ...f, platform: e.target.value }))} placeholder="e.g. SAP, Oracle" />
+            </div>
+            <div className="grid gap-1.5">
+              <Label>Business Analyst (Business)</Label>
+              <Input value={appForm.business_analyst_business} onChange={e => setAppForm(f => ({ ...f, business_analyst_business: e.target.value }))} placeholder="BA name" />
+            </div>
+            <div className="grid gap-1.5">
+              <Label>Business Analyst (IT)</Label>
+              <Input value={appForm.business_analyst_it} onChange={e => setAppForm(f => ({ ...f, business_analyst_it: e.target.value }))} placeholder="BA IT name" />
+            </div>
           </div>
         </div>
         <DialogFooter>

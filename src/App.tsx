@@ -35,6 +35,7 @@ import ClientReports from "./pages/ClientReports";
 import OnPremiseEcosystem from "./pages/OnPremiseEcosystem";
 import CloudEcosystem from "./pages/CloudEcosystem";
 import ActivityLog from "./pages/ActivityLog";
+import ApplicationScreenDetails from "./pages/ApplicationScreenDetails";
 import EnrollMFA from "./pages/EnrollMFA";
 import VerifyMFA from "./pages/VerifyMFA";
 import NotFound from "./pages/NotFound";
@@ -105,6 +106,7 @@ const App = () => {
             <Route path="/controls" element={<ProtectedRoute pageSlug="controls"><Controls /></ProtectedRoute>} />
             <Route path="/regulations" element={<ProtectedRoute pageSlug="regulations"><Regulations /></ProtectedRoute>} />
             <Route path="/incidents" element={<ProtectedRoute pageSlug="incidents"><Incidents /></ProtectedRoute>} />
+            <Route path="/application-screen-details" element={<ProtectedRoute pageSlug="processes"><ApplicationScreenDetails /></ProtectedRoute>} />
             <Route path="/imports" element={<ProtectedRoute pageSlug="mainframe-imports"><MainframeImports /></ProtectedRoute>} />
             <Route path="/mainframe-flows" element={<ProtectedRoute pageSlug="mainframe-imports"><MainframeFlowHub /></ProtectedRoute>} />
             <Route path="/processing-analysis" element={<ProtectedRoute pageSlug="mainframe-imports"><ProcessingAnalysis /></ProtectedRoute>} />

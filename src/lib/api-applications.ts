@@ -9,6 +9,10 @@ export interface StepApplication {
   description: string | null;
   app_type: string;
   parent_id: string | null;
+  application_owner: string | null;
+  business_analyst_business: string | null;
+  business_analyst_it: string | null;
+  platform: string | null;
   created_at: string;
 }
 
