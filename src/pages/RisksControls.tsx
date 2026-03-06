@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useColumnSettings, type ColumnDef } from '@/hooks/useColumnSettings';
 import { ColumnSettingsDropdown } from '@/components/ColumnSettingsDropdown';
+import { PageHeader } from '@/components/PageHeader';
 
 const RISK_COLUMNS: ColumnDef[] = [
   { key: 'client', label: 'Client', defaultVisible: true, minWidth: 80 },
@@ -96,21 +97,20 @@ export default function RisksControls() {
 
   return (
     <div className="p-6 lg:p-8 space-y-6 max-w-[1400px]">
-      {/* Header */}
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-3">
-          <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => navigate(-1)}>
-            <ArrowLeft className="h-4 w-4" />
+      <PageHeader
+        title="Risks"
+        description="Risk scenarios across all business processes"
+        breadcrumbs={[
+          { label: 'Portfolio', to: '/' },
+          { label: 'Business Processes', to: '/processes' },
+          { label: 'Risks' },
+        ]}
+        actions={
+          <Button size="sm" onClick={() => setAddDialog(true)} className="gap-1.5">
+            <Plus className="h-3.5 w-3.5" /> Add Risk
           </Button>
-          <div>
-            <h1 className="text-xl font-bold text-foreground tracking-tight">Risks</h1>
-            <p className="text-xs text-muted-foreground mt-0.5">Risk scenarios across all business processes</p>
-          </div>
-        </div>
-        <Button size="sm" onClick={() => setAddDialog(true)} className="gap-1.5">
-          <Plus className="h-3.5 w-3.5" /> Add Risk
-        </Button>
-      </div>
+        }
+      />
 
       {/* Stats */}
       <div className="grid grid-cols-2 sm:grid-cols-5 gap-3">
@@ -121,7 +121,7 @@ export default function RisksControls() {
           { label: 'Low', value: stats.low, icon: Shield },
           { label: 'Controls', value: stats.totalControls, icon: Shield },
         ].map(s => (
-          <Card key={s.label} className="border border-border/60 bg-card shadow-none">
+          <Card variant="elevated" key={s.label} className="border border-border/60">
             <CardContent className="flex items-center justify-between p-4">
               <div>
                 <p className="text-lg font-bold text-foreground">{s.value}</p>

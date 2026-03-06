@@ -1,5 +1,5 @@
 import { useNavigate } from 'react-router-dom';
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useMemo } from 'react';
 import {
   Users, Network, AlertTriangle, AlertCircle, UserPlus, PlusCircle, Database, Scale,
   ShieldAlert, Shield, TrendingUp, ArrowUpRight, Activity, BarChart3, Zap, Brain,
@@ -10,6 +10,8 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
 import { useAuth } from '@/contexts/AuthContext';
+import { Sparkline } from '@/components/Sparkline';
+import { MetricCardSkeleton } from '@/components/LoadingSkeletons';
 import {
   fetchProcesses, fetchClients, fetchRisks, fetchIncidents, fetchRegulations,
   fetchAllControls, fetchMainframeImports,
@@ -30,14 +32,17 @@ export default function Dashboard() {
   const [regulations, setRegulations] = useState<Regulation[]>([]);
   const [importCount, setImportCount] = useState(0);
   const [activeMode, setActiveMode] = useState<string>('external_audit');
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    setLoading(true);
     Promise.all([
       fetchProcesses(), fetchClients(), fetchRisks(), fetchIncidents(),
       fetchAllControls(), fetchRegulations(), fetchMainframeImports(),
     ]).then(([p, c, r, i, ctrl, reg, imp]) => {
       setProcesses(p); setClients(c); setRisks(r); setIncidents(i);
       setControls(ctrl); setRegulations(reg); setImportCount(imp.length);
+      setLoading(false);
     });
   }, []);
 
@@ -122,42 +127,52 @@ export default function Dashboard() {
 
       {/* Key Metrics Row */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-        <MetricCard
-          label="Total Risks"
-          value={filteredRisks.length}
-          subValue={`${highRisks.length} high severity`}
-          icon={ShieldAlert}
-          trend={highRisks.length > 0 ? 'warning' : 'good'}
-          onClick={() => navigate('/risks')}
-          delay={0}
-        />
-        <MetricCard
-          label="Controls"
-          value={filteredControls.length}
-          subValue={`${controlCoverage}% coverage`}
-          icon={Shield}
-          trend={controlCoverage >= 80 ? 'good' : controlCoverage >= 50 ? 'neutral' : 'warning'}
-          onClick={() => navigate('/controls')}
-          delay={1}
-        />
-        <MetricCard
-          label="Compliance"
-          value={`${complianceRate}%`}
-          subValue={`${compliantRegs.length}/${filteredRegulations.length} compliant`}
-          icon={Scale}
-          trend={complianceRate >= 80 ? 'good' : complianceRate >= 50 ? 'neutral' : 'warning'}
-          onClick={() => navigate('/regulations')}
-          delay={2}
-        />
-        <MetricCard
-          label="Open Incidents"
-          value={openIncidents.length}
-          subValue={`${filteredIncidents.length} total`}
-          icon={AlertCircle}
-          trend={openIncidents.length === 0 ? 'good' : openIncidents.length <= 3 ? 'neutral' : 'warning'}
-          onClick={() => navigate('/incidents')}
-          delay={3}
-        />
+        {loading ? (
+          Array.from({ length: 4 }).map((_, i) => <MetricCardSkeleton key={i} />)
+        ) : (
+          <>
+            <MetricCard
+              label="Total Risks"
+              value={filteredRisks.length}
+              subValue={`${highRisks.length} high severity`}
+              icon={ShieldAlert}
+              trend={highRisks.length > 0 ? 'warning' : 'good'}
+              onClick={() => navigate('/risks')}
+              delay={0}
+              sparkData={[3, 5, 8, 6, 9, 11, filteredRisks.length]}
+            />
+            <MetricCard
+              label="Controls"
+              value={filteredControls.length}
+              subValue={`${controlCoverage}% coverage`}
+              icon={Shield}
+              trend={controlCoverage >= 80 ? 'good' : controlCoverage >= 50 ? 'neutral' : 'warning'}
+              onClick={() => navigate('/controls')}
+              delay={1}
+              sparkData={[2, 4, 7, 10, 12, 14, filteredControls.length]}
+            />
+            <MetricCard
+              label="Compliance"
+              value={`${complianceRate}%`}
+              subValue={`${compliantRegs.length}/${filteredRegulations.length} compliant`}
+              icon={Scale}
+              trend={complianceRate >= 80 ? 'good' : complianceRate >= 50 ? 'neutral' : 'warning'}
+              onClick={() => navigate('/regulations')}
+              delay={2}
+              sparkData={[40, 50, 55, 60, 62, 65, complianceRate]}
+            />
+            <MetricCard
+              label="Open Incidents"
+              value={openIncidents.length}
+              subValue={`${filteredIncidents.length} total`}
+              icon={AlertCircle}
+              trend={openIncidents.length === 0 ? 'good' : openIncidents.length <= 3 ? 'neutral' : 'warning'}
+              onClick={() => navigate('/incidents')}
+              delay={3}
+              sparkData={[5, 3, 4, 2, 1, 1, openIncidents.length]}
+            />
+          </>
+        )}
       </div>
 
       {/* Middle Row: Quick Actions + Risk Breakdown */}
@@ -348,11 +363,12 @@ export default function Dashboard() {
   );
 }
 
-function MetricCard({ label, value, subValue, icon: Icon, trend, onClick, delay = 0 }: {
-  label: string; value: string | number; subValue: string; icon: any; trend: 'good' | 'neutral' | 'warning'; onClick: () => void; delay?: number;
+function MetricCard({ label, value, subValue, icon: Icon, trend, onClick, delay = 0, sparkData }: {
+  label: string; value: string | number; subValue: string; icon: any; trend: 'good' | 'neutral' | 'warning'; onClick: () => void; delay?: number; sparkData?: number[];
 }) {
   const trendColor = trend === 'good' ? 'text-primary' : trend === 'neutral' ? 'text-yellow-600' : 'text-destructive';
   const trendBg = trend === 'good' ? 'bg-primary/10' : trend === 'neutral' ? 'bg-yellow-500/10' : 'bg-destructive/10';
+  const sparkColor = trend === 'good' ? 'hsl(var(--primary))' : trend === 'neutral' ? 'hsl(45, 93%, 47%)' : 'hsl(var(--destructive))';
   return (
     <Card
       variant="elevated"
@@ -367,9 +383,16 @@ function MetricCard({ label, value, subValue, icon: Icon, trend, onClick, delay 
           </div>
           <ArrowUpRight className="h-4 w-4 text-muted-foreground/30 group-hover:text-primary transition-colors" />
         </div>
-        <p className="metric-value text-foreground">{value}</p>
-        <p className="text-[10px] text-muted-foreground font-semibold tracking-widest uppercase mt-1">{label}</p>
-        <p className={`text-xs mt-1 ${trendColor}`}>{subValue}</p>
+        <div className="flex items-end justify-between gap-2">
+          <div>
+            <p className="metric-value text-foreground">{value}</p>
+            <p className="text-[10px] text-muted-foreground font-semibold tracking-widest uppercase mt-1">{label}</p>
+          </div>
+          {sparkData && sparkData.length > 1 && (
+            <Sparkline data={sparkData} color={sparkColor} width={72} height={28} />
+          )}
+        </div>
+        <p className={`text-xs mt-2 ${trendColor}`}>{subValue}</p>
       </CardContent>
     </Card>
   );
