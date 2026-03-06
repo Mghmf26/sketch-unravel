@@ -22,7 +22,7 @@ import {
 } from '@/lib/api';
 import { fetchStepApplications, type StepApplication } from '@/lib/api-applications';
 import { fetchMainframeFlows, fetchMFFlowNodes, type MainframeFlow, type MFFlowNode } from '@/lib/api-mainframe-flows';
-import { exportReportToPDF } from '@/lib/pdf-export';
+import { exportReportToPDF, type FullPDFReportData } from '@/lib/pdf-export';
 
 interface InsightSection {
   title: string;

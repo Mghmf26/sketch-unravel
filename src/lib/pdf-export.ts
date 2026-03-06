@@ -25,6 +25,7 @@ interface StepData {
 }
 
 interface RiskData {
+  id: string;
   description: string;
   likelihood: string;
   impact: string;
