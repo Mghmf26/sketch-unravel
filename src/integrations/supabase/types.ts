@@ -954,33 +954,45 @@ export type Database = {
       step_applications: {
         Row: {
           app_type: string | null
+          application_owner: string | null
+          business_analyst_business: string | null
+          business_analyst_it: string | null
           created_at: string
           description: string | null
           id: string
           name: string
           parent_id: string | null
+          platform: string | null
           process_id: string
           screen_name: string | null
           step_id: string
         }
         Insert: {
           app_type?: string | null
+          application_owner?: string | null
+          business_analyst_business?: string | null
+          business_analyst_it?: string | null
           created_at?: string
           description?: string | null
           id?: string
           name: string
           parent_id?: string | null
+          platform?: string | null
           process_id: string
           screen_name?: string | null
           step_id: string
         }
         Update: {
           app_type?: string | null
+          application_owner?: string | null
+          business_analyst_business?: string | null
+          business_analyst_it?: string | null
           created_at?: string
           description?: string | null
           id?: string
           name?: string
           parent_id?: string | null
+          platform?: string | null
           process_id?: string
           screen_name?: string | null
           step_id?: string
