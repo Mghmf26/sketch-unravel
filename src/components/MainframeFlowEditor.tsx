@@ -98,6 +98,7 @@ export default function MainframeFlowEditor({ processId, initialStepId, initialF
   workingConnsRef.current = workingConns;
 
   const [hasChanges, setHasChanges] = useState(false);
+  const [isAutoSaving, setIsAutoSaving] = useState(false);
   const [history, setHistory] = useState<HistoryEntry[]>([]);
   const [historyIndex, setHistoryIndex] = useState(-1);
   const [showHistory, setShowHistory] = useState(false);
@@ -211,6 +212,7 @@ export default function MainframeFlowEditor({ processId, initialStepId, initialF
     // Auto-save the flow first so the node exists in the DB (FK constraint)
     if (hasChanges && selectedFlowId) {
       try {
+        setIsAutoSaving(true);
         await saveMFFlowDiagram(
           selectedFlowId,
           workingNodesRef.current.map(n => ({ id: n.id, label: n.label, node_type: n.nodeType, description: n.description })),
@@ -218,8 +220,11 @@ export default function MainframeFlowEditor({ processId, initialStepId, initialF
         );
         setHasChanges(false);
         toast({ title: 'Flow auto-saved before attaching data source' });
+        // Keep a brief visual indicator
+        setTimeout(() => setIsAutoSaving(false), 1500);
       } catch (err) {
         console.error(err);
+        setIsAutoSaving(false);
         toast({ title: 'Save failed — cannot attach data source until flow is saved', variant: 'destructive' });
         return;
       }
@@ -425,7 +430,10 @@ export default function MainframeFlowEditor({ processId, initialStepId, initialF
                 </DropdownMenu>
 
                 <Button size="sm" variant="secondary" className="shadow-md" onClick={autoLayout} title="Auto-layout"><LayoutGrid className="h-3.5 w-3.5 mr-1" /> Layout</Button>
-                <Button size="sm" variant={hasChanges ? "default" : "secondary"} className="shadow-md" onClick={handleSave} disabled={!hasChanges}><Save className="h-3.5 w-3.5 mr-1" /> Save</Button>
+                <Button size="sm" variant={isAutoSaving ? "default" : hasChanges ? "default" : "secondary"} className={`shadow-md transition-all ${isAutoSaving ? 'animate-pulse ring-2 ring-primary/40' : ''}`} onClick={handleSave} disabled={!hasChanges && !isAutoSaving}>
+                  <Save className={`h-3.5 w-3.5 mr-1 ${isAutoSaving ? 'animate-spin' : ''}`} />
+                  {isAutoSaving ? 'Auto-saved ✓' : 'Save'}
+                </Button>
               </Panel>
 
               <Panel position="bottom-right" className="text-[10px] text-muted-foreground bg-background/80 px-2 py-1 rounded">
