@@ -20,6 +20,7 @@ import {
   Microscope,
   Monitor,
   Cloud,
+  Clock,
 } from 'lucide-react';
 import { NavLink } from '@/components/NavLink';
 import { useLocation } from 'react-router-dom';
@@ -51,6 +52,7 @@ const menuGroups: MenuGroup[] = [
     children: [
       { title: 'Overview', url: '/', icon: LayoutDashboard, pageSlug: 'dashboard' },
       { title: 'Clients / Engagements', url: '/clients', icon: Users, pageSlug: 'clients' },
+      { title: 'Activity Log', url: '/activity-log', icon: Clock, pageSlug: 'dashboard' },
     ],
   },
   {
