@@ -1,11 +1,12 @@
 import { useState, useEffect, useMemo } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { format } from 'date-fns';
 import { PageHeader } from '@/components/PageHeader';
 import {
   Clock, User, Filter, Search, Plus, Pencil, Trash2,
   Network, AlertTriangle, ShieldCheck, Scale, AlertCircle,
-  Users, Database, Cpu, RefreshCw,
+  Users, Database, Cpu, RefreshCw, ExternalLink,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -13,6 +14,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Badge } from '@/components/ui/badge';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Skeleton } from '@/components/ui/skeleton';
+import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 
 interface ActivityEntry {
   id: string;
@@ -51,6 +53,7 @@ const ACTION_STYLE: Record<string, string> = {
 };
 
 export default function ActivityLog() {
+  const navigate = useNavigate();
   const [entries, setEntries] = useState<ActivityEntry[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
@@ -96,6 +99,99 @@ export default function ActivityLog() {
     });
     return groups;
   }, [filtered]);
+
+  // Build navigation path for an activity entry
+  const getNavigationPath = (entry: ActivityEntry): string | null => {
+    if (entry.action === 'deleted' || !entry.entity_id) return null;
+    const details = entry.details as Record<string, string> | null;
+    const processId = details?.table === 'business_processes' ? entry.entity_id : null;
+    
+    switch (entry.entity_type) {
+      case 'business_processes':
+        return `/process-view/${entry.entity_id}`;
+      case 'process_steps':
+        // Steps belong to a process - navigate to process edit tab
+        return null; // We'd need process_id from details, handled below
+      case 'risks':
+      case 'controls':
+        return '/risks';
+      case 'regulations':
+        return '/regulations';
+      case 'incidents':
+        return '/incidents';
+      case 'clients':
+        return '/clients';
+      case 'mainframe_imports':
+        return '/imports';
+      case 'mainframe_flows':
+        return '/mainframe-flow-hub';
+      default:
+        return null;
+    }
+  };
+
+  // Enhanced navigation using stored details
+  const navigateToEntry = async (entry: ActivityEntry) => {
+    if (entry.action === 'deleted') {
+      return; // Can't navigate to deleted items
+    }
+    
+    const entityType = entry.entity_type;
+    const entityId = entry.entity_id;
+    
+    if (!entityId) return;
+
+    try {
+      switch (entityType) {
+        case 'business_processes':
+          navigate(`/process-view/${entityId}`);
+          break;
+        case 'process_steps': {
+          // Find the process this step belongs to
+          const { data: step } = await supabase.from('process_steps').select('process_id').eq('id', entityId).single();
+          if (step) navigate(`/process-view/${step.process_id}?tab=edit`);
+          break;
+        }
+        case 'risks': {
+          const { data: risk } = await supabase.from('risks').select('process_id, step_id').eq('id', entityId).single();
+          if (risk) navigate(`/process-view/${risk.process_id}?tab=diagram&stepId=${risk.step_id}`);
+          else navigate('/risks');
+          break;
+        }
+        case 'controls':
+          navigate('/controls');
+          break;
+        case 'regulations': {
+          const { data: reg } = await supabase.from('regulations').select('process_id').eq('id', entityId).single();
+          if (reg) navigate(`/process-view/${reg.process_id}?tab=edit`);
+          else navigate('/regulations');
+          break;
+        }
+        case 'incidents': {
+          const { data: inc } = await supabase.from('incidents').select('process_id').eq('id', entityId).single();
+          if (inc) navigate(`/process-view/${inc.process_id}?tab=edit`);
+          else navigate('/incidents');
+          break;
+        }
+        case 'clients':
+          navigate('/clients');
+          break;
+        case 'mainframe_imports':
+          navigate('/imports');
+          break;
+        case 'mainframe_flows': {
+          const { data: flow } = await supabase.from('mainframe_flows').select('process_id, step_id').eq('id', entityId).single();
+          if (flow) navigate(`/process-view/${flow.process_id}?tab=mainframe-flows&stepId=${flow.step_id}&flowId=${entityId}`);
+          else navigate('/mainframe-flow-hub');
+          break;
+        }
+        default:
+          break;
+      }
+    } catch {
+      // If entity not found (deleted), just ignore
+    }
+  };
 
   return (
     <div className="space-y-6 p-6 max-w-5xl mx-auto">
@@ -188,7 +284,10 @@ export default function ActivityLog() {
                           <ActionIcon className="h-2 w-2 text-white" />
                         </div>
 
-                        <div className="rounded-lg border bg-card hover:bg-accent/30 transition-colors p-3 ml-2">
+                        <div 
+                          className={`rounded-lg border bg-card hover:bg-accent/30 transition-colors p-3 ml-2 ${entry.action !== 'deleted' ? 'cursor-pointer' : ''}`}
+                          onClick={() => entry.action !== 'deleted' && navigateToEntry(entry)}
+                        >
                           <div className="flex items-start gap-3">
                             <div className={`shrink-0 rounded-md p-1.5 ${meta.color}`}>
                               <meta.icon className="h-3.5 w-3.5" />
@@ -216,6 +315,9 @@ export default function ActivityLog() {
                                 </span>
                               </div>
                             </div>
+                            {entry.action !== 'deleted' && (
+                              <ExternalLink className="h-3.5 w-3.5 text-muted-foreground/30 group-hover:text-primary shrink-0 mt-1" />
+                            )}
                           </div>
                         </div>
                       </div>
