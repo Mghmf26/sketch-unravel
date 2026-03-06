@@ -343,7 +343,7 @@ export default function NodeDetailPanel({ node, risks, controls, regulations, in
         platform: appForm.platform || null,
       } as any);
       toast({ title: 'Added' }); setAddDialog(null); 
-      setAppForm({ name: '', description: '', app_type: 'application', parent_id: '' }); 
+      setAppForm({ name: '', description: '', app_type: 'application', parent_id: '', application_owner: '', business_analyst_business: '', business_analyst_it: '', platform: '' }); 
       onDataChanged?.();
     } catch { toast({ title: 'Failed to add', variant: 'destructive' }); }
     setSaving(false);
@@ -614,7 +614,7 @@ export default function NodeDetailPanel({ node, risks, controls, regulations, in
           <TabsContent value="applications" className="mt-0 space-y-2">
             <div className="flex items-center justify-between mb-1">
               <span className="text-xs font-semibold text-muted-foreground">{stepApps.length} item{stepApps.length !== 1 ? 's' : ''}</span>
-              <Button size="sm" variant="ghost" className="h-6 text-xs gap-1" onClick={() => { setAppForm({ name: '', description: '', app_type: 'application', parent_id: '' }); setAddDialog('application'); }}>
+              <Button size="sm" variant="ghost" className="h-6 text-xs gap-1" onClick={() => { setAppForm({ name: '', description: '', app_type: 'application', parent_id: '', application_owner: '', business_analyst_business: '', business_analyst_it: '', platform: '' }); setAddDialog('application'); }}>
                 <Plus className="h-3 w-3" /> Add
               </Button>
             </div>
@@ -639,7 +639,7 @@ export default function NodeDetailPanel({ node, risks, controls, regulations, in
                         </Button>
                       </div>
                       <Button size="sm" variant="ghost" className="h-5 text-[10px] gap-0.5 text-sky-600"
-                        onClick={() => { setAppForm({ name: '', description: '', app_type: 'application', parent_id: screen.id }); setAddDialog('application'); }}>
+                        onClick={() => { setAppForm({ name: '', description: '', app_type: 'application', parent_id: screen.id, application_owner: '', business_analyst_business: '', business_analyst_it: '', platform: '' }); setAddDialog('application'); }}>
                         <Plus className="h-2.5 w-2.5" /> Add App to Screen
                       </Button>
                       {childApps.map(app => (
