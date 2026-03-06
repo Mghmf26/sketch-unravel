@@ -39,6 +39,7 @@ import ApplicationScreenDetails from "./pages/ApplicationScreenDetails";
 import EnrollMFA from "./pages/EnrollMFA";
 import VerifyMFA from "./pages/VerifyMFA";
 import NotFound from "./pages/NotFound";
+import DocumentationExport from "./pages/DocumentationExport";
 
 const queryClient = new QueryClient();
 
@@ -124,6 +125,7 @@ const App = () => {
             <Route path="/edit/:id" element={<ProtectedRoute pageSlug="data-entry"><DataEntry /></ProtectedRoute>} />
             <Route path="/view/:id" element={<DiagramViewer />} />
             <Route path="/process-view/:id" element={<ProtectedRoute pageSlug="processes"><ProcessView /></ProtectedRoute>} />
+            <Route path="/documentation-export" element={<ProtectedRoute><DocumentationExport /></ProtectedRoute>} />
             <Route path="*" element={<NotFound />} />
           </Routes>
         </AuthProvider>
