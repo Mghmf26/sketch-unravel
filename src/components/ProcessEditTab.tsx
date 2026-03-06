@@ -19,7 +19,7 @@ import { toast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 import {
   fetchSteps, fetchStepConnections, fetchRisks, fetchControls, fetchAllControls,
-  fetchRegulations, fetchIncidents, fetchMainframeImports, fetchMFQuestions, fetchStepRaci,
+  fetchRegulations, fetchIncidents, fetchMainframeImports, fetchMFQuestions,
   insertStep, deleteStep, updateStep,
   insertStepConnection, deleteStepConnection,
   insertRisk, deleteRisk, updateRisk,
@@ -28,10 +28,14 @@ import {
   insertIncident, deleteIncident, updateIncident,
   insertMainframeImport, deleteMainframeImport,
   insertMFQuestion, deleteMFQuestion,
-  insertStepRaci, deleteStepRaci, updateStepRaci,
   type ProcessStep, type StepConnection, type Risk, type Control,
-  type Regulation, type Incident, type MainframeImport, type MFQuestion, type StepRaci,
+  type Regulation, type Incident, type MainframeImport, type MFQuestion,
 } from '@/lib/api';
+import {
+  fetchProcessRaci, insertProcessRaci, updateProcessRaci, deleteProcessRaci,
+  fetchRaciStepLinks, insertRaciStepLink, deleteRaciStepLink,
+  type ProcessRaci, type ProcessRaciStepLink,
+} from '@/lib/api-raci';
 import { fetchStepApplications, insertStepApplication, updateStepApplication, deleteStepApplication, type StepApplication } from '@/lib/api-applications';
 import { fetchMainframeFlows, fetchMFFlowNodes, type MainframeFlow, type MFFlowNode, MF_NODE_TYPE_META } from '@/lib/api-mainframe-flows';
 import { StepTypeBadge, STEP_TYPE_OPTIONS } from '@/components/StepTypeBadge';
@@ -147,7 +151,8 @@ export default function ProcessEditTab({ processId }: ProcessEditTabProps) {
   const [imports, setImports] = useState<MainframeImport[]>([]);
   const [mfQuestions, setMfQuestions] = useState<MFQuestion[]>([]);
   const [applications, setApplications] = useState<StepApplication[]>([]);
-  const [raciEntries, setRaciEntries] = useState<StepRaci[]>([]);
+  const [raciEntries, setRaciEntries] = useState<ProcessRaci[]>([]);
+  const [raciStepLinks, setRaciStepLinks] = useState<ProcessRaciStepLink[]>([]);
   const [mfFlows, setMfFlows] = useState<MainframeFlow[]>([]);
   const [mfFlowNodes, setMfFlowNodes] = useState<MFFlowNode[]>([]);
   const [addDialog, setAddDialog] = useState<AddDialog>(null);
@@ -158,7 +163,7 @@ export default function ProcessEditTab({ processId }: ProcessEditTabProps) {
 
   // Global sections
   const [openSections, setOpenSections] = useState<Record<string, boolean>>({
-    steps: true, connections: true, imports: true, mfq: true,
+    steps: true, connections: true, imports: true, mfq: true, raci: true,
   });
 
   const toggleSection = (key: string) =>
@@ -176,12 +181,13 @@ export default function ProcessEditTab({ processId }: ProcessEditTabProps) {
   const collapseAllSteps = () => setExpandedSteps(new Set());
 
   const reload = useCallback(async () => {
-    const [s, c, r, ctrl, reg, inc, imp, mfq, raci, apps, flows] = await Promise.all([
+    const [s, c, r, ctrl, reg, inc, imp, mfq, raci, raciLinks, apps, flows] = await Promise.all([
       fetchSteps(processId), fetchStepConnections(processId),
       fetchRisks(processId), fetchAllControls(),
       fetchRegulations(processId), fetchIncidents(processId),
       fetchMainframeImports(processId), fetchMFQuestions(processId),
-      fetchStepRaci(processId), fetchStepApplications(processId),
+      fetchProcessRaci(processId), fetchRaciStepLinks(processId),
+      fetchStepApplications(processId),
       fetchMainframeFlows(processId),
     ]);
     setSteps(s);
@@ -194,6 +200,7 @@ export default function ProcessEditTab({ processId }: ProcessEditTabProps) {
     setImports(imp);
     setMfQuestions(mfq);
     setRaciEntries(raci);
+    setRaciStepLinks(raciLinks);
     setApplications(apps);
     setMfFlows(flows);
     // Fetch all flow nodes
@@ -231,7 +238,7 @@ export default function ProcessEditTab({ processId }: ProcessEditTabProps) {
   const getStepRisks = (stepId: string) => risks.filter(r => r.step_id === stepId);
   const getStepRegulations = (stepId: string) => regulations.filter(r => r.step_id === stepId);
   const getStepIncidents = (stepId: string) => incidents.filter(i => i.step_id === stepId);
-  const getStepRaci = (stepId: string) => raciEntries.filter(r => r.step_id === stepId);
+  const getStepRaciLinks = (stepId: string) => raciStepLinks.filter(l => l.step_id === stepId);
   const getStepApps = (stepId: string) => applications.filter(a => a.step_id === stepId);
   const getRiskControls = (riskId: string) => controls.filter(c => c.risk_id === riskId);
 
@@ -239,9 +246,9 @@ export default function ProcessEditTab({ processId }: ProcessEditTabProps) {
     const r = getStepRisks(stepId).length;
     const reg = getStepRegulations(stepId).length;
     const inc = getStepIncidents(stepId).length;
-    const raci = getStepRaci(stepId).length;
+    const raciLinked = getStepRaciLinks(stepId).length;
     const apps = getStepApps(stepId).length;
-    return r + reg + inc + raci + apps;
+    return r + reg + inc + raciLinked + apps;
   };
 
   return (
@@ -294,7 +301,7 @@ export default function ProcessEditTab({ processId }: ProcessEditTabProps) {
                   const stepRisks = getStepRisks(step.id);
                   const stepRegs = getStepRegulations(step.id);
                   const stepIncs = getStepIncidents(step.id);
-                  const stepRaci = getStepRaci(step.id);
+                  const stepRaciLinked = getStepRaciLinks(step.id);
                   const relCount = countRelations(step.id);
                   const style = getTypeStyle(step.type);
 
@@ -332,12 +339,6 @@ export default function ProcessEditTab({ processId }: ProcessEditTabProps) {
                           <Button variant="ghost" size="icon" className="h-6 w-6" title="Add Incident"
                             onClick={() => { setContextStepId(step.id); setAddDialog('incident'); }}>
                             <AlertCircle className="h-3 w-3 text-red-500" />
-                          </Button>
-                          )}
-                          {canAccessModule('raci') && (
-                          <Button variant="ghost" size="icon" className="h-6 w-6" title="Add RACI"
-                            onClick={() => { setContextStepId(step.id); setAddDialog('raci'); }}>
-                            <Users className="h-3 w-3 text-cyan-500" />
                           </Button>
                           )}
                           <Button variant="ghost" size="icon" className="h-6 w-6" title="Add Application"
@@ -514,39 +515,30 @@ export default function ProcessEditTab({ processId }: ProcessEditTabProps) {
                             </div>
                           )}
 
-                          {/* RACI */}
-                          {canAccessModule('raci') && (
-                            <div className="space-y-2">
-                              <div className="flex items-center gap-1.5 justify-between">
+                          {/* RACI (inherited from process level) */}
+                          {canAccessModule('raci') && (() => {
+                            const stepLinks = getStepRaciLinks(step.id);
+                            const linkedRacis = stepLinks.map(l => raciEntries.find(r => r.id === l.raci_id)).filter(Boolean) as ProcessRaci[];
+                            return linkedRacis.length > 0 ? (
+                              <div className="space-y-2">
                                 <div className="flex items-center gap-1.5">
                                   <Users className="h-3 w-3 text-cyan-500" />
-                                  <span className="text-[11px] font-semibold text-cyan-700">RACI ({stepRaci.length})</span>
+                                  <span className="text-[11px] font-semibold text-cyan-700">RACI ({linkedRacis.length} linked)</span>
                                 </div>
-                                <Button variant="ghost" size="sm" className="h-5 text-[10px] text-cyan-600" onClick={() => { setContextStepId(step.id); setAddDialog('raci'); }}>
-                                  <Plus className="h-3 w-3 mr-0.5" /> Add
-                                </Button>
+                                {linkedRacis.map(raci => (
+                                  <div key={raci.id} className="ml-4 pl-3 border-l-2 border-cyan-200 py-1">
+                                    <span className="text-sm font-medium">{raci.role_name}</span>
+                                    <div className="flex gap-3 mt-1 flex-wrap text-[10px]">
+                                      {raci.responsible && <Badge className="border-0 bg-emerald-100 text-emerald-700 text-[9px]">R: {raci.responsible}</Badge>}
+                                      {raci.accountable && <Badge className="border-0 bg-blue-100 text-blue-700 text-[9px]">A: {raci.accountable}</Badge>}
+                                      {raci.consulted && <Badge className="border-0 bg-amber-100 text-amber-700 text-[9px]">C: {raci.consulted}</Badge>}
+                                      {raci.informed && <Badge className="border-0 bg-purple-100 text-purple-700 text-[9px]">I: {raci.informed}</Badge>}
+                                    </div>
+                                  </div>
+                                ))}
                               </div>
-                              {stepRaci.map(raci => (
-                                <div key={raci.id} className="ml-4 pl-3 border-l-2 border-cyan-200 py-1 group/raci">
-                                  <div className="flex items-center gap-2">
-                                    <InlineEdit value={raci.role_name} onSave={v => updateStepRaci(raci.id, { role_name: v }).then(reload)} className="text-sm font-medium" />
-                                    <span className="flex-1" />
-                                    <Button variant="ghost" size="icon" className="h-5 w-5 opacity-0 group-hover/raci:opacity-100 text-muted-foreground hover:text-destructive"
-                                      onClick={() => deleteStepRaci(raci.id).then(reload)}>
-                                      <Trash2 className="h-2.5 w-2.5" />
-                                    </Button>
-                                  </div>
-                                  <div className="flex gap-3 mt-1 flex-wrap text-[10px]">
-                                    {raci.responsible && <Badge className="border-0 bg-emerald-100 text-emerald-700 text-[9px]">R: {raci.responsible}</Badge>}
-                                    {raci.accountable && <Badge className="border-0 bg-blue-100 text-blue-700 text-[9px]">A: {raci.accountable}</Badge>}
-                                    {raci.consulted && <Badge className="border-0 bg-amber-100 text-amber-700 text-[9px]">C: {raci.consulted}</Badge>}
-                                    {raci.informed && <Badge className="border-0 bg-purple-100 text-purple-700 text-[9px]">I: {raci.informed}</Badge>}
-                                  </div>
-                                </div>
-                              ))}
-                              {stepRaci.length === 0 && <p className="text-[10px] text-muted-foreground italic ml-4">No RACI assignments</p>}
-                            </div>
-                          )}
+                            ) : null;
+                          })()}
 
                           {/* Applications */}
                           <div className="space-y-2">
@@ -847,6 +839,77 @@ export default function ProcessEditTab({ processId }: ProcessEditTabProps) {
         </Card>
       </Collapsible>
 
+      {/* RACI (Process Level) */}
+      {canAccessModule('raci') && (
+      <Collapsible open={openSections.raci} onOpenChange={() => toggleSection('raci')}>
+        <Card>
+          <CardHeader className="py-2 px-4">
+            <SectionHeader icon={Users} title="RACI Roles / Functions" count={raciEntries.length} sectionKey="raci"
+              onAdd={() => setAddDialog('raci')} />
+          </CardHeader>
+          <CollapsibleContent>
+            <CardContent className="p-0">
+              {raciEntries.length === 0 ? (
+                <p className="text-xs text-muted-foreground text-center py-6">No RACI roles defined. Add roles at the process level, then link them to steps.</p>
+              ) : (
+                <div className="divide-y">
+                  {raciEntries.map(raci => {
+                    const linkedStepIds = raciStepLinks.filter(l => l.raci_id === raci.id).map(l => l.step_id);
+                    const linkedSteps = steps.filter(s => linkedStepIds.includes(s.id));
+                    const unlinkedSteps = steps.filter(s => s.type === 'in-scope' && !linkedStepIds.includes(s.id));
+                    return (
+                      <div key={raci.id} className="px-4 py-3 hover:bg-muted/30 group space-y-2">
+                        <div className="flex items-center gap-2">
+                          <InlineEdit value={raci.role_name} onSave={v => updateProcessRaci(raci.id, { role_name: v }).then(reload)} className="text-sm font-semibold" />
+                          <span className="flex-1" />
+                          <Button variant="ghost" size="icon" className="h-5 w-5 opacity-0 group-hover:opacity-100 text-muted-foreground hover:text-destructive"
+                            onClick={() => { if (confirm('Delete this RACI role?')) deleteProcessRaci(raci.id).then(reload); }}>
+                            <Trash2 className="h-2.5 w-2.5" />
+                          </Button>
+                        </div>
+                        <div className="flex gap-3 flex-wrap text-[10px]">
+                          {raci.responsible && <Badge className="border-0 bg-emerald-100 text-emerald-700 text-[9px]">R: {raci.responsible}</Badge>}
+                          {raci.accountable && <Badge className="border-0 bg-blue-100 text-blue-700 text-[9px]">A: {raci.accountable}</Badge>}
+                          {raci.consulted && <Badge className="border-0 bg-amber-100 text-amber-700 text-[9px]">C: {raci.consulted}</Badge>}
+                          {raci.informed && <Badge className="border-0 bg-purple-100 text-purple-700 text-[9px]">I: {raci.informed}</Badge>}
+                        </div>
+                        {/* Linked Steps */}
+                        <div className="mt-2">
+                          <span className="text-[10px] font-semibold text-muted-foreground uppercase">Linked Steps:</span>
+                          <div className="flex gap-1.5 flex-wrap mt-1">
+                            {linkedSteps.map(s => {
+                              const link = raciStepLinks.find(l => l.raci_id === raci.id && l.step_id === s.id);
+                              return (
+                                <Badge key={s.id} className="border-0 bg-cyan-100 text-cyan-700 text-[9px] gap-1 cursor-pointer hover:bg-red-100 hover:text-red-700 transition-colors"
+                                  onClick={() => { if (link && confirm(`Unlink "${s.label}" from this role?`)) deleteRaciStepLink(link.id).then(reload); }}>
+                                  {s.label} ×
+                                </Badge>
+                              );
+                            })}
+                            {linkedSteps.length === 0 && <span className="text-[10px] text-muted-foreground italic">No steps linked</span>}
+                          </div>
+                          {unlinkedSteps.length > 0 && (
+                            <Select onValueChange={v => insertRaciStepLink(raci.id, v).then(reload)}>
+                              <SelectTrigger className="h-6 text-[10px] w-auto min-w-[120px] mt-1 border-dashed">
+                                <SelectValue placeholder="+ Link step..." />
+                              </SelectTrigger>
+                              <SelectContent>
+                                {unlinkedSteps.map(s => <SelectItem key={s.id} value={s.id} className="text-xs">{s.label}</SelectItem>)}
+                              </SelectContent>
+                            </Select>
+                          )}
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
+            </CardContent>
+          </CollapsibleContent>
+        </Card>
+      </Collapsible>
+      )}
+
       {/* Add Dialogs */}
       {addDialog === 'step' && (
         <AddStepDialog processId={processId} onClose={() => setAddDialog(null)} onRefresh={reload} />
@@ -872,8 +935,8 @@ export default function ProcessEditTab({ processId }: ProcessEditTabProps) {
       {addDialog === 'mfq' && (
         <AddMFQuestionDialog processId={processId} onClose={() => setAddDialog(null)} onRefresh={reload} />
       )}
-      {addDialog === 'raci' && contextStepId && (
-        <AddRaciDialog processId={processId} stepId={contextStepId} onClose={() => { setAddDialog(null); setContextStepId(null); }} onRefresh={reload} />
+      {addDialog === 'raci' && (
+        <AddRaciDialog processId={processId} onClose={() => setAddDialog(null)} onRefresh={reload} />
       )}
       {addDialog === 'application' && contextStepId && (
         <AddApplicationDialog 
@@ -1151,7 +1214,7 @@ function AddMFQuestionDialog({ processId, onClose, onRefresh }: { processId: str
   );
 }
 
-function AddRaciDialog({ processId, stepId, onClose, onRefresh }: { processId: string; stepId: string; onClose: () => void; onRefresh: () => void }) {
+function AddRaciDialog({ processId, onClose, onRefresh }: { processId: string; onClose: () => void; onRefresh: () => void }) {
   const [roleName, setRoleName] = useState('');
   const [responsible, setResponsible] = useState('');
   const [accountable, setAccountable] = useState('');
@@ -1159,19 +1222,19 @@ function AddRaciDialog({ processId, stepId, onClose, onRefresh }: { processId: s
   const [informed, setInformed] = useState('');
   const submit = async () => {
     if (!roleName.trim()) return;
-    await insertStepRaci({
-      process_id: processId, step_id: stepId, role_name: roleName.trim(),
+    await insertProcessRaci({
+      process_id: processId, role_name: roleName.trim(),
       responsible: responsible || null, accountable: accountable || null,
       consulted: consulted || null, informed: informed || null,
     });
-    toast({ title: 'RACI entry added' }); onRefresh(); onClose();
+    toast({ title: 'RACI role added to process' }); onRefresh(); onClose();
   };
   return (
     <Dialog open onOpenChange={onClose}>
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
-          <DialogTitle>Add RACI Assignment</DialogTitle>
-          <DialogDescription>Define who is Responsible, Accountable, Consulted, and Informed for this step.</DialogDescription>
+          <DialogTitle>Add RACI Role / Function</DialogTitle>
+          <DialogDescription>Define a role at the business process level. You can then link it to specific steps.</DialogDescription>
         </DialogHeader>
         <div className="grid gap-3 py-2">
           <div className="grid gap-1.5"><Label>Role / Function Name *</Label><Input value={roleName} onChange={e => setRoleName(e.target.value)} placeholder="e.g. Finance Manager, IT Operations" /></div>

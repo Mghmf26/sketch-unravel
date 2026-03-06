@@ -65,7 +65,7 @@ export default function Dashboard() {
   const complianceRate = filteredRegulations.length > 0 ? Math.round((compliantRegs.length / filteredRegulations.length) * 100) : 0;
   const controlCoverage = filteredRisks.length > 0 ? Math.round((filteredRisks.filter(r => filteredControls.some(c => c.risk_id === r.id)).length / filteredRisks.length) * 100) : 0;
 
-  // MF AI Potential distribution
+  // BMF AI Potential distribution
   const potentialCounts = MF_AI_POTENTIAL_LEVELS.map(level => ({
     level,
     count: processes.filter(p => ((p as any).mf_ai_potential || 'medium') === level).length,
@@ -286,7 +286,7 @@ export default function Dashboard() {
 
       {/* Overall Portfolio AI Potential */}
       <div>
-        <h2 className="text-sm font-semibold text-foreground tracking-wide uppercase mb-3">Overall Portfolio AI Potential</h2>
+        <h2 className="text-sm font-semibold text-foreground tracking-wide uppercase mb-3">Overall Portfolio BMF AI Potential</h2>
         <Card variant="elevated" className="border">
           <CardContent className="p-6">
             <div className="flex items-center gap-3 mb-5">
@@ -294,7 +294,7 @@ export default function Dashboard() {
                 <Brain className="h-5 w-5 text-primary" />
               </div>
               <div>
-                <p className="text-sm font-semibold text-foreground">AI Potential Distribution</p>
+                <p className="text-sm font-semibold text-foreground">BMF AI Potential Distribution</p>
                 <p className="text-xs text-muted-foreground">Percentage breakdown across all business processes</p>
               </div>
             </div>

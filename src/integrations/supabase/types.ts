@@ -237,6 +237,7 @@ export type Database = {
           file_type: string | null
           file_url: string
           id: string
+          is_confidential: boolean
           process_id: string
           uploaded_by: string | null
         }
@@ -249,6 +250,7 @@ export type Database = {
           file_type?: string | null
           file_url: string
           id?: string
+          is_confidential?: boolean
           process_id: string
           uploaded_by?: string | null
         }
@@ -261,6 +263,7 @@ export type Database = {
           file_type?: string | null
           file_url?: string
           id?: string
+          is_confidential?: boolean
           process_id?: string
           uploaded_by?: string | null
         }
@@ -695,6 +698,83 @@ export type Database = {
           updated_at?: string
         }
         Relationships: []
+      }
+      process_raci: {
+        Row: {
+          accountable: string | null
+          consulted: string | null
+          created_at: string
+          id: string
+          informed: string | null
+          process_id: string
+          responsible: string | null
+          role_name: string
+        }
+        Insert: {
+          accountable?: string | null
+          consulted?: string | null
+          created_at?: string
+          id?: string
+          informed?: string | null
+          process_id: string
+          responsible?: string | null
+          role_name: string
+        }
+        Update: {
+          accountable?: string | null
+          consulted?: string | null
+          created_at?: string
+          id?: string
+          informed?: string | null
+          process_id?: string
+          responsible?: string | null
+          role_name?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "process_raci_process_id_fkey"
+            columns: ["process_id"]
+            isOneToOne: false
+            referencedRelation: "business_processes"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      process_raci_step_links: {
+        Row: {
+          created_at: string
+          id: string
+          raci_id: string
+          step_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          raci_id: string
+          step_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          raci_id?: string
+          step_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "process_raci_step_links_raci_id_fkey"
+            columns: ["raci_id"]
+            isOneToOne: false
+            referencedRelation: "process_raci"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "process_raci_step_links_step_id_fkey"
+            columns: ["step_id"]
+            isOneToOne: false
+            referencedRelation: "process_steps"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       process_steps: {
         Row: {
