@@ -1,6 +1,7 @@
 import { useEffect, useState, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { ArrowLeft, Brain, Sparkles, TrendingUp, ShieldAlert, DollarSign, Lightbulb, Loader2, Filter } from 'lucide-react';
+import { PageHeader } from '@/components/PageHeader';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from '@/hooks/use-toast';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -125,17 +126,15 @@ export default function AIReports() {
 
   return (
     <div className="p-8 space-y-8 max-w-7xl">
-      <div className="flex items-center gap-4">
-        <Button variant="ghost" size="icon" onClick={() => navigate('/')}><ArrowLeft className="h-5 w-5" /></Button>
-        <div className="flex-1">
-          <h1 className="text-2xl font-bold text-foreground tracking-tight flex items-center gap-2">
-            <Brain className="h-6 w-6 text-primary" /> AI-Powered Reports
-          </h1>
-          <p className="text-sm text-muted-foreground mt-0.5">
-            Intelligent analysis of business processes, mainframe data, risks, controls, regulations, and incidents
-          </p>
-        </div>
-      </div>
+      <PageHeader
+        title="AI-Powered Reports"
+        description="Intelligent analysis of business processes, mainframe data, risks, controls, regulations, and incidents"
+        breadcrumbs={[
+          { label: 'Portfolio', to: '/' },
+          { label: 'Reporting' },
+          { label: 'AI Reports' },
+        ]}
+      />
 
       {/* Filter Section */}
       <Card className="border shadow-sm">

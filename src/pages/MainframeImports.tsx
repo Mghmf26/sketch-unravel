@@ -1,6 +1,7 @@
 import { useEffect, useState, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { ArrowLeft, Database, Upload, FileText, HardDrive, Server, Plus, Trash2, Search, X, File, Cpu, Layers } from 'lucide-react';
+import { PageHeader } from '@/components/PageHeader';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -54,16 +55,19 @@ export default function MainframeImports() {
 
   return (
     <div className="p-8 space-y-6 max-w-7xl">
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-4">
-          <Button variant="ghost" size="icon" onClick={() => navigate(-1)}><ArrowLeft className="h-4 w-4" /></Button>
-          <div>
-            <h1 className="text-2xl font-bold text-foreground tracking-tight">MF Data Sources</h1>
-            <p className="text-sm text-muted-foreground mt-1">Mainframe data sources linked to flow nodes — the system of record for infrastructure analysis</p>
-          </div>
-        </div>
-        <Button onClick={() => setAddDialog(true)}><Plus className="mr-2 h-4 w-4" /> Add Data Source</Button>
-      </div>
+      <PageHeader
+        title="MF Data Sources"
+        description="Mainframe data sources linked to flow nodes — the system of record for infrastructure analysis"
+        breadcrumbs={[
+          { label: 'Portfolio', to: '/' },
+          { label: 'Technology' },
+          { label: 'Mainframe Ecosystem' },
+          { label: 'MF Data Sources' },
+        ]}
+        actions={
+          <Button onClick={() => setAddDialog(true)}><Plus className="mr-2 h-4 w-4" /> Add Data Source</Button>
+        }
+      />
 
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
         {[

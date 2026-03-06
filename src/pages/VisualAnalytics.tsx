@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { ArrowLeft, TrendingUp, PieChart, BarChart3, Activity } from 'lucide-react';
+import { PageHeader } from '@/components/PageHeader';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { ChartContainer, ChartTooltip, ChartTooltipContent } from '@/components/ui/chart';
@@ -80,15 +81,15 @@ export default function VisualAnalytics() {
 
   return (
     <div className="p-8 space-y-8 max-w-7xl">
-      <div className="flex items-center gap-4">
-        <Button variant="ghost" size="icon" onClick={() => navigate('/')}><ArrowLeft className="h-5 w-5" /></Button>
-        <div>
-          <h1 className="text-2xl font-bold text-foreground tracking-tight flex items-center gap-2">
-            <BarChart3 className="h-6 w-6 text-primary" /> Visual Analytics
-          </h1>
-          <p className="text-sm text-muted-foreground mt-0.5">Interactive charts for process, risk, and compliance insights — all data from the relational database</p>
-        </div>
-      </div>
+      <PageHeader
+        title="Visual Analytics"
+        description="Interactive charts for process, risk, and compliance insights"
+        breadcrumbs={[
+          { label: 'Portfolio', to: '/' },
+          { label: 'Reporting' },
+          { label: 'Visual Analytics' },
+        ]}
+      />
 
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
         {[

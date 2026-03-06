@@ -1,6 +1,7 @@
 import { useState, useEffect, useMemo } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { format } from 'date-fns';
+import { PageHeader } from '@/components/PageHeader';
 import {
   Clock, User, Filter, Search, Plus, Pencil, Trash2,
   Network, AlertTriangle, ShieldCheck, Scale, AlertCircle,
@@ -98,21 +99,19 @@ export default function ActivityLog() {
 
   return (
     <div className="space-y-6 p-6 max-w-5xl mx-auto">
-      {/* Header */}
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-2xl font-bold text-foreground tracking-tight flex items-center gap-2.5">
-            <Clock className="h-6 w-6 text-primary" />
-            Activity Log
-          </h1>
-          <p className="text-sm text-muted-foreground mt-1">
-            Full audit trail of all changes across the platform
-          </p>
-        </div>
-        <Button size="sm" variant="outline" onClick={load} disabled={loading}>
-          <RefreshCw className={`h-3.5 w-3.5 mr-1 ${loading ? 'animate-spin' : ''}`} /> Refresh
-        </Button>
-      </div>
+      <PageHeader
+        title="Activity Log"
+        description="Full audit trail of all changes across the platform"
+        breadcrumbs={[
+          { label: 'Portfolio', to: '/' },
+          { label: 'Activity Log' },
+        ]}
+        actions={
+          <Button size="sm" variant="outline" onClick={load} disabled={loading}>
+            <RefreshCw className={`h-3.5 w-3.5 mr-1 ${loading ? 'animate-spin' : ''}`} /> Refresh
+          </Button>
+        }
+      />
 
       {/* Filters */}
       <div className="flex flex-wrap gap-3 items-center bg-muted/30 rounded-lg p-3 border">
