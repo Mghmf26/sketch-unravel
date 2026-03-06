@@ -212,6 +212,7 @@ export default function MainframeFlowEditor({ processId, initialStepId, initialF
     // Auto-save the flow first so the node exists in the DB (FK constraint)
     if (hasChanges && selectedFlowId) {
       try {
+        setIsAutoSaving(true);
         await saveMFFlowDiagram(
           selectedFlowId,
           workingNodesRef.current.map(n => ({ id: n.id, label: n.label, node_type: n.nodeType, description: n.description })),
@@ -219,8 +220,11 @@ export default function MainframeFlowEditor({ processId, initialStepId, initialF
         );
         setHasChanges(false);
         toast({ title: 'Flow auto-saved before attaching data source' });
+        // Keep a brief visual indicator
+        setTimeout(() => setIsAutoSaving(false), 1500);
       } catch (err) {
         console.error(err);
+        setIsAutoSaving(false);
         toast({ title: 'Save failed — cannot attach data source until flow is saved', variant: 'destructive' });
         return;
       }
