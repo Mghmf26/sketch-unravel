@@ -2,7 +2,7 @@ import { useState, useEffect, useCallback } from 'react';
 import {
   Plus, Trash2, ArrowRight, ShieldAlert, ShieldCheck, Scale,
   AlertCircle, Database, HelpCircle, ChevronDown, ChevronRight, Pencil, Users,
-  Check, X, Save, Monitor
+  Check, X, Save, Monitor, Cpu, Link2
 } from 'lucide-react';
 import { usePermissions } from '@/hooks/usePermissions';
 import { Button } from '@/components/ui/button';
@@ -33,6 +33,7 @@ import {
   type Regulation, type Incident, type MainframeImport, type MFQuestion, type StepRaci,
 } from '@/lib/api';
 import { fetchStepApplications, insertStepApplication, updateStepApplication, deleteStepApplication, type StepApplication } from '@/lib/api-applications';
+import { fetchMainframeFlows, fetchMFFlowNodes, type MainframeFlow, type MFFlowNode, MF_NODE_TYPE_META } from '@/lib/api-mainframe-flows';
 import { StepTypeBadge, STEP_TYPE_OPTIONS } from '@/components/StepTypeBadge';
 
 interface ProcessEditTabProps {
