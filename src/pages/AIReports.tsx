@@ -401,7 +401,7 @@ export default function AIReports() {
                     generatedAt: generatedAt || new Date(),
                     clientName: client?.name,
                     clientIndustry: client?.industry || undefined,
-                    clientEngagementMode: client?.engagement_mode || undefined,
+                    clientEngagementMode: (client as any)?.engagement_mode || undefined,
                     clientContactPerson: client?.contact_person || undefined,
                     scopeSummary: `${processes.length} Processes · ${steps.length} Steps · ${risks.length} Risks · ${controls.length} Controls · ${incidents.length} Incidents · ${regulations.length} Regulations · ${applications.length} Scr./App. · ${mfFlows.length} MF Flows · ${mfFlowNodes.length} MF Nodes · ${mfImports.length} MF Sources`,
                     processes: processes.map(p => ({ ...p })),
