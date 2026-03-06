@@ -389,31 +389,35 @@ export default function NodeDetailPanel({ node, risks, controls, regulations, in
       <Separator />
 
       {/* Tabs */}
-      <Tabs defaultValue={defaultTab} className="flex-1 flex flex-col overflow-hidden">
+      <Tabs defaultValue={node.type !== 'in-scope' && defaultTab !== 'overview' ? 'overview' : defaultTab} className="flex-1 flex flex-col overflow-hidden">
         <TabsList className="mx-4 mt-2 bg-muted/50 h-8 flex-wrap">
           <TabsTrigger value="overview" className="text-[10px] h-6 px-2">
             <Info className="h-3 w-3 mr-1" /> Info
           </TabsTrigger>
-          <TabsTrigger value="risks" className="text-[10px] h-6 px-2">
-            <ShieldAlert className="h-3 w-3 mr-1" />
-            {stepRisks.length > 0 && <Badge variant="secondary" className="ml-0.5 h-4 text-[8px] px-1">{stepRisks.length}</Badge>}
-          </TabsTrigger>
-          <TabsTrigger value="controls" className="text-[10px] h-6 px-2">
-            <ShieldCheck className="h-3 w-3 mr-1" />
-            {stepControls.length > 0 && <Badge variant="secondary" className="ml-0.5 h-4 text-[8px] px-1">{stepControls.length}</Badge>}
-          </TabsTrigger>
-          <TabsTrigger value="regulations" className="text-[10px] h-6 px-2">
-            <Scale className="h-3 w-3 mr-1" />
-            {stepRegulations.length > 0 && <Badge variant="secondary" className="ml-0.5 h-4 text-[8px] px-1">{stepRegulations.length}</Badge>}
-          </TabsTrigger>
-          <TabsTrigger value="incidents" className="text-[10px] h-6 px-2">
-            <AlertCircle className="h-3 w-3 mr-1" />
-            {stepIncidents.length > 0 && <Badge variant="secondary" className="ml-0.5 h-4 text-[8px] px-1">{stepIncidents.length}</Badge>}
-          </TabsTrigger>
-          <TabsTrigger value="applications" className="text-[10px] h-6 px-2">
-            <Monitor className="h-3 w-3 mr-1" />
-            {stepApps.length > 0 && <Badge variant="secondary" className="ml-0.5 h-4 text-[8px] px-1">{stepApps.length}</Badge>}
-          </TabsTrigger>
+          {node.type === 'in-scope' && (
+            <>
+              <TabsTrigger value="risks" className="text-[10px] h-6 px-2">
+                <ShieldAlert className="h-3 w-3 mr-1" />
+                {stepRisks.length > 0 && <Badge variant="secondary" className="ml-0.5 h-4 text-[8px] px-1">{stepRisks.length}</Badge>}
+              </TabsTrigger>
+              <TabsTrigger value="controls" className="text-[10px] h-6 px-2">
+                <ShieldCheck className="h-3 w-3 mr-1" />
+                {stepControls.length > 0 && <Badge variant="secondary" className="ml-0.5 h-4 text-[8px] px-1">{stepControls.length}</Badge>}
+              </TabsTrigger>
+              <TabsTrigger value="regulations" className="text-[10px] h-6 px-2">
+                <Scale className="h-3 w-3 mr-1" />
+                {stepRegulations.length > 0 && <Badge variant="secondary" className="ml-0.5 h-4 text-[8px] px-1">{stepRegulations.length}</Badge>}
+              </TabsTrigger>
+              <TabsTrigger value="incidents" className="text-[10px] h-6 px-2">
+                <AlertCircle className="h-3 w-3 mr-1" />
+                {stepIncidents.length > 0 && <Badge variant="secondary" className="ml-0.5 h-4 text-[8px] px-1">{stepIncidents.length}</Badge>}
+              </TabsTrigger>
+              <TabsTrigger value="applications" className="text-[10px] h-6 px-2">
+                <Monitor className="h-3 w-3 mr-1" />
+                {stepApps.length > 0 && <Badge variant="secondary" className="ml-0.5 h-4 text-[8px] px-1">{stepApps.length}</Badge>}
+              </TabsTrigger>
+            </>
+          )}
         </TabsList>
 
         <ScrollArea className="flex-1 px-4 py-2">
