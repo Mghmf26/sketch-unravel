@@ -431,28 +431,39 @@ export default function NodeDetailPanel({ node, risks, controls, regulations, in
               <p className="text-sm">{TYPE_LABELS[node.type] || node.type}</p>
             </div>
             <Separator />
-            <div className="grid grid-cols-3 gap-2">
-              <div className="p-2 rounded-lg border bg-orange-50">
-                <div className="flex items-center gap-1 mb-0.5"><ShieldAlert className="h-3 w-3 text-orange-500" /><span className="text-[10px] font-semibold text-orange-700">Risks</span></div>
-                <span className="text-lg font-bold text-orange-700">{stepRisks.length}</span>
+            {node.type === 'in-scope' && (
+              <>
+                <div className="grid grid-cols-3 gap-2">
+                  <div className="p-2 rounded-lg border bg-orange-50">
+                    <div className="flex items-center gap-1 mb-0.5"><ShieldAlert className="h-3 w-3 text-orange-500" /><span className="text-[10px] font-semibold text-orange-700">Risks</span></div>
+                    <span className="text-lg font-bold text-orange-700">{stepRisks.length}</span>
+                  </div>
+                  <div className="p-2 rounded-lg border bg-blue-50">
+                    <div className="flex items-center gap-1 mb-0.5"><ShieldCheck className="h-3 w-3 text-blue-500" /><span className="text-[10px] font-semibold text-blue-700">Controls</span></div>
+                    <span className="text-lg font-bold text-blue-700">{stepControls.length}</span>
+                  </div>
+                  <div className="p-2 rounded-lg border bg-purple-50">
+                    <div className="flex items-center gap-1 mb-0.5"><Scale className="h-3 w-3 text-purple-500" /><span className="text-[10px] font-semibold text-purple-700">Regulations</span></div>
+                    <span className="text-lg font-bold text-purple-700">{stepRegulations.length}</span>
+                  </div>
+                  <div className="p-2 rounded-lg border bg-red-50">
+                    <div className="flex items-center gap-1 mb-0.5"><AlertCircle className="h-3 w-3 text-red-500" /><span className="text-[10px] font-semibold text-red-700">Incidents</span></div>
+                    <span className="text-lg font-bold text-red-700">{stepIncidents.length}</span>
+                  </div>
+                  <div className="p-2 rounded-lg border bg-sky-50">
+                    <div className="flex items-center gap-1 mb-0.5"><Monitor className="h-3 w-3 text-sky-500" /><span className="text-[10px] font-semibold text-sky-700">Scr./App.</span></div>
+                    <span className="text-lg font-bold text-sky-700">{stepApps.length}</span>
+                  </div>
+                </div>
+              </>
+            )}
+            {node.type !== 'in-scope' && (
+              <div className="rounded-lg border border-dashed p-4 text-center">
+                <p className="text-xs text-muted-foreground">
+                  Risks, controls, regulations, incidents, and applications can only be added to <strong>Step</strong> (in-scope) nodes.
+                </p>
               </div>
-              <div className="p-2 rounded-lg border bg-blue-50">
-                <div className="flex items-center gap-1 mb-0.5"><ShieldCheck className="h-3 w-3 text-blue-500" /><span className="text-[10px] font-semibold text-blue-700">Controls</span></div>
-                <span className="text-lg font-bold text-blue-700">{stepControls.length}</span>
-              </div>
-              <div className="p-2 rounded-lg border bg-purple-50">
-                <div className="flex items-center gap-1 mb-0.5"><Scale className="h-3 w-3 text-purple-500" /><span className="text-[10px] font-semibold text-purple-700">Regulations</span></div>
-                <span className="text-lg font-bold text-purple-700">{stepRegulations.length}</span>
-              </div>
-              <div className="p-2 rounded-lg border bg-red-50">
-                <div className="flex items-center gap-1 mb-0.5"><AlertCircle className="h-3 w-3 text-red-500" /><span className="text-[10px] font-semibold text-red-700">Incidents</span></div>
-                <span className="text-lg font-bold text-red-700">{stepIncidents.length}</span>
-              </div>
-              <div className="p-2 rounded-lg border bg-sky-50">
-                <div className="flex items-center gap-1 mb-0.5"><Monitor className="h-3 w-3 text-sky-500" /><span className="text-[10px] font-semibold text-sky-700">Scr./App.</span></div>
-                <span className="text-lg font-bold text-sky-700">{stepApps.length}</span>
-              </div>
-            </div>
+            )}
             {/* Notes & files for the step itself */}
             {derivedProcessId && <EntityNotesSection entityType="step" entityId={node.id} processId={derivedProcessId} />}
           </TabsContent>
