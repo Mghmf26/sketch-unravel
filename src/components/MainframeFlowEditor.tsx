@@ -430,7 +430,10 @@ export default function MainframeFlowEditor({ processId, initialStepId, initialF
                 </DropdownMenu>
 
                 <Button size="sm" variant="secondary" className="shadow-md" onClick={autoLayout} title="Auto-layout"><LayoutGrid className="h-3.5 w-3.5 mr-1" /> Layout</Button>
-                <Button size="sm" variant={hasChanges ? "default" : "secondary"} className="shadow-md" onClick={handleSave} disabled={!hasChanges}><Save className="h-3.5 w-3.5 mr-1" /> Save</Button>
+                <Button size="sm" variant={isAutoSaving ? "default" : hasChanges ? "default" : "secondary"} className={`shadow-md transition-all ${isAutoSaving ? 'animate-pulse ring-2 ring-primary/40' : ''}`} onClick={handleSave} disabled={!hasChanges && !isAutoSaving}>
+                  <Save className={`h-3.5 w-3.5 mr-1 ${isAutoSaving ? 'animate-spin' : ''}`} />
+                  {isAutoSaving ? 'Auto-saved ✓' : 'Save'}
+                </Button>
               </Panel>
 
               <Panel position="bottom-right" className="text-[10px] text-muted-foreground bg-background/80 px-2 py-1 rounded">
