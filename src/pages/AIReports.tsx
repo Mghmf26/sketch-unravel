@@ -12,9 +12,11 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Checkbox } from '@/components/ui/checkbox';
 import { Label } from '@/components/ui/label';
 import {
-  fetchProcesses, fetchClients, fetchRisks, fetchAllControls, fetchIncidents, fetchRegulations, fetchMFQuestions, fetchMainframeImports,
-  type BusinessProcess, type Risk, type Control, type Incident, type Regulation, type MFQuestion, type MainframeImport, type Client,
+  fetchProcesses, fetchClients, fetchSteps, fetchRisks, fetchAllControls, fetchIncidents, fetchRegulations, fetchMFQuestions, fetchMainframeImports,
+  type BusinessProcess, type ProcessStep, type Risk, type Control, type Incident, type Regulation, type MFQuestion, type MainframeImport, type Client,
 } from '@/lib/api';
+import { fetchStepApplications, type StepApplication } from '@/lib/api-applications';
+import { fetchMainframeFlows, fetchMFFlowNodes, type MainframeFlow, type MFFlowNode } from '@/lib/api-mainframe-flows';
 import { exportReportToPDF } from '@/lib/pdf-export';
 
 interface InsightSection {
@@ -29,12 +31,16 @@ export default function AIReports() {
   const navigate = useNavigate();
   const [allProcesses, setAllProcesses] = useState<BusinessProcess[]>([]);
   const [clients, setClients] = useState<Client[]>([]);
+  const [allSteps, setAllSteps] = useState<ProcessStep[]>([]);
   const [allRisks, setAllRisks] = useState<Risk[]>([]);
   const [allControls, setAllControls] = useState<Control[]>([]);
   const [allIncidents, setAllIncidents] = useState<Incident[]>([]);
   const [allRegulations, setAllRegulations] = useState<Regulation[]>([]);
   const [allMfQuestions, setAllMfQuestions] = useState<MFQuestion[]>([]);
   const [allMfImports, setAllMfImports] = useState<MainframeImport[]>([]);
+  const [allApplications, setAllApplications] = useState<StepApplication[]>([]);
+  const [allMfFlows, setAllMfFlows] = useState<MainframeFlow[]>([]);
+  const [allMfFlowNodes, setAllMfFlowNodes] = useState<MFFlowNode[]>([]);
   const [generating, setGenerating] = useState(false);
   const [report, setReport] = useState<InsightSection[] | null>(null);
 
@@ -44,11 +50,16 @@ export default function AIReports() {
 
   useEffect(() => {
     Promise.all([
-      fetchProcesses(), fetchClients(), fetchRisks(), fetchAllControls(),
+      fetchProcesses(), fetchClients(), fetchSteps(), fetchRisks(), fetchAllControls(),
       fetchIncidents(), fetchRegulations(), fetchMFQuestions(), fetchMainframeImports(),
-    ]).then(([p, c, r, ctrl, i, reg, mfq, mfi]) => {
-      setAllProcesses(p); setClients(c); setAllRisks(r); setAllControls(ctrl);
+      fetchStepApplications(), fetchMainframeFlows(),
+    ]).then(async ([p, c, s, r, ctrl, i, reg, mfq, mfi, apps, flows]) => {
+      setAllProcesses(p); setClients(c); setAllSteps(s); setAllRisks(r); setAllControls(ctrl);
       setAllIncidents(i); setAllRegulations(reg); setAllMfQuestions(mfq); setAllMfImports(mfi);
+      setAllApplications(apps); setAllMfFlows(flows);
+      // Fetch all flow nodes
+      const allNodes = await Promise.all(flows.map(f => fetchMFFlowNodes(f.id)));
+      setAllMfFlowNodes(allNodes.flat());
     });
   }, []);
 
@@ -81,11 +92,16 @@ export default function AIReports() {
   // Scoped data based on selected processes
   const scopedProcessIds = selectedProcessIds.length > 0 ? selectedProcessIds : clientProcesses.map(p => p.id);
   const processes = allProcesses.filter(p => scopedProcessIds.includes(p.id));
+  const steps = allSteps.filter(s => scopedProcessIds.includes(s.process_id));
   const risks = allRisks.filter(r => scopedProcessIds.includes(r.process_id));
   const incidents = allIncidents.filter(i => scopedProcessIds.includes(i.process_id));
   const regulations = allRegulations.filter(r => scopedProcessIds.includes(r.process_id));
   const mfQuestions = allMfQuestions.filter(q => scopedProcessIds.includes(q.process_id));
   const mfImports = allMfImports.filter(m => scopedProcessIds.includes(m.process_id));
+  const applications = allApplications.filter(a => scopedProcessIds.includes(a.process_id));
+  const mfFlows = allMfFlows.filter(f => scopedProcessIds.includes(f.process_id));
+  const mfFlowNodeIds = new Set(mfFlows.map(f => f.id));
+  const mfFlowNodes = allMfFlowNodes.filter(n => mfFlowNodeIds.has(n.flow_id));
   // Controls are linked via risks
   const riskIds = new Set(risks.map(r => r.id));
   const controls = allControls.filter(c => riskIds.has(c.risk_id));
@@ -98,7 +114,7 @@ export default function AIReports() {
     setGenerating(true);
     try {
       const { data, error } = await supabase.functions.invoke('generate-ai-report', {
-        body: { processes, risks, controls, incidents, regulations, mfImports: mfImports, mfQuestions: mfQuestions },
+        body: { processes, steps, risks, controls, incidents, regulations, mfImports, mfQuestions, applications, mfFlows, mfFlowNodes },
       });
 
       if (error) throw error;
@@ -201,12 +217,16 @@ export default function AIReports() {
               <p className="text-xs text-muted-foreground mt-1">Analysis will run on the following scoped data.</p>
               <div className="flex flex-wrap gap-2 mt-3">
                 <Badge variant="secondary" className="text-xs">{processes.length} Process(es)</Badge>
+                <Badge variant="secondary" className="text-xs">{steps.length} Step(s)</Badge>
                 <Badge variant="secondary" className="text-xs">{risks.length} Risk(s)</Badge>
                 <Badge variant="secondary" className="text-xs">{controls.length} Control(s)</Badge>
                 <Badge variant="secondary" className="text-xs">{incidents.length} Incident(s)</Badge>
                 <Badge variant="secondary" className="text-xs">{regulations.length} Regulation(s)</Badge>
-                <Badge variant="secondary" className="text-xs">{mfQuestions.length} MF Q&A(s)</Badge>
+                <Badge variant="secondary" className="text-xs">{applications.length} Scr./App.</Badge>
+                <Badge variant="secondary" className="text-xs">{mfFlows.length} MF Flow(s)</Badge>
+                <Badge variant="secondary" className="text-xs">{mfFlowNodes.length} MF Node(s)</Badge>
                 <Badge variant="secondary" className="text-xs">{mfImports.length} MF Import(s)</Badge>
+                <Badge variant="secondary" className="text-xs">{mfQuestions.length} MF Q&A(s)</Badge>
               </div>
             </div>
             <Button onClick={generateReport} disabled={generating || processes.length === 0} className="flex-shrink-0">
