@@ -247,7 +247,7 @@ export default function ProcessEditTab({ processId }: ProcessEditTabProps) {
   return (
     <div className="space-y-3">
       {/* Summary Bar */}
-      <div className="grid grid-cols-4 md:grid-cols-9 gap-2">
+      <div className="grid grid-cols-4 md:grid-cols-10 gap-2">
         {[
           { label: 'Steps', count: steps.length, dot: 'bg-emerald-500' },
           { label: 'Bus. Processes', count: steps.filter(s => s.type === 'interface').length, dot: 'bg-slate-400' },
@@ -257,6 +257,7 @@ export default function ProcessEditTab({ processId }: ProcessEditTabProps) {
           { label: 'Regulations', count: regulations.length, dot: 'bg-purple-500' },
           { label: 'Incidents', count: incidents.length, dot: 'bg-red-500' },
           { label: 'Scr./App.', count: applications.length, dot: 'bg-sky-500' },
+          { label: 'MF Sources', count: imports.length, dot: 'bg-amber-500' },
           { label: 'RACI', count: raciEntries.length, dot: 'bg-cyan-500' },
         ].map(m => (
           <div key={m.label} className="flex items-center gap-2 p-2 rounded-lg border bg-card">
