@@ -148,6 +148,8 @@ export default function ProcessEditTab({ processId }: ProcessEditTabProps) {
   const [mfQuestions, setMfQuestions] = useState<MFQuestion[]>([]);
   const [applications, setApplications] = useState<StepApplication[]>([]);
   const [raciEntries, setRaciEntries] = useState<StepRaci[]>([]);
+  const [mfFlows, setMfFlows] = useState<MainframeFlow[]>([]);
+  const [mfFlowNodes, setMfFlowNodes] = useState<MFFlowNode[]>([]);
   const [addDialog, setAddDialog] = useState<AddDialog>(null);
   const [contextStepId, setContextStepId] = useState<string | null>(null);
   const [contextRiskId, setContextRiskId] = useState<string | null>(null);
@@ -174,12 +176,13 @@ export default function ProcessEditTab({ processId }: ProcessEditTabProps) {
   const collapseAllSteps = () => setExpandedSteps(new Set());
 
   const reload = useCallback(async () => {
-    const [s, c, r, ctrl, reg, inc, imp, mfq, raci, apps] = await Promise.all([
+    const [s, c, r, ctrl, reg, inc, imp, mfq, raci, apps, flows] = await Promise.all([
       fetchSteps(processId), fetchStepConnections(processId),
       fetchRisks(processId), fetchAllControls(),
       fetchRegulations(processId), fetchIncidents(processId),
       fetchMainframeImports(processId), fetchMFQuestions(processId),
       fetchStepRaci(processId), fetchStepApplications(processId),
+      fetchMainframeFlows(processId),
     ]);
     setSteps(s);
     setConnections(c);
@@ -192,6 +195,10 @@ export default function ProcessEditTab({ processId }: ProcessEditTabProps) {
     setMfQuestions(mfq);
     setRaciEntries(raci);
     setApplications(apps);
+    setMfFlows(flows);
+    // Fetch all flow nodes
+    const allNodes = await Promise.all(flows.map(f => fetchMFFlowNodes(f.id)));
+    setMfFlowNodes(allNodes.flat());
   }, [processId]);
 
   useEffect(() => { reload(); }, [reload]);
