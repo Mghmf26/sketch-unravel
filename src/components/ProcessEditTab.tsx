@@ -1197,12 +1197,20 @@ function AddApplicationDialog({ processId, stepId, parentScreenId, screens, onCl
   const [appType, setAppType] = useState(parentScreenId ? 'application' : 'application');
   const [parentId, setParentId] = useState(parentScreenId || '');
   const [desc, setDesc] = useState('');
+  const [appOwner, setAppOwner] = useState('');
+  const [baBusiness, setBaBusiness] = useState('');
+  const [baIT, setBaIT] = useState('');
+  const [platform, setPlatform] = useState('');
   const submit = async () => {
     if (!name.trim()) return;
     await insertStepApplication({ 
       process_id: processId, step_id: stepId, name: name.trim(), 
       app_type: appType, description: desc || null,
       parent_id: parentId || null,
+      application_owner: appOwner || null,
+      business_analyst_business: baBusiness || null,
+      business_analyst_it: baIT || null,
+      platform: platform || null,
     } as any);
     toast({ title: `${appType === 'screen' ? 'Screen' : 'Application'} added` }); onRefresh(); onClose();
   };
@@ -1239,6 +1247,24 @@ function AddApplicationDialog({ processId, stepId, parentScreenId, screens, onCl
             </div>
           )}
           <div className="grid gap-1.5"><Label>Description</Label><Textarea value={desc} onChange={e => setDesc(e.target.value)} placeholder="Optional description..." /></div>
+          <div className="grid grid-cols-2 gap-3">
+            <div className="grid gap-1.5">
+              <Label>Application Owner</Label>
+              <Input value={appOwner} onChange={e => setAppOwner(e.target.value)} placeholder="e.g. John Smith" />
+            </div>
+            <div className="grid gap-1.5">
+              <Label>Platform</Label>
+              <Input value={platform} onChange={e => setPlatform(e.target.value)} placeholder="e.g. SAP, Oracle" />
+            </div>
+            <div className="grid gap-1.5">
+              <Label>Business Analyst (Business)</Label>
+              <Input value={baBusiness} onChange={e => setBaBusiness(e.target.value)} placeholder="BA name" />
+            </div>
+            <div className="grid gap-1.5">
+              <Label>Business Analyst (IT)</Label>
+              <Input value={baIT} onChange={e => setBaIT(e.target.value)} placeholder="BA IT name" />
+            </div>
+          </div>
         </div>
         <DialogFooter><Button variant="outline" onClick={onClose}>Cancel</Button><Button onClick={submit} disabled={!name.trim()}>Add {appType === 'screen' ? 'Screen' : 'Application'}</Button></DialogFooter>
       </DialogContent>
