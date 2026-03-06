@@ -139,7 +139,8 @@ class DocPDF {
     // Rows
     rows.forEach((row, ri) => {
       this.ensure(6);
-      this.doc.setFillColor(ri % 2 === 0 ? ...C.sectionBg : ...C.white);
+      const bgColor = ri % 2 === 0 ? C.sectionBg : C.white;
+      this.doc.setFillColor(...bgColor);
       this.doc.rect(this.m, this.y, this.cw, 5.5, 'F');
       this.doc.setTextColor(...C.dark);
       this.doc.setFontSize(6);
