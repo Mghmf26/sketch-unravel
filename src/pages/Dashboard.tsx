@@ -363,11 +363,12 @@ export default function Dashboard() {
   );
 }
 
-function MetricCard({ label, value, subValue, icon: Icon, trend, onClick, delay = 0 }: {
-  label: string; value: string | number; subValue: string; icon: any; trend: 'good' | 'neutral' | 'warning'; onClick: () => void; delay?: number;
+function MetricCard({ label, value, subValue, icon: Icon, trend, onClick, delay = 0, sparkData }: {
+  label: string; value: string | number; subValue: string; icon: any; trend: 'good' | 'neutral' | 'warning'; onClick: () => void; delay?: number; sparkData?: number[];
 }) {
   const trendColor = trend === 'good' ? 'text-primary' : trend === 'neutral' ? 'text-yellow-600' : 'text-destructive';
   const trendBg = trend === 'good' ? 'bg-primary/10' : trend === 'neutral' ? 'bg-yellow-500/10' : 'bg-destructive/10';
+  const sparkColor = trend === 'good' ? 'hsl(var(--primary))' : trend === 'neutral' ? 'hsl(45, 93%, 47%)' : 'hsl(var(--destructive))';
   return (
     <Card
       variant="elevated"
@@ -382,9 +383,16 @@ function MetricCard({ label, value, subValue, icon: Icon, trend, onClick, delay 
           </div>
           <ArrowUpRight className="h-4 w-4 text-muted-foreground/30 group-hover:text-primary transition-colors" />
         </div>
-        <p className="metric-value text-foreground">{value}</p>
-        <p className="text-[10px] text-muted-foreground font-semibold tracking-widest uppercase mt-1">{label}</p>
-        <p className={`text-xs mt-1 ${trendColor}`}>{subValue}</p>
+        <div className="flex items-end justify-between gap-2">
+          <div>
+            <p className="metric-value text-foreground">{value}</p>
+            <p className="text-[10px] text-muted-foreground font-semibold tracking-widest uppercase mt-1">{label}</p>
+          </div>
+          {sparkData && sparkData.length > 1 && (
+            <Sparkline data={sparkData} color={sparkColor} width={72} height={28} />
+          )}
+        </div>
+        <p className={`text-xs mt-2 ${trendColor}`}>{subValue}</p>
       </CardContent>
     </Card>
   );
