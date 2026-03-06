@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
+import { PageHeader } from '@/components/PageHeader';
 import { toast } from '@/hooks/use-toast';
 import {
   Users,
@@ -212,18 +213,19 @@ export default function Clients() {
 
   return (
     <div className="p-8 space-y-6 max-w-7xl">
-      {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-        <div>
-          <h1 className="text-2xl font-bold text-foreground tracking-tight">Clients</h1>
-          <p className="text-sm text-muted-foreground mt-1">
-            Manage your clients and their business process engagements
-          </p>
-        </div>
-        <Button onClick={openAdd} className="gap-2 bg-primary hover:bg-primary/90">
-          <Plus className="h-4 w-4" /> Add Client
-        </Button>
-      </div>
+      <PageHeader
+        title="Clients"
+        description="Manage your clients and their business process engagements"
+        breadcrumbs={[
+          { label: 'Portfolio', to: '/' },
+          { label: 'Clients' },
+        ]}
+        actions={
+          <Button onClick={openAdd} className="gap-2 bg-primary hover:bg-primary/90">
+            <Plus className="h-4 w-4" /> Add Client
+          </Button>
+        }
+      />
 
       {/* Search & Stats */}
       <div className="flex flex-col sm:flex-row gap-4">
