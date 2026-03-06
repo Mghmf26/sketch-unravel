@@ -907,6 +907,24 @@ export default function NodeDetailPanel({ node, risks, controls, regulations, in
             <Label>Description</Label>
             <Textarea value={appForm.description} onChange={e => setAppForm(f => ({ ...f, description: e.target.value }))} placeholder="Optional description..." />
           </div>
+          <div className="grid grid-cols-2 gap-3">
+            <div className="grid gap-1.5">
+              <Label>Application Owner</Label>
+              <Input value={appForm.application_owner} onChange={e => setAppForm(f => ({ ...f, application_owner: e.target.value }))} placeholder="e.g. John Smith" />
+            </div>
+            <div className="grid gap-1.5">
+              <Label>Platform</Label>
+              <Input value={appForm.platform} onChange={e => setAppForm(f => ({ ...f, platform: e.target.value }))} placeholder="e.g. SAP, Oracle" />
+            </div>
+            <div className="grid gap-1.5">
+              <Label>Business Analyst (Business)</Label>
+              <Input value={appForm.business_analyst_business} onChange={e => setAppForm(f => ({ ...f, business_analyst_business: e.target.value }))} placeholder="BA name" />
+            </div>
+            <div className="grid gap-1.5">
+              <Label>Business Analyst (IT)</Label>
+              <Input value={appForm.business_analyst_it} onChange={e => setAppForm(f => ({ ...f, business_analyst_it: e.target.value }))} placeholder="BA IT name" />
+            </div>
+          </div>
         </div>
         <DialogFooter>
           <Button variant="outline" onClick={() => setAddDialog(null)}>Cancel</Button>
