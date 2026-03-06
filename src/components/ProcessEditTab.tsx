@@ -181,12 +181,13 @@ export default function ProcessEditTab({ processId }: ProcessEditTabProps) {
   const collapseAllSteps = () => setExpandedSteps(new Set());
 
   const reload = useCallback(async () => {
-    const [s, c, r, ctrl, reg, inc, imp, mfq, raci, apps, flows] = await Promise.all([
+    const [s, c, r, ctrl, reg, inc, imp, mfq, raci, raciLinks, apps, flows] = await Promise.all([
       fetchSteps(processId), fetchStepConnections(processId),
       fetchRisks(processId), fetchAllControls(),
       fetchRegulations(processId), fetchIncidents(processId),
       fetchMainframeImports(processId), fetchMFQuestions(processId),
-      fetchStepRaci(processId), fetchStepApplications(processId),
+      fetchProcessRaci(processId), fetchRaciStepLinks(processId),
+      fetchStepApplications(processId),
       fetchMainframeFlows(processId),
     ]);
     setSteps(s);
@@ -199,6 +200,7 @@ export default function ProcessEditTab({ processId }: ProcessEditTabProps) {
     setImports(imp);
     setMfQuestions(mfq);
     setRaciEntries(raci);
+    setRaciStepLinks(raciLinks);
     setApplications(apps);
     setMfFlows(flows);
     // Fetch all flow nodes
@@ -299,7 +301,7 @@ export default function ProcessEditTab({ processId }: ProcessEditTabProps) {
                   const stepRisks = getStepRisks(step.id);
                   const stepRegs = getStepRegulations(step.id);
                   const stepIncs = getStepIncidents(step.id);
-                  const stepRaci = getStepRaci(step.id);
+                  const stepRaciLinked = getStepRaciLinks(step.id);
                   const relCount = countRelations(step.id);
                   const style = getTypeStyle(step.type);
 
