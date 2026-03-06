@@ -96,7 +96,7 @@ export default function Dashboard() {
 
       {/* Analysis Mode Selector */}
       <div className="space-y-3">
-        <h2 className="text-sm font-semibold text-foreground tracking-wide uppercase">Engagement Mode</h2>
+        <h2 className="section-header uppercase">Engagement Mode</h2>
         <div className="flex gap-3">
           {ENGAGEMENT_MODES.map(mode => (
             <Button
@@ -129,6 +129,7 @@ export default function Dashboard() {
           icon={ShieldAlert}
           trend={highRisks.length > 0 ? 'warning' : 'good'}
           onClick={() => navigate('/risks')}
+          delay={0}
         />
         <MetricCard
           label="Controls"
@@ -137,6 +138,7 @@ export default function Dashboard() {
           icon={Shield}
           trend={controlCoverage >= 80 ? 'good' : controlCoverage >= 50 ? 'neutral' : 'warning'}
           onClick={() => navigate('/controls')}
+          delay={1}
         />
         <MetricCard
           label="Compliance"
@@ -145,6 +147,7 @@ export default function Dashboard() {
           icon={Scale}
           trend={complianceRate >= 80 ? 'good' : complianceRate >= 50 ? 'neutral' : 'warning'}
           onClick={() => navigate('/regulations')}
+          delay={2}
         />
         <MetricCard
           label="Open Incidents"
@@ -153,6 +156,7 @@ export default function Dashboard() {
           icon={AlertCircle}
           trend={openIncidents.length === 0 ? 'good' : openIncidents.length <= 3 ? 'neutral' : 'warning'}
           onClick={() => navigate('/incidents')}
+          delay={3}
         />
       </div>
 
@@ -160,7 +164,7 @@ export default function Dashboard() {
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Quick Actions */}
         <div className="lg:col-span-1 space-y-3">
-          <h2 className="text-sm font-semibold text-foreground tracking-wide uppercase">Quick Actions</h2>
+          <h2 className="section-header uppercase">Quick Actions</h2>
           <div className="space-y-2">
             {[
               { label: 'Add Client', desc: 'Register a new engagement', icon: UserPlus, path: '/clients', color: 'text-primary' },
@@ -169,7 +173,7 @@ export default function Dashboard() {
               { label: 'Import Data', desc: 'Connect mainframe sources', icon: Database, path: '/imports', color: 'text-primary' },
               { label: 'View Analytics', desc: 'Visual insights & charts', icon: BarChart3, path: '/analytics', color: 'text-primary' },
             ].map(a => (
-              <Card key={a.label} className="group cursor-pointer border bg-card hover:bg-muted/50 shadow-none hover:shadow-sm transition-all duration-200" onClick={() => navigate(a.path)}>
+              <Card variant="elevated" key={a.label} className="group cursor-pointer hover:border-primary/30" onClick={() => navigate(a.path)}>
                 <CardContent className="flex items-center gap-4 p-4">
                   <div className={`h-10 w-10 rounded-xl bg-primary/10 flex items-center justify-center flex-shrink-0 group-hover:bg-primary/15 transition-colors`}>
                     <a.icon className={`h-5 w-5 ${a.color}`} />
@@ -187,11 +191,11 @@ export default function Dashboard() {
 
         {/* Industry Risk & Compliance Breakdown */}
         <div className="lg:col-span-2 space-y-4">
-          <h2 className="text-sm font-semibold text-foreground tracking-wide uppercase">Industry Risk & Compliance Overview</h2>
+          <h2 className="section-header uppercase">Industry Risk & Compliance Overview</h2>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             {/* Risk Severity Distribution */}
-            <Card className="border shadow-sm">
+            <Card variant="elevated" className="border">
               <CardHeader className="pb-3">
                 <CardTitle className="text-sm font-medium flex items-center gap-2">
                   <Activity className="h-4 w-4 text-primary" />
@@ -206,7 +210,7 @@ export default function Dashboard() {
             </Card>
 
             {/* Control Types */}
-            <Card className="border shadow-sm">
+            <Card variant="elevated" className="border">
               <CardHeader className="pb-3">
                 <CardTitle className="text-sm font-medium flex items-center gap-2">
                   <Shield className="h-4 w-4 text-primary" />
@@ -221,7 +225,7 @@ export default function Dashboard() {
             </Card>
 
             {/* Compliance Gauge */}
-            <Card className="border shadow-sm">
+            <Card variant="elevated" className="border">
               <CardHeader className="pb-3">
                 <CardTitle className="text-sm font-medium flex items-center gap-2">
                   <Scale className="h-4 w-4 text-primary" />
@@ -242,7 +246,7 @@ export default function Dashboard() {
             </Card>
 
             {/* Control Coverage */}
-            <Card className="border shadow-sm">
+            <Card variant="elevated" className="border">
               <CardHeader className="pb-3">
                 <CardTitle className="text-sm font-medium flex items-center gap-2">
                   <Zap className="h-4 w-4 text-primary" />
@@ -268,7 +272,7 @@ export default function Dashboard() {
       {/* Overall Portfolio AI Potential */}
       <div>
         <h2 className="text-sm font-semibold text-foreground tracking-wide uppercase mb-3">Overall Portfolio AI Potential</h2>
-        <Card className="border shadow-sm">
+        <Card variant="elevated" className="border">
           <CardContent className="p-6">
             <div className="flex items-center gap-3 mb-5">
               <div className="h-10 w-10 rounded-xl bg-primary/10 flex items-center justify-center">
@@ -312,7 +316,7 @@ export default function Dashboard() {
             const pRegs = regulations.filter(r => r.process_id === p.id);
             const potential = (p as any).mf_ai_potential || 'medium';
             return (
-              <Card key={p.id} className="group cursor-pointer border hover:border-primary/40 shadow-none hover:shadow-md transition-all duration-300" onClick={() => navigate(`/process-view/${p.id}`)}>
+              <Card variant="elevated" key={p.id} className="group cursor-pointer hover:border-primary/30" onClick={() => navigate(`/process-view/${p.id}`)}>
                 <CardContent className="p-5">
                   <div className="flex items-start justify-between mb-3">
                     <div className="flex-1 min-w-0">
@@ -344,21 +348,26 @@ export default function Dashboard() {
   );
 }
 
-function MetricCard({ label, value, subValue, icon: Icon, trend, onClick }: {
-  label: string; value: string | number; subValue: string; icon: any; trend: 'good' | 'neutral' | 'warning'; onClick: () => void;
+function MetricCard({ label, value, subValue, icon: Icon, trend, onClick, delay = 0 }: {
+  label: string; value: string | number; subValue: string; icon: any; trend: 'good' | 'neutral' | 'warning'; onClick: () => void; delay?: number;
 }) {
   const trendColor = trend === 'good' ? 'text-primary' : trend === 'neutral' ? 'text-yellow-600' : 'text-destructive';
   const trendBg = trend === 'good' ? 'bg-primary/10' : trend === 'neutral' ? 'bg-yellow-500/10' : 'bg-destructive/10';
   return (
-    <Card className="group cursor-pointer border hover:border-primary/40 shadow-none hover:shadow-md transition-all duration-300" onClick={onClick}>
+    <Card
+      variant="elevated"
+      className="group cursor-pointer hover:border-primary/30 animate-count-up"
+      style={{ animationDelay: `${delay * 100}ms`, animationFillMode: 'both' }}
+      onClick={onClick}
+    >
       <CardContent className="p-5">
         <div className="flex items-center justify-between mb-3">
-          <div className={`h-10 w-10 rounded-xl ${trendBg} flex items-center justify-center`}>
+          <div className={`h-10 w-10 rounded-xl ${trendBg} flex items-center justify-center transition-transform duration-300 group-hover:scale-110`}>
             <Icon className={`h-5 w-5 ${trendColor}`} />
           </div>
           <ArrowUpRight className="h-4 w-4 text-muted-foreground/30 group-hover:text-primary transition-colors" />
         </div>
-        <p className="text-2xl font-bold text-foreground">{value}</p>
+        <p className="metric-value text-foreground">{value}</p>
         <p className="text-[10px] text-muted-foreground font-semibold tracking-widest uppercase mt-1">{label}</p>
         <p className={`text-xs mt-1 ${trendColor}`}>{subValue}</p>
       </CardContent>

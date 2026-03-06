@@ -169,17 +169,17 @@ export function AppSidebar() {
     const visible = filterChildren(children);
     if (visible.length === 0) return null;
     return (
-      <div className="ml-3 border-l border-sidebar-border pl-2 mt-0.5 mb-1 space-y-0.5">
+      <div className="ml-3 border-l border-sidebar-border pl-2 mt-0.5 mb-1 space-y-0.5 animate-slide-up">
         {visible.map((item) => (
           <SidebarMenuItem key={item.title}>
             <SidebarMenuButton asChild>
               <NavLink
                 to={item.url}
                 end
-                className="flex items-center gap-3 px-3 py-2 rounded-lg text-sidebar-foreground/70 hover:bg-sidebar-accent hover:text-sidebar-foreground transition-all duration-150 text-[12px]"
+                className="flex items-center gap-3 px-3 py-2 rounded-lg text-sidebar-foreground/70 hover:bg-sidebar-accent hover:text-sidebar-foreground transition-all duration-200 text-[12px] group/link"
                 activeClassName="bg-sidebar-accent text-sidebar-primary font-semibold border-l-[3px] border-sidebar-primary rounded-l-none hover:bg-sidebar-accent hover:text-sidebar-primary"
               >
-                <item.icon className="h-[15px] w-[15px]" />
+                <item.icon className="h-[15px] w-[15px] transition-transform duration-200 group-hover/link:scale-110" />
                 <span className="font-medium">{item.title}</span>
               </NavLink>
             </SidebarMenuButton>
@@ -209,9 +209,9 @@ export function AppSidebar() {
           <SidebarMenuButton asChild>
             <button
               onClick={() => toggleGroup(group.title)}
-              className={`flex items-center gap-3 px-3 py-2.5 rounded-lg text-sidebar-foreground/70 hover:bg-sidebar-accent hover:text-sidebar-foreground transition-all duration-150 w-full ${depth > 0 ? 'py-2 text-[12px]' : ''}`}
+              className={`flex items-center gap-3 px-3 py-2.5 rounded-lg text-sidebar-foreground/70 hover:bg-sidebar-accent hover:text-sidebar-foreground transition-all duration-200 w-full group/btn ${depth > 0 ? 'py-2 text-[12px]' : ''}`}
             >
-              <group.icon className={`shrink-0 ${depth > 0 ? 'h-[15px] w-[15px]' : 'h-[18px] w-[18px]'}`} />
+              <group.icon className={`shrink-0 transition-transform duration-200 group-hover/btn:scale-110 ${depth > 0 ? 'h-[15px] w-[15px]' : 'h-[18px] w-[18px]'}`} />
               {!isCollapsed && (
                 <>
                   <span className={`flex-1 text-left ${depth > 0 ? 'text-[12px] font-medium' : 'text-[13px] font-semibold'}`}>{group.title}</span>
