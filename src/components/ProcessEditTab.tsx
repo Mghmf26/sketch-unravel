@@ -1215,20 +1215,33 @@ function AddIncidentDialog({ processId, stepId, onClose, onRefresh }: { processI
   const [title, setTitle] = useState('');
   const [severity, setSeverity] = useState('medium');
   const [desc, setDesc] = useState('');
+  const [ownerDepartment, setOwnerDepartment] = useState('');
+  const [moneyLossAmount, setMoneyLossAmount] = useState('');
+  const [lossThreshold, setLossThreshold] = useState('');
+  const [rootCause, setRootCause] = useState('');
   const submit = async () => {
     if (!title.trim()) return;
-    await insertIncident({ process_id: processId, step_id: stepId, title: title.trim(), severity, description: desc || null });
+    await insertIncident({ process_id: processId, step_id: stepId, title: title.trim(), severity, description: desc || null, owner_department: ownerDepartment || null, money_loss_amount: moneyLossAmount || null, loss_threshold: lossThreshold || null, root_cause: rootCause || null } as any);
     toast({ title: 'Incident added' }); onRefresh(); onClose();
   };
   return (
     <Dialog open onOpenChange={onClose}>
-      <DialogContent className="sm:max-w-md">
+      <DialogContent className="sm:max-w-lg">
         <DialogHeader><DialogTitle>Add Incident</DialogTitle></DialogHeader>
         <div className="grid gap-3 py-2">
           <div className="grid gap-1.5"><Label>Title *</Label><Input value={title} onChange={e => setTitle(e.target.value)} /></div>
-          <div className="grid gap-1.5"><Label>Severity</Label><Select value={severity} onValueChange={setSeverity}><SelectTrigger><SelectValue /></SelectTrigger>
-            <SelectContent><SelectItem value="low">Low</SelectItem><SelectItem value="medium">Medium</SelectItem><SelectItem value="high">High</SelectItem><SelectItem value="critical">Critical</SelectItem></SelectContent></Select></div>
+          <div className="grid grid-cols-2 gap-3">
+            <div className="grid gap-1.5"><Label>Severity</Label><Select value={severity} onValueChange={setSeverity}><SelectTrigger><SelectValue /></SelectTrigger>
+              <SelectContent><SelectItem value="low">Low</SelectItem><SelectItem value="medium">Medium</SelectItem><SelectItem value="high">High</SelectItem><SelectItem value="critical">Critical</SelectItem></SelectContent></Select></div>
+            <div className="grid gap-1.5"><Label>Owner (Department)</Label><Input value={ownerDepartment} onChange={e => setOwnerDepartment(e.target.value)} placeholder="e.g. Finance, IT" /></div>
+          </div>
           <div className="grid gap-1.5"><Label>Description</Label><Textarea value={desc} onChange={e => setDesc(e.target.value)} /></div>
+          <div className="grid grid-cols-2 gap-3">
+            <div className="grid gap-1.5"><Label>Money Loss Amount</Label><Input value={moneyLossAmount} onChange={e => setMoneyLossAmount(e.target.value)} placeholder="e.g. $50,000" /></div>
+            <div className="grid gap-1.5"><Label>Loss Threshold (Client)</Label><Input value={lossThreshold} onChange={e => setLossThreshold(e.target.value)} placeholder="e.g. $100,000" /></div>
+          </div>
+          <div className="grid gap-1.5"><Label>Root Cause</Label><Select value={rootCause || '__none__'} onValueChange={v => setRootCause(v === '__none__' ? '' : v)}><SelectTrigger><SelectValue /></SelectTrigger>
+            <SelectContent><SelectItem value="__none__">— Select —</SelectItem><SelectItem value="people">People</SelectItem><SelectItem value="system">System</SelectItem><SelectItem value="market">Market</SelectItem><SelectItem value="regulations">Regulations</SelectItem></SelectContent></Select></div>
         </div>
         <DialogFooter><Button variant="outline" onClick={onClose}>Cancel</Button><Button onClick={submit}>Add</Button></DialogFooter>
       </DialogContent>
