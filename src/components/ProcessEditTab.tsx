@@ -228,7 +228,7 @@ export default function ProcessEditTab({ processId }: ProcessEditTabProps) {
     setRaciStepLinks(raciLinks);
     setApplications(apps);
     setMfFlows(flows);
-    setQuestQuestions(qq.filter(q => q.importance_level !== 3));
+    setQuestQuestions(qq.filter(q => q.is_active));
     setQuestLinks(ql);
     // Fetch all flow nodes
     const allNodes = await Promise.all(flows.map(f => fetchMFFlowNodes(f.id)));
