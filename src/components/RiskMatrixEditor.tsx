@@ -213,6 +213,8 @@ export default function RiskMatrixEditor({ processId }: RiskMatrixEditorProps) {
             isAcceptable={isAcceptable}
             onCellClick={handleCellToggle}
             readonly={isStandard}
+            impactDescriptions={impactDescs}
+            onImpactDescriptionChange={!isStandard ? handleImpactDescChange : undefined}
           />
         </div>
 
