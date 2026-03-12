@@ -1152,9 +1152,12 @@ function AddControlDialog({ riskId, onClose, onRefresh }: { riskId: string; onCl
   const [name, setName] = useState('');
   const [type, setType] = useState('preventive');
   const [effectiveness, setEffectiveness] = useState('effective');
+  const [automationLevel, setAutomationLevel] = useState('');
+  const [frequency, setFrequency] = useState('');
+  const [lastTested, setLastTested] = useState('');
   const submit = async () => {
     if (!name.trim()) return;
-    await insertControl({ risk_id: riskId, name: name.trim(), type, effectiveness });
+    await insertControl({ risk_id: riskId, name: name.trim(), type, effectiveness, automation_level: automationLevel || null, frequency: frequency || null, last_tested: lastTested || null } as any);
     toast({ title: 'Control added' }); onRefresh(); onClose();
   };
   return (
@@ -1169,6 +1172,13 @@ function AddControlDialog({ riskId, onClose, onRefresh }: { riskId: string; onCl
             <div className="grid gap-1.5"><Label>Effectiveness</Label><Select value={effectiveness} onValueChange={setEffectiveness}><SelectTrigger><SelectValue /></SelectTrigger>
               <SelectContent><SelectItem value="effective">Effective</SelectItem><SelectItem value="partially">Partially</SelectItem><SelectItem value="ineffective">Ineffective</SelectItem></SelectContent></Select></div>
           </div>
+          <div className="grid grid-cols-2 gap-3">
+            <div className="grid gap-1.5"><Label>Automation Level</Label><Select value={automationLevel || '__none__'} onValueChange={v => setAutomationLevel(v === '__none__' ? '' : v)}><SelectTrigger><SelectValue /></SelectTrigger>
+              <SelectContent><SelectItem value="__none__">— Select —</SelectItem><SelectItem value="automatic">Automatic</SelectItem><SelectItem value="semi-automatic">Semi-Automatic</SelectItem><SelectItem value="manual">Manual</SelectItem></SelectContent></Select></div>
+            <div className="grid gap-1.5"><Label>Frequency</Label><Select value={frequency || '__none__'} onValueChange={v => setFrequency(v === '__none__' ? '' : v)}><SelectTrigger><SelectValue /></SelectTrigger>
+              <SelectContent><SelectItem value="__none__">— Select —</SelectItem><SelectItem value="multiple_daily">Multiple times/day</SelectItem><SelectItem value="daily">Daily</SelectItem><SelectItem value="weekly">Weekly</SelectItem><SelectItem value="monthly">Monthly</SelectItem><SelectItem value="quarterly">Quarterly</SelectItem><SelectItem value="yearly">Yearly</SelectItem></SelectContent></Select></div>
+          </div>
+          <div className="grid gap-1.5"><Label>Last Tested by Client</Label><Input value={lastTested} onChange={e => setLastTested(e.target.value)} placeholder="e.g. 2024-12-15 or N/A" /></div>
         </div>
         <DialogFooter><Button variant="outline" onClick={onClose}>Cancel</Button><Button onClick={submit}>Add</Button></DialogFooter>
       </DialogContent>
