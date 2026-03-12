@@ -5,11 +5,12 @@ import {
 } from '@/lib/api-questionnaire';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Input } from '@/components/ui/input';
 import { toast } from '@/hooks/use-toast';
-import { Search, Filter, ClipboardList, AlertTriangle } from 'lucide-react';
+import { Search, Filter, ClipboardList, AlertTriangle, CheckSquare, XSquare } from 'lucide-react';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 
@@ -66,6 +67,25 @@ export default function ProcessQuestionnaireConfig() {
     try {
       await updateQuestion(question.id, { step_types: updated });
       setQuestions(prev => prev.map(q => q.id === question.id ? { ...q, step_types: updated } : q));
+    } catch (err: any) {
+      toast({ title: 'Error', description: err.message, variant: 'destructive' });
+    }
+  };
+
+  const handleSelectAll = async (question: QuestionnaireQuestion) => {
+    const allTypes = STEP_TYPES.map(st => st.value);
+    try {
+      await updateQuestion(question.id, { step_types: allTypes });
+      setQuestions(prev => prev.map(q => q.id === question.id ? { ...q, step_types: allTypes } : q));
+    } catch (err: any) {
+      toast({ title: 'Error', description: err.message, variant: 'destructive' });
+    }
+  };
+
+  const handleUnselectAll = async (question: QuestionnaireQuestion) => {
+    try {
+      await updateQuestion(question.id, { step_types: [] });
+      setQuestions(prev => prev.map(q => q.id === question.id ? { ...q, step_types: [] } : q));
     } catch (err: any) {
       toast({ title: 'Error', description: err.message, variant: 'destructive' });
     }
@@ -152,6 +172,7 @@ export default function ProcessQuestionnaireConfig() {
                       {STEP_TYPES.map(st => (
                         <TableHead key={st.value} className="text-[10px] font-semibold uppercase w-24 text-center">{st.label}</TableHead>
                       ))}
+                      <TableHead className="text-[10px] font-semibold uppercase w-16 text-center">All</TableHead>
                       <TableHead className="text-[10px] font-semibold uppercase w-36 text-center">Importance</TableHead>
                     </TableRow>
                   </TableHeader>
@@ -176,6 +197,18 @@ export default function ProcessQuestionnaireConfig() {
                               />
                             </TableCell>
                           ))}
+                          <TableCell className="text-center">
+                            <div className="flex gap-0.5 justify-center">
+                              <Button variant="ghost" size="icon" className="h-5 w-5" title="Select All"
+                                onClick={() => handleSelectAll(q)} disabled={q.step_types.length === STEP_TYPES.length}>
+                                <CheckSquare className="h-3 w-3 text-emerald-600" />
+                              </Button>
+                              <Button variant="ghost" size="icon" className="h-5 w-5" title="Unselect All"
+                                onClick={() => handleUnselectAll(q)} disabled={q.step_types.length === 0}>
+                                <XSquare className="h-3 w-3 text-muted-foreground" />
+                              </Button>
+                            </div>
+                          </TableCell>
                           <TableCell className="text-center">
                             <Select
                               value={String(q.importance_level)}
