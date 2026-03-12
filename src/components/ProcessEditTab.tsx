@@ -346,7 +346,7 @@ export default function ProcessEditTab({ processId }: ProcessEditTabProps) {
       setQuestLinks(prev => {
         const existing = prev.find(l => l.question_id === questionId && l.step_id === stepId);
         if (existing) return prev.map(l => l.question_id === questionId && l.step_id === stepId ? { ...l, is_relevant: !current } : l);
-        return [...prev, { id: crypto.randomUUID(), process_id: processId, question_id: questionId, step_id: stepId, is_relevant: !current, created_at: new Date().toISOString() }];
+        return [...prev, { id: crypto.randomUUID(), process_id: processId, question_id: questionId, step_id: stepId, is_relevant: !current, answer: null, created_at: new Date().toISOString() }];
       });
     } catch (err: any) {
       toast({ title: 'Error saving', description: err.message, variant: 'destructive' });
