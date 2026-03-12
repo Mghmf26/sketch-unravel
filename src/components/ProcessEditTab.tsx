@@ -1023,7 +1023,21 @@ function AddStepDialog({ processId, onClose, onRefresh }: { processId: string; o
         <div className="grid gap-3 py-2">
           <div className="grid gap-1.5"><Label>Label *</Label><Input value={label} onChange={e => setLabel(e.target.value)} placeholder="e.g. Validate Payment" /></div>
           <div className="grid gap-1.5">
-            <Label>Type</Label>
+            <div className="flex items-center gap-2">
+              <Label>Type</Label>
+              <TooltipProvider>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <CircleHelp className="h-3.5 w-3.5 text-muted-foreground cursor-help" />
+                  </TooltipTrigger>
+                  <TooltipContent side="right" className="max-w-[320px] space-y-1.5">
+                    {Object.entries(typeDescriptions).map(([k, d]) => (
+                      <div key={k}><span className="font-semibold text-xs">{typeLabel[k]}:</span> <span className="text-xs text-muted-foreground">{d}</span></div>
+                    ))}
+                  </TooltipContent>
+                </Tooltip>
+              </TooltipProvider>
+            </div>
             <Select value={type} onValueChange={setType}>
               <SelectTrigger><SelectValue /></SelectTrigger>
               <SelectContent>
