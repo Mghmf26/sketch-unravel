@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback, useMemo } from 'react';
 import {
   Plus, Trash2, Download, Upload as UploadIcon, Search, Users, ChevronDown, ChevronRight,
-  Check, X, Link2, Filter, BarChart3, Briefcase, Building2, UserCheck, Copy
+  Check, X, Link2, Filter, BarChart3, Briefcase, Building2, UserCheck, Copy, Pencil
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
