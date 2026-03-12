@@ -361,6 +361,7 @@ export default function RaciManagementTab({ processId, processName }: RaciManage
         <TabsList className="h-8 bg-muted/50">
           <TabsTrigger value="table" className="text-xs h-7 px-3">Table View</TabsTrigger>
           <TabsTrigger value="matrix" className="text-xs h-7 px-3">RACI Matrix</TabsTrigger>
+          <TabsTrigger value="organigram" className="text-xs h-7 px-3">Organigram</TabsTrigger>
         </TabsList>
 
         <TabsContent value="table" className="mt-3">
