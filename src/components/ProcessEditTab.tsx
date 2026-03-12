@@ -212,7 +212,7 @@ export default function ProcessEditTab({ processId }: ProcessEditTabProps) {
       fetchProcessRaci(processId), fetchRaciStepLinks(processId),
       fetchStepApplications(processId),
       fetchMainframeFlows(processId),
-      fetchActiveQuestions(),
+      fetchQuestions(),
       fetchStepLinks(processId),
     ]);
     setSteps(s);
