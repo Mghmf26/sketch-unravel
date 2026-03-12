@@ -45,6 +45,7 @@ import {
   fetchActiveQuestions, fetchQuestions, fetchStepLinks, upsertStepLink, updateQuestion,
   type QuestionnaireQuestion, type QuestionnaireStepLink,
 } from '@/lib/api-questionnaire';
+import { exportRaciToExcel, parseRaciExcel, type ImportedRaciRow } from '@/lib/raci-excel';
 
 interface ProcessEditTabProps {
   processId: string;
