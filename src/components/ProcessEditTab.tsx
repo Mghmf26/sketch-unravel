@@ -1,8 +1,8 @@
-import { useState, useEffect, useCallback, useMemo } from 'react';
+import { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import {
   Plus, Trash2, ArrowRight, ShieldAlert, ShieldCheck, Scale,
   AlertCircle, Database, HelpCircle, ChevronDown, ChevronRight, Pencil, Users,
-  Check, X, Save, Monitor, Cpu, Link2, CircleHelp, ClipboardList
+  Check, X, Save, Monitor, Cpu, Link2, CircleHelp, ClipboardList, Download, Upload as UploadIcon
 } from 'lucide-react';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { usePermissions } from '@/hooks/usePermissions';
@@ -45,6 +45,7 @@ import {
   fetchActiveQuestions, fetchQuestions, fetchStepLinks, upsertStepLink, updateQuestion,
   type QuestionnaireQuestion, type QuestionnaireStepLink,
 } from '@/lib/api-questionnaire';
+import { exportRaciToExcel, parseRaciExcel, type ImportedRaciRow } from '@/lib/raci-excel';
 
 interface ProcessEditTabProps {
   processId: string;
@@ -92,6 +93,61 @@ function getTypeStyle(type: string) {
 }
 
 type AddDialog = 'step' | 'risk' | 'control' | 'regulation' | 'incident' | 'import' | 'mfq' | 'connection' | 'raci' | 'application' | null;
+
+// Multi-person RACI field with tags
+function RaciPeopleField({ label, color, value, onSave }: {
+  label: string; color: string; value: string; onSave: (v: string) => void;
+}) {
+  const [editing, setEditing] = useState(false);
+  const [draft, setDraft] = useState('');
+  const people = value ? value.split(',').map(p => p.trim()).filter(Boolean) : [];
+
+  const colorMap: Record<string, { bg: string; text: string }> = {
+    emerald: { bg: 'bg-emerald-100', text: 'text-emerald-700' },
+    blue: { bg: 'bg-blue-100', text: 'text-blue-700' },
+    amber: { bg: 'bg-amber-100', text: 'text-amber-700' },
+    purple: { bg: 'bg-purple-100', text: 'text-purple-700' },
+  };
+  const c = colorMap[color] || colorMap.emerald;
+
+  const addPerson = () => {
+    if (!draft.trim()) return;
+    const newPeople = [...people, draft.trim()];
+    onSave(newPeople.join(', '));
+    setDraft('');
+    setEditing(false);
+  };
+
+  const removePerson = (idx: number) => {
+    const newPeople = people.filter((_, i) => i !== idx);
+    onSave(newPeople.join(', '));
+  };
+
+  return (
+    <div className="flex items-center gap-1 flex-wrap">
+      <span className={`font-bold ${c.text} text-[10px]`}>{label}:</span>
+      {people.map((p, i) => (
+        <Badge key={i} className={`border-0 ${c.bg} ${c.text} text-[9px] gap-0.5 cursor-pointer hover:opacity-70`}
+          onClick={() => removePerson(i)}>
+          {p} ×
+        </Badge>
+      ))}
+      {editing ? (
+        <span className="inline-flex items-center gap-0.5">
+          <Input value={draft} onChange={e => setDraft(e.target.value)} className="h-5 text-[10px] w-24 px-1"
+            autoFocus placeholder="Name..."
+            onKeyDown={e => { if (e.key === 'Enter') addPerson(); if (e.key === 'Escape') setEditing(false); }} />
+          <Button variant="ghost" size="icon" className="h-4 w-4" onClick={addPerson}><Check className="h-2.5 w-2.5" /></Button>
+          <Button variant="ghost" size="icon" className="h-4 w-4" onClick={() => setEditing(false)}><X className="h-2.5 w-2.5" /></Button>
+        </span>
+      ) : (
+        <Button variant="ghost" size="icon" className="h-4 w-4" onClick={() => setEditing(true)} title={`Add ${label} person`}>
+          <Plus className="h-2.5 w-2.5 text-muted-foreground" />
+        </Button>
+      )}
+    </div>
+  );
+}
 
 // Inline editable text field
 function InlineEdit({ value, onSave, className = '', multiline = false }: {
@@ -1153,7 +1209,63 @@ export default function ProcessEditTab({ processId }: ProcessEditTabProps) {
         <Card>
           <CardHeader className="py-2 px-4">
             <SectionHeader icon={Users} title="RACI Roles / Functions" count={raciEntries.length} sectionKey="raci"
-              onAdd={() => setAddDialog('raci')} />
+              onAdd={() => setAddDialog('raci')}
+              extra={
+                <div className="flex gap-1">
+                  <Button size="sm" variant="ghost" className="h-6 text-[10px] text-muted-foreground gap-1" onClick={() => {
+                    exportRaciToExcel({
+                      processName: 'Process',
+                      raciEntries, raciStepLinks, steps,
+                    });
+                    toast({ title: 'RACI exported to Excel' });
+                  }}>
+                    <Download className="h-3 w-3" /> Export
+                  </Button>
+                  <label className="cursor-pointer">
+                    <Button size="sm" variant="ghost" className="h-6 text-[10px] text-muted-foreground gap-1 pointer-events-none" asChild>
+                      <span><UploadIcon className="h-3 w-3" /> Import</span>
+                    </Button>
+                    <input type="file" className="hidden" accept=".xlsx,.xls,.csv" onChange={async (e) => {
+                      const file = e.target.files?.[0];
+                      if (!file) return;
+                      try {
+                        const rows = await parseRaciExcel(file);
+                        if (rows.length === 0) { toast({ title: 'No data found', variant: 'destructive' }); return; }
+                        let imported = 0;
+                        for (const row of rows) {
+                          if (!row.role_name) continue;
+                          await insertProcessRaci({
+                            process_id: processId,
+                            role_name: row.role_name,
+                            job_title: row.job_title || null,
+                            job_description: row.job_description || null,
+                            function_dept: row.function_dept || null,
+                            sub_function: row.sub_function || null,
+                            seniority: row.seniority || null,
+                            tenure: row.tenure || null,
+                            grade: row.grade || null,
+                            fte: row.fte,
+                            salary: row.salary,
+                            manager_status: row.manager_status || null,
+                            span_of_control: row.span_of_control,
+                            responsible: row.responsible || null,
+                            accountable: row.accountable || null,
+                            consulted: row.consulted || null,
+                            informed: row.informed || null,
+                          });
+                          imported++;
+                        }
+                        toast({ title: `Imported ${imported} RACI roles` });
+                        reload();
+                      } catch (err: any) {
+                        toast({ title: 'Import failed', description: err.message, variant: 'destructive' });
+                      }
+                      e.target.value = '';
+                    }} />
+                  </label>
+                </div>
+              }
+            />
           </CardHeader>
           <CollapsibleContent>
             <CardContent className="p-0">
@@ -1175,12 +1287,68 @@ export default function ProcessEditTab({ processId }: ProcessEditTabProps) {
                             <Trash2 className="h-2.5 w-2.5" />
                           </Button>
                         </div>
-                        <div className="flex gap-3 flex-wrap text-[10px]">
-                          {raci.responsible && <Badge className="border-0 bg-emerald-100 text-emerald-700 text-[9px]">R: {raci.responsible}</Badge>}
-                          {raci.accountable && <Badge className="border-0 bg-blue-100 text-blue-700 text-[9px]">A: {raci.accountable}</Badge>}
-                          {raci.consulted && <Badge className="border-0 bg-amber-100 text-amber-700 text-[9px]">C: {raci.consulted}</Badge>}
-                          {raci.informed && <Badge className="border-0 bg-purple-100 text-purple-700 text-[9px]">I: {raci.informed}</Badge>}
+
+                        {/* Metadata fields */}
+                        <div className="grid grid-cols-2 md:grid-cols-4 gap-x-4 gap-y-1 text-[10px]">
+                          <div>
+                            <span className="text-muted-foreground font-medium">Job Title:</span>{' '}
+                            <InlineEdit value={raci.job_title || ''} onSave={v => updateProcessRaci(raci.id, { job_title: v } as any).then(reload)} className="text-[10px] font-medium" />
+                          </div>
+                          <div>
+                            <span className="text-muted-foreground font-medium">Function:</span>{' '}
+                            <InlineEdit value={raci.function_dept || ''} onSave={v => updateProcessRaci(raci.id, { function_dept: v } as any).then(reload)} className="text-[10px]" />
+                          </div>
+                          <div>
+                            <span className="text-muted-foreground font-medium">Sub Function:</span>{' '}
+                            <InlineEdit value={raci.sub_function || ''} onSave={v => updateProcessRaci(raci.id, { sub_function: v } as any).then(reload)} className="text-[10px]" />
+                          </div>
+                          <div>
+                            <span className="text-muted-foreground font-medium">Seniority:</span>{' '}
+                            <InlineEdit value={raci.seniority || ''} onSave={v => updateProcessRaci(raci.id, { seniority: v } as any).then(reload)} className="text-[10px]" />
+                          </div>
+                          <div>
+                            <span className="text-muted-foreground font-medium">Tenure:</span>{' '}
+                            <InlineEdit value={raci.tenure || ''} onSave={v => updateProcessRaci(raci.id, { tenure: v } as any).then(reload)} className="text-[10px]" />
+                          </div>
+                          <div>
+                            <span className="text-muted-foreground font-medium">Grade:</span>{' '}
+                            <InlineEdit value={raci.grade || ''} onSave={v => updateProcessRaci(raci.id, { grade: v } as any).then(reload)} className="text-[10px]" />
+                          </div>
+                          <div>
+                            <span className="text-muted-foreground font-medium">FTE:</span>{' '}
+                            <InlineEdit value={raci.fte != null ? String(raci.fte) : ''} onSave={v => updateProcessRaci(raci.id, { fte: parseFloat(v) || null } as any).then(reload)} className="text-[10px] font-medium" />
+                          </div>
+                          <div>
+                            <span className="text-muted-foreground font-medium">Salary:</span>{' '}
+                            <InlineEdit value={raci.salary != null ? String(raci.salary) : ''} onSave={v => updateProcessRaci(raci.id, { salary: parseFloat(v) || null } as any).then(reload)} className="text-[10px]" />
+                          </div>
+                          <div>
+                            <span className="text-muted-foreground font-medium">Manager:</span>{' '}
+                            <InlineSelect value={raci.manager_status || '__none__'}
+                              options={[{ value: '__none__', label: '— Select —' }, { value: 'yes', label: 'Yes' }, { value: 'no', label: 'No' }]}
+                              onSave={v => updateProcessRaci(raci.id, { manager_status: v === '__none__' ? null : v } as any).then(reload)} />
+                          </div>
+                          <div>
+                            <span className="text-muted-foreground font-medium">Span of Control:</span>{' '}
+                            <InlineEdit value={raci.span_of_control != null ? String(raci.span_of_control) : ''} onSave={v => updateProcessRaci(raci.id, { span_of_control: parseInt(v) || null } as any).then(reload)} className="text-[10px]" />
+                          </div>
                         </div>
+
+                        {raci.job_description && (
+                          <div className="text-[10px]">
+                            <span className="text-muted-foreground font-medium">Description:</span>{' '}
+                            <span className="text-muted-foreground italic">{raci.job_description}</span>
+                          </div>
+                        )}
+
+                        {/* RACI assignments with multi-person tags */}
+                        <div className="flex gap-3 flex-wrap text-[10px]">
+                          <RaciPeopleField label="R" color="emerald" value={raci.responsible || ''} onSave={v => updateProcessRaci(raci.id, { responsible: v || null }).then(reload)} />
+                          <RaciPeopleField label="A" color="blue" value={raci.accountable || ''} onSave={v => updateProcessRaci(raci.id, { accountable: v || null }).then(reload)} />
+                          <RaciPeopleField label="C" color="amber" value={raci.consulted || ''} onSave={v => updateProcessRaci(raci.id, { consulted: v || null }).then(reload)} />
+                          <RaciPeopleField label="I" color="purple" value={raci.informed || ''} onSave={v => updateProcessRaci(raci.id, { informed: v || null }).then(reload)} />
+                        </div>
+
                         {/* Linked Steps */}
                         <div className="mt-2">
                           <span className="text-[10px] font-semibold text-muted-foreground uppercase">Linked Steps:</span>
@@ -1561,30 +1729,138 @@ function AddMFQuestionDialog({ processId, onClose, onRefresh }: { processId: str
 
 function AddRaciDialog({ processId, onClose, onRefresh }: { processId: string; onClose: () => void; onRefresh: () => void }) {
   const [roleName, setRoleName] = useState('');
+  const [jobTitle, setJobTitle] = useState('');
+  const [jobDesc, setJobDesc] = useState('');
+  const [functionDept, setFunctionDept] = useState('');
+  const [subFunction, setSubFunction] = useState('');
+  const [seniority, setSeniority] = useState('');
+  const [tenure, setTenure] = useState('');
+  const [grade, setGrade] = useState('');
+  const [fte, setFte] = useState('');
+  const [salary, setSalary] = useState('');
+  const [managerStatus, setManagerStatus] = useState('');
+  const [spanOfControl, setSpanOfControl] = useState('');
   const [responsible, setResponsible] = useState('');
   const [accountable, setAccountable] = useState('');
   const [consulted, setConsulted] = useState('');
   const [informed, setInformed] = useState('');
   const submit = async () => {
-    if (!roleName.trim()) return;
+    if (!roleName.trim() || !jobTitle.trim() || !functionDept.trim()) {
+      toast({ title: 'Please fill in all mandatory fields (Role Name, Job Title, Function)', variant: 'destructive' });
+      return;
+    }
     await insertProcessRaci({
       process_id: processId, role_name: roleName.trim(),
+      job_title: jobTitle.trim(),
+      job_description: jobDesc.trim() || null,
+      function_dept: functionDept.trim(),
+      sub_function: subFunction.trim() || null,
+      seniority: seniority.trim() || null,
+      tenure: tenure.trim() || null,
+      grade: grade.trim() || null,
+      fte: fte ? parseFloat(fte) : null,
+      salary: salary ? parseFloat(salary) : null,
+      manager_status: managerStatus || null,
+      span_of_control: spanOfControl ? parseInt(spanOfControl) : null,
       responsible: responsible || null, accountable: accountable || null,
       consulted: consulted || null, informed: informed || null,
-    });
+    } as any);
     toast({ title: 'RACI role added to process' }); onRefresh(); onClose();
   };
   return (
     <Dialog open onOpenChange={onClose}>
-      <DialogContent className="sm:max-w-md">
+      <DialogContent className="sm:max-w-2xl max-h-[85vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>Add RACI Role / Function</DialogTitle>
-          <DialogDescription>Define a role at the business process level. You can then link it to specific steps.</DialogDescription>
+          <DialogDescription>Define a role at the business process level. Fields marked with * are mandatory.</DialogDescription>
         </DialogHeader>
         <div className="grid gap-3 py-2">
-          <div className="grid gap-1.5"><Label>Role / Function Name *</Label><Input value={roleName} onChange={e => setRoleName(e.target.value)} placeholder="e.g. Finance Manager, IT Operations" /></div>
+          <div className="grid gap-1.5">
+            <Label>Role / Function Name *</Label>
+            <Input value={roleName} onChange={e => setRoleName(e.target.value)} placeholder="e.g. Finance Manager, IT Operations" />
+          </div>
+
+          <Separator />
+          <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Role Details</p>
+
           <div className="grid grid-cols-2 gap-3">
-            <div className="grid gap-1.5"><Label>Responsible</Label><Input value={responsible} onChange={e => setResponsible(e.target.value)} placeholder="Person / team" /></div>
+            <div className="grid gap-1.5">
+              <Label>Job Title *</Label>
+              <Input value={jobTitle} onChange={e => setJobTitle(e.target.value)} placeholder="Standardized role title" />
+              <p className="text-[10px] text-muted-foreground">The standardized title representing the role analysed.</p>
+            </div>
+            <div className="grid gap-1.5">
+              <Label>Function (Department) *</Label>
+              <Input value={functionDept} onChange={e => setFunctionDept(e.target.value)} placeholder="e.g. Finance, IT, Operations" />
+              <p className="text-[10px] text-muted-foreground">Main business area where the role sits.</p>
+            </div>
+          </div>
+
+          <div className="grid gap-1.5">
+            <Label>Job Description</Label>
+            <Textarea value={jobDesc} onChange={e => setJobDesc(e.target.value)} placeholder="Short description summarizing the main purpose and key activities of the role" className="min-h-[60px]" />
+          </div>
+
+          <div className="grid grid-cols-2 gap-3">
+            <div className="grid gap-1.5">
+              <Label>Sub Function</Label>
+              <Input value={subFunction} onChange={e => setSubFunction(e.target.value)} placeholder="e.g. Accounts Payable, Network Security" />
+              <p className="text-[10px] text-muted-foreground">Specific specialization within the function.</p>
+            </div>
+            <div className="grid gap-1.5">
+              <Label>Seniority</Label>
+              <Input value={seniority} onChange={e => setSeniority(e.target.value)} placeholder="e.g. Senior, Junior, Lead" />
+              <p className="text-[10px] text-muted-foreground">Hierarchical level reflecting expertise and autonomy.</p>
+            </div>
+          </div>
+
+          <div className="grid grid-cols-3 gap-3">
+            <div className="grid gap-1.5">
+              <Label>Tenure</Label>
+              <Input value={tenure} onChange={e => setTenure(e.target.value)} placeholder="e.g. 5 years" />
+            </div>
+            <div className="grid gap-1.5">
+              <Label>Grade</Label>
+              <Input value={grade} onChange={e => setGrade(e.target.value)} placeholder="e.g. Band 7, Level 3" />
+              <p className="text-[10px] text-muted-foreground">Internal organizational level or band.</p>
+            </div>
+            <div className="grid gap-1.5">
+              <Label>FTE *</Label>
+              <Input type="number" step="0.1" value={fte} onChange={e => setFte(e.target.value)} placeholder="e.g. 12.5" />
+              <p className="text-[10px] text-muted-foreground">Total FTE volume for this role.</p>
+            </div>
+          </div>
+
+          <div className="grid grid-cols-3 gap-3">
+            <div className="grid gap-1.5">
+              <Label>Salary</Label>
+              <Input type="number" value={salary} onChange={e => setSalary(e.target.value)} placeholder="Annual base salary" />
+              <p className="text-[10px] text-muted-foreground">Average annual base salary.</p>
+            </div>
+            <div className="grid gap-1.5">
+              <Label>Manager Status</Label>
+              <Select value={managerStatus || '__none__'} onValueChange={v => setManagerStatus(v === '__none__' ? '' : v)}>
+                <SelectTrigger><SelectValue placeholder="Select..." /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="__none__">— Select —</SelectItem>
+                  <SelectItem value="yes">Yes</SelectItem>
+                  <SelectItem value="no">No</SelectItem>
+                </SelectContent>
+              </Select>
+              <p className="text-[10px] text-muted-foreground">Includes managerial duties?</p>
+            </div>
+            <div className="grid gap-1.5">
+              <Label>Span of Control</Label>
+              <Input type="number" value={spanOfControl} onChange={e => setSpanOfControl(e.target.value)} placeholder="Direct reports" />
+              <p className="text-[10px] text-muted-foreground">Avg. direct reports per manager.</p>
+            </div>
+          </div>
+
+          <Separator />
+          <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">RACI Assignments (comma-separate for multiple people)</p>
+
+          <div className="grid grid-cols-2 gap-3">
+            <div className="grid gap-1.5"><Label>Responsible</Label><Input value={responsible} onChange={e => setResponsible(e.target.value)} placeholder="e.g. John Doe, Jane Smith" /></div>
             <div className="grid gap-1.5"><Label>Accountable</Label><Input value={accountable} onChange={e => setAccountable(e.target.value)} placeholder="Person / team" /></div>
           </div>
           <div className="grid grid-cols-2 gap-3">
