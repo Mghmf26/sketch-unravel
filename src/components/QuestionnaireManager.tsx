@@ -169,8 +169,6 @@ export default function QuestionnaireManager() {
                     <TableRow className="bg-muted/30">
                       <TableHead className="text-[10px] font-semibold uppercase w-12">#</TableHead>
                       <TableHead className="text-[10px] font-semibold uppercase">Question</TableHead>
-                      <TableHead className="text-[10px] font-semibold uppercase w-36">Step Types</TableHead>
-                      <TableHead className="text-[10px] font-semibold uppercase w-20 text-center">Level</TableHead>
                       <TableHead className="text-[10px] font-semibold uppercase w-16 text-center">Active</TableHead>
                       <TableHead className="text-[10px] font-semibold uppercase w-20 text-center">Actions</TableHead>
                     </TableRow>
@@ -185,14 +183,6 @@ export default function QuestionnaireManager() {
                             <p className="text-[11px] text-muted-foreground mt-0.5 italic">↳ {q.observation_text}</p>
                           )}
                         </TableCell>
-                        <TableCell>
-                          <div className="flex flex-wrap gap-1">
-                            {(q.step_types || []).map(t => (
-                              <Badge key={t} variant="secondary" className="text-[9px] capitalize">{t}</Badge>
-                            ))}
-                          </div>
-                        </TableCell>
-                        <TableCell className="text-center">{levelBadge(q.importance_level)}</TableCell>
                         <TableCell className="text-center">
                           <Badge variant="outline" className={`text-[9px] ${q.is_active ? 'border-emerald-300 text-emerald-700' : 'border-destructive/30 text-destructive'}`}>
                             {q.is_active ? 'Yes' : 'No'}
