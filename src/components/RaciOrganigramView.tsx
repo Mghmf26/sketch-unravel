@@ -65,6 +65,11 @@ function OrgNode({ data }: { data: any }) {
               </p>
             )}
           </div>
+          <Button variant="ghost" size="icon" className="h-5 w-5 shrink-0 opacity-50 hover:opacity-100"
+            onClick={(e) => { e.stopPropagation(); data.onEdit?.(data.raciId); }}
+            title="Edit role">
+            <Pencil className="h-3 w-3" />
+          </Button>
         </div>
       </div>
 
