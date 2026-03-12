@@ -268,10 +268,14 @@ export default function ProcessEditTab({ processId }: ProcessEditTabProps) {
     return m;
   }, [questLinks]);
 
+  const inScopeSteps = useMemo(() => steps.filter(s => s.type === 'in-scope'), [steps]);
+
   const getStepQuestions = (stepId: string) => {
     const step = steps.find(s => s.id === stepId);
     if (!step) return [];
     return questQuestions.filter(q => {
+      // Hide L3 questions
+      if (q.importance_level === 3) return false;
       if (q.step_types.length === 0) return true;
       if (!step.step_type) return true;
       return q.step_types.includes(step.step_type);
@@ -294,6 +298,21 @@ export default function ProcessEditTab({ processId }: ProcessEditTabProps) {
       setSavingQuestLink(null);
     }
   };
+
+  const handleQuestionConfigChange = async (questionId: string, updates: Partial<QuestionnaireQuestion>) => {
+    try {
+      await updateQuestion(questionId, updates);
+      setQuestQuestions(prev => prev.map(q => q.id === questionId ? { ...q, ...updates } : q));
+    } catch (err: any) {
+      toast({ title: 'Error updating question', description: err.message, variant: 'destructive' });
+    }
+  };
+
+  const toggleQuestVisible = (stepId: string) =>
+    setQuestVisible(prev => ({ ...prev, [stepId]: !prev[stepId] }));
+
+  const toggleQuestSection = (key: string) =>
+    setQuestSectionsOpen(prev => ({ ...prev, [key]: prev[key] === undefined ? false : !prev[key] }));
 
   // Get step-related data
   const getStepRisks = (stepId: string) => risks.filter(r => r.step_id === stepId);
