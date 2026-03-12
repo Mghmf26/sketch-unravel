@@ -469,7 +469,7 @@ export default function Clients() {
                   <Input id="address" placeholder="123 Main St, City" value={form.address} onChange={(e) => setForm({ ...form, address: e.target.value })} />
                 </div>
                 <div className="grid gap-1.5">
-                  <Label htmlFor="notes">Notes</Label>
+                  <Label htmlFor="notes">Notes *</Label>
                   <Textarea id="notes" placeholder="Additional notes..." value={form.notes} onChange={(e) => setForm({ ...form, notes: e.target.value })} rows={2} />
                 </div>
               </div>
