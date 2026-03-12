@@ -21,6 +21,7 @@ export interface QuestionnaireStepLink {
   question_id: string;
   step_id: string;
   is_relevant: boolean;
+  answer: string | null;
   created_at: string;
 }
 
