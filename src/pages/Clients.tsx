@@ -456,7 +456,7 @@ export default function Clients() {
                 </div>
                 <div className="grid grid-cols-2 gap-4">
                   <div className="grid gap-1.5">
-                    <Label htmlFor="contact_email">Email</Label>
+                    <Label htmlFor="contact_email">Email *</Label>
                     <Input id="contact_email" type="email" placeholder="john@acme.com" value={form.contact_email} onChange={(e) => setForm({ ...form, contact_email: e.target.value })} />
                   </div>
                   <div className="grid gap-1.5">
