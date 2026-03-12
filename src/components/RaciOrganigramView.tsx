@@ -26,7 +26,9 @@ import EditRaciDialog from '@/components/EditRaciDialog';
 interface OrganigramProps {
   raciEntries: ProcessRaci[];
   steps: ProcessStep[];
+  processId: string;
   onUpdateRaci?: (id: string, field: string, value: any) => Promise<void>;
+  onRefresh?: () => void;
 }
 
 // ── Custom Org Node ──
