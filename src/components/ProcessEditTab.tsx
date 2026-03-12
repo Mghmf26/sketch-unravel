@@ -94,6 +94,61 @@ function getTypeStyle(type: string) {
 
 type AddDialog = 'step' | 'risk' | 'control' | 'regulation' | 'incident' | 'import' | 'mfq' | 'connection' | 'raci' | 'application' | null;
 
+// Multi-person RACI field with tags
+function RaciPeopleField({ label, color, value, onSave }: {
+  label: string; color: string; value: string; onSave: (v: string) => void;
+}) {
+  const [editing, setEditing] = useState(false);
+  const [draft, setDraft] = useState('');
+  const people = value ? value.split(',').map(p => p.trim()).filter(Boolean) : [];
+
+  const colorMap: Record<string, { bg: string; text: string }> = {
+    emerald: { bg: 'bg-emerald-100', text: 'text-emerald-700' },
+    blue: { bg: 'bg-blue-100', text: 'text-blue-700' },
+    amber: { bg: 'bg-amber-100', text: 'text-amber-700' },
+    purple: { bg: 'bg-purple-100', text: 'text-purple-700' },
+  };
+  const c = colorMap[color] || colorMap.emerald;
+
+  const addPerson = () => {
+    if (!draft.trim()) return;
+    const newPeople = [...people, draft.trim()];
+    onSave(newPeople.join(', '));
+    setDraft('');
+    setEditing(false);
+  };
+
+  const removePerson = (idx: number) => {
+    const newPeople = people.filter((_, i) => i !== idx);
+    onSave(newPeople.join(', '));
+  };
+
+  return (
+    <div className="flex items-center gap-1 flex-wrap">
+      <span className={`font-bold ${c.text} text-[10px]`}>{label}:</span>
+      {people.map((p, i) => (
+        <Badge key={i} className={`border-0 ${c.bg} ${c.text} text-[9px] gap-0.5 cursor-pointer hover:opacity-70`}
+          onClick={() => removePerson(i)}>
+          {p} ×
+        </Badge>
+      ))}
+      {editing ? (
+        <span className="inline-flex items-center gap-0.5">
+          <Input value={draft} onChange={e => setDraft(e.target.value)} className="h-5 text-[10px] w-24 px-1"
+            autoFocus placeholder="Name..."
+            onKeyDown={e => { if (e.key === 'Enter') addPerson(); if (e.key === 'Escape') setEditing(false); }} />
+          <Button variant="ghost" size="icon" className="h-4 w-4" onClick={addPerson}><Check className="h-2.5 w-2.5" /></Button>
+          <Button variant="ghost" size="icon" className="h-4 w-4" onClick={() => setEditing(false)}><X className="h-2.5 w-2.5" /></Button>
+        </span>
+      ) : (
+        <Button variant="ghost" size="icon" className="h-4 w-4" onClick={() => setEditing(true)} title={`Add ${label} person`}>
+          <Plus className="h-2.5 w-2.5 text-muted-foreground" />
+        </Button>
+      )}
+    </div>
+  );
+}
+
 // Inline editable text field
 function InlineEdit({ value, onSave, className = '', multiline = false }: {
   value: string; onSave: (v: string) => void; className?: string; multiline?: boolean;
