@@ -800,14 +800,19 @@ export default function ProcessEditTab({ processId }: ProcessEditTabProps) {
                           })()}
 
                           {/* Risks & Controls */}
-                          {isSectionVisible('risks') && canAccessModule('risks') && (
+                          {canAccessModule('risks') && (
                             <div className="space-y-2">
                               <div className="flex items-center gap-1.5 justify-between">
-                                <div className="flex items-center gap-1.5">
+                                <div className="flex items-center gap-1.5 cursor-pointer" onClick={() => toggleStepSection(step.id, 'risks')}>
+                                  {isStepSectionVisible(step.id, 'risks') ? <ChevronDown className="h-3 w-3 text-orange-500" /> : <ChevronRight className="h-3 w-3 text-orange-500" />}
                                   <ShieldAlert className="h-3 w-3 text-orange-500" />
                                   <span className="text-[11px] font-semibold text-orange-700">Risks ({stepRisks.length})</span>
                                 </div>
-                                <Button variant="ghost" size="sm" className="h-5 text-[10px] text-orange-600" onClick={() => { setContextStepId(step.id); setAddDialog('risk'); }}>
+                                <div className="flex items-center gap-1">
+                                  <Button variant="ghost" size="sm" className="h-5 text-[10px] text-muted-foreground" onClick={() => toggleStepSection(step.id, 'risks')}>
+                                    {isStepSectionVisible(step.id, 'risks') ? 'Hide' : 'Show'}
+                                  </Button>
+                                  <Button variant="ghost" size="sm" className="h-5 text-[10px] text-orange-600" onClick={() => { setContextStepId(step.id); setAddDialog('risk'); }}>
                                   <Plus className="h-3 w-3 mr-0.5" /> Add
                                 </Button>
                               </div>
