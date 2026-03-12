@@ -6,12 +6,13 @@ import { PageHeader } from '@/components/PageHeader';
 
 const RISK_COLUMNS: ColumnDef[] = [
   { key: 'client', label: 'Client', defaultVisible: true, minWidth: 80 },
-  { key: 'process', label: 'Process', defaultVisible: true, minWidth: 100 },
-  { key: 'step', label: 'Step', defaultVisible: true, minWidth: 80 },
   { key: 'description', label: 'Risk', defaultVisible: true, minWidth: 120 },
   { key: 'likelihood', label: 'Likelihood', defaultVisible: true, minWidth: 60 },
   { key: 'impact', label: 'Impact', defaultVisible: true, minWidth: 60 },
-  { key: 'controls', label: 'Controls', defaultVisible: true, minWidth: 60 },
+  { key: 'category', label: 'Category', defaultVisible: true, minWidth: 80 },
+  { key: 'controls', label: '# Controls', defaultVisible: true, minWidth: 60 },
+  { key: 'process', label: '# Process', defaultVisible: true, minWidth: 80 },
+  { key: 'step', label: '# Step Links', defaultVisible: true, minWidth: 80 },
   { key: 'actions', label: 'Actions', defaultVisible: true, minWidth: 60 },
 ];
 import { ArrowLeft, ShieldAlert, Shield, AlertTriangle, Plus, Trash2, Pencil, Search, X } from 'lucide-react';
