@@ -582,10 +582,14 @@ export default function RaciManagementTab({ processId, processName }: RaciManage
         </TabsContent>
       </Tabs>
 
-      {/* Add Dialog */}
-      {addDialogOpen && (
-        <AddRaciRoleDialog processId={processId} onClose={() => setAddDialogOpen(false)} onRefresh={reload} />
-      )}
+      {/* Add/Edit Dialog */}
+      <EditRaciDialog
+        open={addDialogOpen || editDialogOpen}
+        onClose={() => { setAddDialogOpen(false); setEditDialogOpen(false); setEditEntry(null); }}
+        onRefresh={reload}
+        entry={editEntry}
+        processId={processId}
+      />
       {/* Import from Process Dialog */}
       {importProcessDialogOpen && (
         <ImportFromProcessDialog processId={processId} onClose={() => setImportProcessDialogOpen(false)} onRefresh={reload} />
