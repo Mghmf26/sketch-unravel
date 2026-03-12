@@ -495,7 +495,7 @@ export default function Clients() {
                     </Select>
                   </div>
                   <div className="grid gap-1.5">
-                    <Label htmlFor="wbs_code">WBS Code</Label>
+                    <Label htmlFor="wbs_code">WBS Code *</Label>
                     <Input id="wbs_code" placeholder="e.g. WBS-2026-001" value={form.wbs_code} onChange={(e) => setForm({ ...form, wbs_code: e.target.value })} />
                   </div>
                 </div>
