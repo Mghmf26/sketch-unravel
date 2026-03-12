@@ -562,6 +562,14 @@ export default function RaciManagementTab({ processId, processName }: RaciManage
         <TabsContent value="matrix" className="mt-3">
           <RaciMatrixView raciEntries={filtered} steps={inScopeSteps} raciStepLinks={raciStepLinks} />
         </TabsContent>
+
+        <TabsContent value="organigram" className="mt-3">
+          <RaciOrganigramView
+            raciEntries={filtered}
+            steps={inScopeSteps}
+            onUpdateRaci={handleUpdate}
+          />
+        </TabsContent>
       </Tabs>
 
       {/* Add Dialog */}
