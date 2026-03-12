@@ -276,6 +276,24 @@ export default function ProcessEditTab({ processId }: ProcessEditTabProps) {
   const [contextScreenId, setContextScreenId] = useState<string | null>(null);
   const [expandedSteps, setExpandedSteps] = useState<Set<string>>(new Set());
 
+  // Section visibility toggles for expanded steps
+  const [hiddenSections, setHiddenSections] = useState<Record<string, boolean>>(() => {
+    try {
+      const stored = localStorage.getItem(`edit-data-hidden-sections-${processId}`);
+      return stored ? JSON.parse(stored) : {};
+    } catch { return {}; }
+  });
+
+  const toggleSectionVisibility = (key: string) => {
+    setHiddenSections(prev => {
+      const next = { ...prev, [key]: !prev[key] };
+      localStorage.setItem(`edit-data-hidden-sections-${processId}`, JSON.stringify(next));
+      return next;
+    });
+  };
+
+  const isSectionVisible = (key: string) => !hiddenSections[key];
+
   // Global sections
   const [openSections, setOpenSections] = useState<Record<string, boolean>>({
     steps: true, connections: true, imports: true, mfq: true, raci: true,
@@ -580,8 +598,31 @@ export default function ProcessEditTab({ processId }: ProcessEditTabProps) {
                           </div>
                           )}
 
+                          {/* Section visibility toggles */}
+                          <div className="flex items-center gap-1 flex-wrap py-1">
+                            <span className="text-[10px] text-muted-foreground font-medium mr-1">Show:</span>
+                            {[
+                              { key: 'questionnaire', label: 'Questionnaire', color: 'text-indigo-600 border-indigo-300' },
+                              { key: 'risks', label: 'Risks', color: 'text-orange-600 border-orange-300' },
+                              { key: 'regulations', label: 'Regulations', color: 'text-purple-600 border-purple-300' },
+                              { key: 'incidents', label: 'Incidents', color: 'text-red-600 border-red-300' },
+                              { key: 'raci', label: 'RACI', color: 'text-cyan-600 border-cyan-300' },
+                              { key: 'applications', label: 'Scr./Apps', color: 'text-sky-600 border-sky-300' },
+                            ].map(sec => (
+                              <Button
+                                key={sec.key}
+                                variant={isSectionVisible(sec.key) ? 'outline' : 'ghost'}
+                                size="sm"
+                                className={`h-5 text-[9px] px-2 ${isSectionVisible(sec.key) ? sec.color : 'text-muted-foreground opacity-50'}`}
+                                onClick={() => toggleSectionVisibility(sec.key)}
+                              >
+                                {isSectionVisible(sec.key) ? '✓' : '○'} {sec.label}
+                              </Button>
+                            ))}
+                          </div>
+
                           {/* Business Process Questionnaire — after step type, before risks */}
-                          {step.type === 'in-scope' && (() => {
+                          {isSectionVisible('questionnaire') && step.type === 'in-scope' && (() => {
                             const stepQs = getStepQuestions(step.id);
                             const relevantCount = stepQs.filter(q => questLinkMap[`${q.id}:${step.id}`]).length;
                             const sectionNums = [...new Set(stepQs.map(q => q.section_number))].sort();
@@ -778,7 +819,7 @@ export default function ProcessEditTab({ processId }: ProcessEditTabProps) {
                           })()}
 
                           {/* Risks & Controls */}
-                          {canAccessModule('risks') && (
+                          {isSectionVisible('risks') && canAccessModule('risks') && (
                             <div className="space-y-2">
                               <div className="flex items-center gap-1.5 justify-between">
                                 <div className="flex items-center gap-1.5">
@@ -857,7 +898,7 @@ export default function ProcessEditTab({ processId }: ProcessEditTabProps) {
                           )}
 
                           {/* Regulations */}
-                          {canAccessModule('regulations') && (
+                          {isSectionVisible('regulations') && canAccessModule('regulations') && (
                             <div className="space-y-2">
                               <div className="flex items-center gap-1.5 justify-between">
                                 <div className="flex items-center gap-1.5">
@@ -888,7 +929,7 @@ export default function ProcessEditTab({ processId }: ProcessEditTabProps) {
                           )}
 
                           {/* Incidents */}
-                          {canAccessModule('incidents') && (
+                          {isSectionVisible('incidents') && canAccessModule('incidents') && (
                             <div className="space-y-2">
                               <div className="flex items-center gap-1.5 justify-between">
                                 <div className="flex items-center gap-1.5">
@@ -936,7 +977,7 @@ export default function ProcessEditTab({ processId }: ProcessEditTabProps) {
                           )}
 
                           {/* RACI (inherited from process level) */}
-                          {canAccessModule('raci') && (() => {
+                          {isSectionVisible('raci') && canAccessModule('raci') && (() => {
                             const stepLinks = getStepRaciLinks(step.id);
                             const linkedRacis = stepLinks.map(l => raciEntries.find(r => r.id === l.raci_id)).filter(Boolean) as ProcessRaci[];
                             return linkedRacis.length > 0 ? (
@@ -961,6 +1002,7 @@ export default function ProcessEditTab({ processId }: ProcessEditTabProps) {
                           })()}
 
                           {/* Applications */}
+                          {isSectionVisible('applications') && (
                           <div className="space-y-2">
                             <div className="flex items-center gap-1.5 justify-between">
                               <div className="flex items-center gap-1.5">
@@ -1024,6 +1066,7 @@ export default function ProcessEditTab({ processId }: ProcessEditTabProps) {
                             ))}
                             {stepApps.length === 0 && <p className="text-[10px] text-muted-foreground italic ml-4">No applications</p>}
                           </div>
+                          )}
                         </div>
                       )}
                     </div>
