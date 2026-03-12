@@ -213,8 +213,44 @@ function TypeBadge({ type }: { type: string }) {
     </span>
   );
 }
+// Debounced answer field for questionnaire
+function AnswerField({ value, onSave }: { value: string; onSave: (v: string) => void }) {
+  const [draft, setDraft] = useState(value);
+  const [dirty, setDirty] = useState(false);
+  const timerRef = useRef<ReturnType<typeof setTimeout>>();
 
-export default function ProcessEditTab({ processId }: ProcessEditTabProps) {
+  useEffect(() => { setDraft(value); setDirty(false); }, [value]);
+
+  const handleChange = (v: string) => {
+    setDraft(v);
+    setDirty(true);
+    if (timerRef.current) clearTimeout(timerRef.current);
+    timerRef.current = setTimeout(() => { onSave(v); setDirty(false); }, 1200);
+  };
+
+  const handleBlur = () => {
+    if (dirty) {
+      if (timerRef.current) clearTimeout(timerRef.current);
+      onSave(draft);
+      setDirty(false);
+    }
+  };
+
+  return (
+    <div className="relative">
+      <Textarea
+        value={draft}
+        onChange={e => handleChange(e.target.value)}
+        onBlur={handleBlur}
+        placeholder="Type your answer here..."
+        className="text-[11px] min-h-[60px] resize-y"
+      />
+      {dirty && <span className="absolute top-1 right-2 text-[8px] text-amber-500">Saving...</span>}
+    </div>
+  );
+}
+
+
   const { canAccessModule } = usePermissions();
   const [steps, setSteps] = useState<ProcessStep[]>([]);
   const [connections, setConnections] = useState<StepConnection[]>([]);
