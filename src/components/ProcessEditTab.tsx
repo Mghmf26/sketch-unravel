@@ -1661,28 +1661,73 @@ function AddConnectionDialog({ processId, steps, onClose, onRefresh }: { process
 }
 
 function AddRiskDialog({ processId, stepId, onClose, onRefresh }: { processId: string; stepId: string; onClose: () => void; onRefresh: () => void }) {
+  const [mode, setMode] = useState<'new' | 'existing'>('new');
   const [desc, setDesc] = useState('');
   const [likelihood, setLikelihood] = useState('medium');
   const [impact, setImpact] = useState('medium');
+  const [allRisks, setAllRisks] = useState<Risk[]>([]);
+  const [search, setSearch] = useState('');
+  const [loading, setLoading] = useState(false);
+
+  useEffect(() => {
+    if (mode === 'existing') {
+      setLoading(true);
+      fetchRisks().then(r => { setAllRisks(r); setLoading(false); });
+    }
+  }, [mode]);
+
   const submit = async () => {
     if (!desc.trim()) return;
     await insertRisk({ process_id: processId, step_id: stepId, description: desc.trim(), likelihood, impact });
     toast({ title: 'Risk added' }); onRefresh(); onClose();
   };
+
+  const selectExisting = async (risk: Risk) => {
+    await insertRisk({ process_id: processId, step_id: stepId, description: risk.description, likelihood: risk.likelihood, impact: risk.impact });
+    toast({ title: 'Risk added from existing' }); onRefresh(); onClose();
+  };
+
+  const filtered = allRisks.filter(r => r.description.toLowerCase().includes(search.toLowerCase()));
+
   return (
     <Dialog open onOpenChange={onClose}>
       <DialogContent className="sm:max-w-md">
         <DialogHeader><DialogTitle>Add Risk</DialogTitle></DialogHeader>
-        <div className="grid gap-3 py-2">
-          <div className="grid gap-1.5"><Label>Description *</Label><Textarea value={desc} onChange={e => setDesc(e.target.value)} /></div>
-          <div className="grid grid-cols-2 gap-3">
-            <div className="grid gap-1.5"><Label>Likelihood</Label><Select value={likelihood} onValueChange={setLikelihood}><SelectTrigger><SelectValue /></SelectTrigger>
-              <SelectContent><SelectItem value="low">Low</SelectItem><SelectItem value="medium">Medium</SelectItem><SelectItem value="high">High</SelectItem></SelectContent></Select></div>
-            <div className="grid gap-1.5"><Label>Impact</Label><Select value={impact} onValueChange={setImpact}><SelectTrigger><SelectValue /></SelectTrigger>
-              <SelectContent><SelectItem value="low">Low</SelectItem><SelectItem value="medium">Medium</SelectItem><SelectItem value="high">High</SelectItem></SelectContent></Select></div>
-          </div>
+        <div className="flex gap-1 mb-2">
+          <Button size="sm" variant={mode === 'new' ? 'default' : 'outline'} className="h-7 text-xs" onClick={() => setMode('new')}>Create New</Button>
+          <Button size="sm" variant={mode === 'existing' ? 'default' : 'outline'} className="h-7 text-xs" onClick={() => setMode('existing')}>Select Existing</Button>
         </div>
-        <DialogFooter><Button variant="outline" onClick={onClose}>Cancel</Button><Button onClick={submit}>Add</Button></DialogFooter>
+        {mode === 'new' ? (
+          <div className="grid gap-3 py-2">
+            <div className="grid gap-1.5"><Label>Description *</Label><Textarea value={desc} onChange={e => setDesc(e.target.value)} /></div>
+            <div className="grid grid-cols-2 gap-3">
+              <div className="grid gap-1.5"><Label>Likelihood</Label><Select value={likelihood} onValueChange={setLikelihood}><SelectTrigger><SelectValue /></SelectTrigger>
+                <SelectContent><SelectItem value="low">Low</SelectItem><SelectItem value="medium">Medium</SelectItem><SelectItem value="high">High</SelectItem></SelectContent></Select></div>
+              <div className="grid gap-1.5"><Label>Impact</Label><Select value={impact} onValueChange={setImpact}><SelectTrigger><SelectValue /></SelectTrigger>
+                <SelectContent><SelectItem value="low">Low</SelectItem><SelectItem value="medium">Medium</SelectItem><SelectItem value="high">High</SelectItem></SelectContent></Select></div>
+            </div>
+            <DialogFooter><Button variant="outline" onClick={onClose}>Cancel</Button><Button onClick={submit}>Add</Button></DialogFooter>
+          </div>
+        ) : (
+          <div className="space-y-2">
+            <Input placeholder="Search risks..." value={search} onChange={e => setSearch(e.target.value)} className="h-8 text-sm" />
+            <div className="max-h-[300px] overflow-y-auto space-y-1">
+              {loading ? <p className="text-xs text-muted-foreground text-center py-4">Loading...</p> :
+                filtered.length === 0 ? <p className="text-xs text-muted-foreground text-center py-4">No risks found</p> :
+                filtered.map(r => (
+                  <div key={r.id} className="flex items-center justify-between p-2 rounded border hover:bg-muted/50 cursor-pointer group" onClick={() => selectExisting(r)}>
+                    <div className="flex-1 min-w-0">
+                      <p className="text-xs truncate">{r.description}</p>
+                      <p className="text-[10px] text-muted-foreground">Likelihood: {r.likelihood} · Impact: {r.impact}</p>
+                    </div>
+                    <Button size="sm" variant="ghost" className="h-6 text-[10px] opacity-0 group-hover:opacity-100 shrink-0">Select</Button>
+                  </div>
+                ))
+              }
+            </div>
+            <DialogFooter><Button variant="outline" onClick={onClose}>Cancel</Button></DialogFooter>
+          </div>
+        )}
       </DialogContent>
     </Dialog>
   );
