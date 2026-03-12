@@ -42,7 +42,7 @@ import { fetchStepApplications, insertStepApplication, updateStepApplication, de
 import { fetchMainframeFlows, fetchMFFlowNodes, type MainframeFlow, type MFFlowNode, MF_NODE_TYPE_META } from '@/lib/api-mainframe-flows';
 import { StepTypeBadge, STEP_TYPE_OPTIONS } from '@/components/StepTypeBadge';
 import {
-  fetchActiveQuestions, fetchQuestions, fetchStepLinks, upsertStepLink, updateQuestion,
+  fetchActiveQuestions, fetchQuestions, fetchStepLinks, upsertStepLink, updateStepLinkAnswer, updateQuestion,
   type QuestionnaireQuestion, type QuestionnaireStepLink,
 } from '@/lib/api-questionnaire';
 import { exportRaciToExcel, parseRaciExcel, type ImportedRaciRow } from '@/lib/raci-excel';
