@@ -811,3 +811,140 @@ function AddRaciRoleDialog({ processId, onClose, onRefresh }: { processId: strin
     </Dialog>
   );
 }
+
+// Import RACI from another process (clone/copy approach)
+function ImportFromProcessDialog({ processId, onClose, onRefresh }: { processId: string; onClose: () => void; onRefresh: () => void }) {
+  const [processes, setProcesses] = useState<{ id: string; process_name: string }[]>([]);
+  const [selectedProcessId, setSelectedProcessId] = useState('');
+  const [previewRaci, setPreviewRaci] = useState<ProcessRaci[]>([]);
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+  const [loading, setLoading] = useState(false);
+  const [importing, setImporting] = useState(false);
+
+  useEffect(() => {
+    (async () => {
+      const { data } = await (await import('@/integrations/supabase/client')).supabase
+        .from('business_processes').select('id, process_name').neq('id', processId).order('process_name');
+      setProcesses(data || []);
+    })();
+  }, [processId]);
+
+  const loadPreview = async (pid: string) => {
+    setSelectedProcessId(pid);
+    setLoading(true);
+    try {
+      const entries = await fetchProcessRaci(pid);
+      setPreviewRaci(entries);
+      setSelectedIds(new Set(entries.map(e => e.id)));
+    } finally { setLoading(false); }
+  };
+
+  const toggleId = (id: string) => {
+    setSelectedIds(prev => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id); else next.add(id);
+      return next;
+    });
+  };
+
+  const handleImport = async () => {
+    const toImport = previewRaci.filter(r => selectedIds.has(r.id));
+    if (toImport.length === 0) return;
+    setImporting(true);
+    try {
+      for (const r of toImport) {
+        await insertProcessRaci({
+          process_id: processId,
+          role_name: r.role_name,
+          job_title: r.job_title,
+          job_description: r.job_description,
+          function_dept: r.function_dept,
+          sub_function: r.sub_function,
+          seniority: r.seniority,
+          tenure: r.tenure,
+          grade: r.grade,
+          fte: r.fte,
+          salary: r.salary,
+          manager_status: r.manager_status,
+          span_of_control: r.span_of_control,
+          responsible: r.responsible,
+          accountable: r.accountable,
+          consulted: r.consulted,
+          informed: r.informed,
+        } as any);
+      }
+      toast({ title: `Cloned ${toImport.length} RACI roles from another process` });
+      onRefresh();
+      onClose();
+    } catch (err: any) {
+      toast({ title: 'Clone failed', description: err.message, variant: 'destructive' });
+    } finally { setImporting(false); }
+  };
+
+  return (
+    <Dialog open onOpenChange={onClose}>
+      <DialogContent className="sm:max-w-2xl max-h-[85vh] overflow-y-auto">
+        <DialogHeader>
+          <DialogTitle className="flex items-center gap-2"><Copy className="h-5 w-5 text-primary" /> Clone RACI from Another Process</DialogTitle>
+          <DialogDescription>Select a process to clone its RACI roles into this process. Each role will be copied independently.</DialogDescription>
+        </DialogHeader>
+        <div className="space-y-4 py-2">
+          <div className="grid gap-1.5">
+            <Label className="text-xs font-semibold">Source Process</Label>
+            <Select value={selectedProcessId} onValueChange={loadPreview}>
+              <SelectTrigger className="h-9"><SelectValue placeholder="Select a process..." /></SelectTrigger>
+              <SelectContent>
+                {processes.map(p => <SelectItem key={p.id} value={p.id}>{p.process_name}</SelectItem>)}
+              </SelectContent>
+            </Select>
+          </div>
+
+          {loading && <p className="text-sm text-muted-foreground text-center py-4">Loading RACI roles...</p>}
+
+          {!loading && previewRaci.length > 0 && (
+            <div className="space-y-2">
+              <div className="flex items-center justify-between">
+                <Label className="text-xs font-semibold">Select roles to clone ({selectedIds.size}/{previewRaci.length})</Label>
+                <div className="flex gap-1">
+                  <Button variant="ghost" size="sm" className="h-6 text-[10px]" onClick={() => setSelectedIds(new Set(previewRaci.map(r => r.id)))}>Select All</Button>
+                  <Button variant="ghost" size="sm" className="h-6 text-[10px]" onClick={() => setSelectedIds(new Set())}>Deselect All</Button>
+                </div>
+              </div>
+              <div className="border rounded-lg max-h-[300px] overflow-y-auto divide-y">
+                {previewRaci.map(r => (
+                  <label key={r.id} className="flex items-center gap-3 px-3 py-2 hover:bg-muted/30 cursor-pointer">
+                    <Checkbox checked={selectedIds.has(r.id)} onCheckedChange={() => toggleId(r.id)} className="h-4 w-4" />
+                    <div className="flex-1 min-w-0">
+                      <span className="text-sm font-medium">{r.role_name}</span>
+                      <div className="flex gap-2 text-[10px] text-muted-foreground">
+                        {r.job_title && <span>{r.job_title}</span>}
+                        {r.function_dept && <span>• {r.function_dept}</span>}
+                        {r.fte != null && <span>• {r.fte} FTE</span>}
+                      </div>
+                      <div className="flex gap-1 mt-0.5 flex-wrap">
+                        {r.responsible && <Badge className="border-0 bg-emerald-100 text-emerald-700 text-[8px] px-1 py-0">R: {r.responsible}</Badge>}
+                        {r.accountable && <Badge className="border-0 bg-blue-100 text-blue-700 text-[8px] px-1 py-0">A: {r.accountable}</Badge>}
+                        {r.consulted && <Badge className="border-0 bg-amber-100 text-amber-700 text-[8px] px-1 py-0">C: {r.consulted}</Badge>}
+                        {r.informed && <Badge className="border-0 bg-purple-100 text-purple-700 text-[8px] px-1 py-0">I: {r.informed}</Badge>}
+                      </div>
+                    </div>
+                  </label>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {!loading && selectedProcessId && previewRaci.length === 0 && (
+            <p className="text-sm text-muted-foreground text-center py-4">No RACI roles found in the selected process.</p>
+          )}
+        </div>
+        <DialogFooter>
+          <Button variant="outline" onClick={onClose}>Cancel</Button>
+          <Button onClick={handleImport} disabled={importing || selectedIds.size === 0}>
+            {importing ? 'Cloning...' : `Clone ${selectedIds.size} Role(s)`}
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  );
+}
