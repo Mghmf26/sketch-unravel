@@ -242,34 +242,6 @@ export default function QuestionnaireManager() {
               <Input value={form.observation_text} onChange={e => setForm(f => ({ ...f, observation_text: e.target.value }))} placeholder="Observation guidance..." />
             </div>
             <div>
-              <Label>Applicable Step Types</Label>
-              <div className="flex gap-4 mt-1">
-                {STEP_TYPE_OPTIONS.map(opt => (
-                  <label key={opt.value} className="flex items-center gap-2 text-sm cursor-pointer">
-                    <Checkbox
-                      checked={form.step_types.includes(opt.value)}
-                      onCheckedChange={() => toggleStepType(opt.value)}
-                    />
-                    {opt.label}
-                  </label>
-                ))}
-              </div>
-            </div>
-            <div>
-              <Label>Importance Level</Label>
-              <Select value={String(form.importance_level)} onValueChange={v => setForm(f => ({ ...f, importance_level: parseInt(v) }))}>
-                <SelectTrigger><SelectValue /></SelectTrigger>
-                <SelectContent>
-                  {LEVEL_OPTIONS.map(l => (
-                    <SelectItem key={l.value} value={String(l.value)}>{l.label}</SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-              {form.importance_level === 3 && (
-                <p className="text-[11px] text-amber-600 mt-1">Level 3 questions will be hidden during step creation.</p>
-              )}
-            </div>
-            <div>
               <label className="flex items-center gap-2 text-sm cursor-pointer">
                 <Checkbox checked={form.is_active} onCheckedChange={(v) => setForm(f => ({ ...f, is_active: !!v }))} />
                 Active (visible in questionnaires)
