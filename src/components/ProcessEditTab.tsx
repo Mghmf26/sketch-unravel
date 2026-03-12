@@ -622,7 +622,7 @@ export default function ProcessEditTab({ processId }: ProcessEditTabProps) {
                           </div>
 
                           {/* Business Process Questionnaire — after step type, before risks */}
-                          {step.type === 'in-scope' && (() => {
+                          {isSectionVisible('questionnaire') && step.type === 'in-scope' && (() => {
                             const stepQs = getStepQuestions(step.id);
                             const relevantCount = stepQs.filter(q => questLinkMap[`${q.id}:${step.id}`]).length;
                             const sectionNums = [...new Set(stepQs.map(q => q.section_number))].sort();
