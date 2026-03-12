@@ -6,12 +6,13 @@ import { PageHeader } from '@/components/PageHeader';
 
 const RISK_COLUMNS: ColumnDef[] = [
   { key: 'client', label: 'Client', defaultVisible: true, minWidth: 80 },
-  { key: 'process', label: 'Process', defaultVisible: true, minWidth: 100 },
-  { key: 'step', label: 'Step', defaultVisible: true, minWidth: 80 },
   { key: 'description', label: 'Risk', defaultVisible: true, minWidth: 120 },
   { key: 'likelihood', label: 'Likelihood', defaultVisible: true, minWidth: 60 },
   { key: 'impact', label: 'Impact', defaultVisible: true, minWidth: 60 },
-  { key: 'controls', label: 'Controls', defaultVisible: true, minWidth: 60 },
+  { key: 'category', label: 'Category', defaultVisible: true, minWidth: 80 },
+  { key: 'controls', label: '# Controls', defaultVisible: true, minWidth: 60 },
+  { key: 'process', label: '# Process', defaultVisible: true, minWidth: 80 },
+  { key: 'step', label: '# Step Links', defaultVisible: true, minWidth: 80 },
   { key: 'actions', label: 'Actions', defaultVisible: true, minWidth: 60 },
 ];
 import { ArrowLeft, ShieldAlert, Shield, AlertTriangle, Plus, Trash2, Pencil, Search, X } from 'lucide-react';
@@ -192,12 +193,13 @@ export default function RisksControls() {
             <TableHeader>
               <TableRow className="bg-muted/20 hover:bg-muted/20">
                 {colSettings.isVisible('client') && <TableHead className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider py-2.5 px-3" style={{width: colSettings.getWidth('client')}}>Client</TableHead>}
-                {colSettings.isVisible('process') && <TableHead className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider py-2.5 px-3" style={{width: colSettings.getWidth('process')}}>Process</TableHead>}
-                {colSettings.isVisible('step') && <TableHead className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider py-2.5 px-3" style={{width: colSettings.getWidth('step')}}>Step</TableHead>}
                 {colSettings.isVisible('description') && <TableHead className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider py-2.5 px-3" style={{width: colSettings.getWidth('description')}}>Risk</TableHead>}
                 {colSettings.isVisible('likelihood') && <TableHead className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider py-2.5 px-3 text-center" style={{width: colSettings.getWidth('likelihood')}}>Likelihood</TableHead>}
                 {colSettings.isVisible('impact') && <TableHead className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider py-2.5 px-3 text-center" style={{width: colSettings.getWidth('impact')}}>Impact</TableHead>}
-                {colSettings.isVisible('controls') && <TableHead className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider py-2.5 px-3 text-center" style={{width: colSettings.getWidth('controls')}}>Controls</TableHead>}
+                {colSettings.isVisible('category') && <TableHead className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider py-2.5 px-3 text-center" style={{width: colSettings.getWidth('category')}}>Category</TableHead>}
+                {colSettings.isVisible('controls') && <TableHead className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider py-2.5 px-3 text-center" style={{width: colSettings.getWidth('controls')}}># Controls</TableHead>}
+                {colSettings.isVisible('process') && <TableHead className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider py-2.5 px-3 text-center" style={{width: colSettings.getWidth('process')}}># Process</TableHead>}
+                {colSettings.isVisible('step') && <TableHead className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider py-2.5 px-3 text-center" style={{width: colSettings.getWidth('step')}}># Step Links</TableHead>}
                 {colSettings.isVisible('actions') && <TableHead className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider py-2.5 px-3 text-right" style={{width: colSettings.getWidth('actions')}}>Actions</TableHead>}
               </TableRow>
             </TableHeader>
@@ -212,21 +214,26 @@ export default function RisksControls() {
                 filtered.map(r => {
                   const proc = processMap[r.process_id];
                   const riskControls = controls.filter(c => c.risk_id === r.id);
+                  // Derive a severity category from likelihood + impact
+                  const severityCategory = (r.impact === 'high' || r.likelihood === 'high') ? 'High' :
+                    (r.impact === 'medium' || r.likelihood === 'medium') ? 'Medium' : 'Low';
                   return (
                     <TableRow key={r.id} className="group hover:bg-muted/30">
                       {colSettings.isVisible('client') && <TableCell className="text-xs text-muted-foreground py-2.5 px-3 whitespace-nowrap">{proc?.client_id ? clientMap[proc.client_id] || '—' : '—'}</TableCell>}
-                      {colSettings.isVisible('process') && <TableCell className="text-xs font-medium text-foreground py-2.5 px-3 whitespace-nowrap">{proc?.process_name || '—'}</TableCell>}
-                      {colSettings.isVisible('step') && <TableCell className="py-2.5 px-3">
-                        <div className="flex items-center gap-1.5">
-                          <Badge variant="outline" className="text-[10px] font-normal">{stepMap[r.step_id] || '—'}</Badge>
-                          {(() => { const s = steps.find(s => s.id === r.step_id); return s?.step_type ? <StepTypeBadge stepType={s.step_type as any} size="xs" /> : null; })()}
-                        </div>
-                      </TableCell>}
                       {colSettings.isVisible('description') && <TableCell className="text-xs text-foreground/80 py-2.5 px-3 max-w-[280px] truncate">{r.description}</TableCell>}
                       {colSettings.isVisible('likelihood') && <TableCell className="text-center py-2.5 px-3"><SeverityBadge value={r.likelihood} /></TableCell>}
                       {colSettings.isVisible('impact') && <TableCell className="text-center py-2.5 px-3"><SeverityBadge value={r.impact} /></TableCell>}
+                      {colSettings.isVisible('category') && <TableCell className="text-center py-2.5 px-3">
+                        <Badge variant="outline" className="text-[10px] font-medium">{severityCategory}</Badge>
+                      </TableCell>}
                       {colSettings.isVisible('controls') && <TableCell className="text-center py-2.5 px-3">
                         <Badge variant="secondary" className="text-[10px] font-medium">{riskControls.length}</Badge>
+                      </TableCell>}
+                      {colSettings.isVisible('process') && <TableCell className="text-center py-2.5 px-3">
+                        <span className="text-xs font-medium text-foreground">{proc?.process_name || '—'}</span>
+                      </TableCell>}
+                      {colSettings.isVisible('step') && <TableCell className="text-center py-2.5 px-3">
+                        <Badge variant="outline" className="text-[10px] font-normal">{stepMap[r.step_id] || '—'}</Badge>
                       </TableCell>}
                       {colSettings.isVisible('actions') && <TableCell className="text-right py-2.5 px-3">
                         <div className="flex items-center justify-end gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity">

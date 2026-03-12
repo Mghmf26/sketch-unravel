@@ -149,8 +149,25 @@ export default function Clients() {
   };
 
   const handleSave = async () => {
-    if (!form.name.trim()) {
-      toast({ title: 'Client name is required', variant: 'destructive' });
+    // Validate all mandatory fields
+    const requiredFields: { key: keyof typeof form; label: string }[] = [
+      { key: 'name', label: 'Client Name' },
+      { key: 'industry', label: 'Industry' },
+      { key: 'entity_type', label: 'Entity Type' },
+      { key: 'contact_person', label: 'Contact Person' },
+      { key: 'contact_email', label: 'Email' },
+      { key: 'contact_phone', label: 'Phone' },
+      { key: 'address', label: 'Address' },
+      { key: 'status', label: 'Status' },
+      { key: 'engagement_mode', label: 'Engagement Mode' },
+      { key: 'wbs_code', label: 'WBS Code' },
+      { key: 'engagement_period_start', label: 'Engagement Period Start' },
+      { key: 'engagement_period_end', label: 'Engagement Period End' },
+      { key: 'report_issuance_date', label: 'Report Issuance Date' },
+    ];
+    const missing = requiredFields.filter(f => !form[f.key]?.toString().trim());
+    if (missing.length > 0) {
+      toast({ title: 'Please fill all required fields', description: `Missing: ${missing.map(m => m.label).join(', ')}`, variant: 'destructive' });
       return;
     }
     setSaving(true);
@@ -394,12 +411,12 @@ export default function Clients() {
               </h3>
               <div className="grid gap-4 pl-6 border-l-2 border-primary/20">
                 <div className="grid gap-1.5">
-                  <Label htmlFor="name">Client Name *</Label>
+                <Label htmlFor="name">Client Name *</Label>
                   <Input id="name" placeholder="e.g. Acme Corporation" value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} />
                 </div>
                 <div className="grid grid-cols-2 gap-4">
                   <div className="grid gap-1.5">
-                    <Label htmlFor="industry">Industry</Label>
+                    <Label htmlFor="industry">Industry *</Label>
                     <Select value={form.industry} onValueChange={(v) => setForm({ ...form, industry: v })}>
                       <SelectTrigger><SelectValue placeholder="Select industry" /></SelectTrigger>
                       <SelectContent>
@@ -410,7 +427,7 @@ export default function Clients() {
                     </Select>
                   </div>
                   <div className="grid gap-1.5">
-                    <Label>Entity Type</Label>
+                    <Label>Entity Type *</Label>
                     <Select value={form.entity_type} onValueChange={(v) => setForm({ ...form, entity_type: v })}>
                       <SelectTrigger><SelectValue /></SelectTrigger>
                       <SelectContent>
@@ -422,7 +439,7 @@ export default function Clients() {
                 </div>
                 <div className="grid grid-cols-2 gap-4">
                   <div className="grid gap-1.5">
-                    <Label htmlFor="status">Status</Label>
+                    <Label htmlFor="status">Status *</Label>
                     <Select value={form.status} onValueChange={(v) => setForm({ ...form, status: v })}>
                       <SelectTrigger><SelectValue /></SelectTrigger>
                       <SelectContent>
@@ -433,26 +450,26 @@ export default function Clients() {
                     </Select>
                   </div>
                   <div className="grid gap-1.5">
-                    <Label htmlFor="contact_person">Contact Person</Label>
+                    <Label htmlFor="contact_person">Contact Person *</Label>
                     <Input id="contact_person" placeholder="John Doe" value={form.contact_person} onChange={(e) => setForm({ ...form, contact_person: e.target.value })} />
                   </div>
                 </div>
                 <div className="grid grid-cols-2 gap-4">
                   <div className="grid gap-1.5">
-                    <Label htmlFor="contact_email">Email</Label>
+                    <Label htmlFor="contact_email">Email *</Label>
                     <Input id="contact_email" type="email" placeholder="john@acme.com" value={form.contact_email} onChange={(e) => setForm({ ...form, contact_email: e.target.value })} />
                   </div>
                   <div className="grid gap-1.5">
-                    <Label htmlFor="contact_phone">Phone</Label>
+                    <Label htmlFor="contact_phone">Phone *</Label>
                     <Input id="contact_phone" placeholder="+1 234 567 890" value={form.contact_phone} onChange={(e) => setForm({ ...form, contact_phone: e.target.value })} />
                   </div>
                 </div>
                 <div className="grid gap-1.5">
-                  <Label htmlFor="address">Address</Label>
+                  <Label htmlFor="address">Address *</Label>
                   <Input id="address" placeholder="123 Main St, City" value={form.address} onChange={(e) => setForm({ ...form, address: e.target.value })} />
                 </div>
                 <div className="grid gap-1.5">
-                  <Label htmlFor="notes">Notes</Label>
+                  <Label htmlFor="notes">Notes *</Label>
                   <Textarea id="notes" placeholder="Additional notes..." value={form.notes} onChange={(e) => setForm({ ...form, notes: e.target.value })} rows={2} />
                 </div>
               </div>
@@ -466,7 +483,7 @@ export default function Clients() {
               <div className="grid gap-4 pl-6 border-l-2 border-primary/20">
                 <div className="grid grid-cols-2 gap-4">
                   <div className="grid gap-1.5">
-                    <Label>Engagement Mode</Label>
+                    <Label>Engagement Mode *</Label>
                     <Select value={form.engagement_mode} onValueChange={(v) => setForm({ ...form, engagement_mode: v })}>
                       <SelectTrigger><SelectValue /></SelectTrigger>
                       <SelectContent>
@@ -478,23 +495,23 @@ export default function Clients() {
                     </Select>
                   </div>
                   <div className="grid gap-1.5">
-                    <Label htmlFor="wbs_code">WBS Code</Label>
+                    <Label htmlFor="wbs_code">WBS Code *</Label>
                     <Input id="wbs_code" placeholder="e.g. WBS-2026-001" value={form.wbs_code} onChange={(e) => setForm({ ...form, wbs_code: e.target.value })} />
                   </div>
                 </div>
                 <div className="grid grid-cols-2 gap-4">
                   <div className="grid gap-1.5">
-                    <Label>Engagement Period Start</Label>
+                    <Label>Engagement Period Start *</Label>
                     <Input type="date" value={form.engagement_period_start} onChange={(e) => setForm({ ...form, engagement_period_start: e.target.value })} />
                   </div>
                   <div className="grid gap-1.5">
-                    <Label>Engagement Period End</Label>
+                    <Label>Engagement Period End *</Label>
                     <Input type="date" value={form.engagement_period_end} onChange={(e) => setForm({ ...form, engagement_period_end: e.target.value })} />
                   </div>
                 </div>
                 <div className="grid grid-cols-2 gap-4">
                   <div className="grid gap-1.5">
-                    <Label>Estimated Report Issuance Date</Label>
+                    <Label>Estimated Report Issuance Date *</Label>
                     <Input type="date" value={form.report_issuance_date} onChange={(e) => setForm({ ...form, report_issuance_date: e.target.value })} />
                   </div>
                   <div />
