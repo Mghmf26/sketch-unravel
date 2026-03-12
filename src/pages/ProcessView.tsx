@@ -197,6 +197,10 @@ export default function ProcessView() {
           <RiskMatrixEditor processId={id!} />
         </TabsContent>
 
+        <TabsContent value="raci" className="mt-0">
+          <RaciManagementTab processId={id!} processName={process.process_name} />
+        </TabsContent>
+
         <TabsContent value="questionnaire" className="mt-0">
           <ProcessQuestionnaireConfig />
         </TabsContent>
