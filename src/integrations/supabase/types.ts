@@ -934,6 +934,7 @@ export type Database = {
           description: string | null
           frequency_levels: string[]
           id: string
+          impact_descriptions: Json | null
           impact_levels: string[]
           matrix_type: string
           name: string
@@ -945,6 +946,7 @@ export type Database = {
           description?: string | null
           frequency_levels?: string[]
           id?: string
+          impact_descriptions?: Json | null
           impact_levels?: string[]
           matrix_type?: string
           name?: string
@@ -956,6 +958,7 @@ export type Database = {
           description?: string | null
           frequency_levels?: string[]
           id?: string
+          impact_descriptions?: Json | null
           impact_levels?: string[]
           matrix_type?: string
           name?: string
