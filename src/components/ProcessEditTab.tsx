@@ -1604,6 +1604,13 @@ export default function ProcessEditTab({ processId }: ProcessEditTabProps) {
         <AddStepRaciDialog processId={processId} stepId={contextStepId} raciEntries={raciEntries}
           onClose={() => { setAddDialog(null); setContextStepId(null); }} onRefresh={reload} />
       )}
+      <EditRaciDialog
+        open={editRaciDialogOpen}
+        onClose={() => { setEditRaciDialogOpen(false); setEditRaciEntry(null); setAddRaciFromStep(false); }}
+        onRefresh={reload}
+        entry={editRaciEntry}
+        processId={processId}
+      />
       {addDialog === 'application' && contextStepId && (
         <AddApplicationDialog 
           processId={processId} stepId={contextStepId} 
