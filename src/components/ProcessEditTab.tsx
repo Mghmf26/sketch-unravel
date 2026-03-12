@@ -172,6 +172,9 @@ export default function ProcessEditTab({ processId }: ProcessEditTabProps) {
   const [raciStepLinks, setRaciStepLinks] = useState<ProcessRaciStepLink[]>([]);
   const [mfFlows, setMfFlows] = useState<MainframeFlow[]>([]);
   const [mfFlowNodes, setMfFlowNodes] = useState<MFFlowNode[]>([]);
+  const [questQuestions, setQuestQuestions] = useState<QuestionnaireQuestion[]>([]);
+  const [questLinks, setQuestLinks] = useState<QuestionnaireStepLink[]>([]);
+  const [savingQuestLink, setSavingQuestLink] = useState<string | null>(null);
   const [addDialog, setAddDialog] = useState<AddDialog>(null);
   const [contextStepId, setContextStepId] = useState<string | null>(null);
   const [contextRiskId, setContextRiskId] = useState<string | null>(null);
