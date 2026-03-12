@@ -725,31 +725,64 @@ export type Database = {
           accountable: string | null
           consulted: string | null
           created_at: string
+          fte: number | null
+          function_dept: string | null
+          grade: string | null
           id: string
           informed: string | null
+          job_description: string | null
+          job_title: string | null
+          manager_status: string | null
           process_id: string
           responsible: string | null
           role_name: string
+          salary: number | null
+          seniority: string | null
+          span_of_control: number | null
+          sub_function: string | null
+          tenure: string | null
         }
         Insert: {
           accountable?: string | null
           consulted?: string | null
           created_at?: string
+          fte?: number | null
+          function_dept?: string | null
+          grade?: string | null
           id?: string
           informed?: string | null
+          job_description?: string | null
+          job_title?: string | null
+          manager_status?: string | null
           process_id: string
           responsible?: string | null
           role_name: string
+          salary?: number | null
+          seniority?: string | null
+          span_of_control?: number | null
+          sub_function?: string | null
+          tenure?: string | null
         }
         Update: {
           accountable?: string | null
           consulted?: string | null
           created_at?: string
+          fte?: number | null
+          function_dept?: string | null
+          grade?: string | null
           id?: string
           informed?: string | null
+          job_description?: string | null
+          job_title?: string | null
+          manager_status?: string | null
           process_id?: string
           responsible?: string | null
           role_name?: string
+          salary?: number | null
+          seniority?: string | null
+          span_of_control?: number | null
+          sub_function?: string | null
+          tenure?: string | null
         }
         Relationships: [
           {
