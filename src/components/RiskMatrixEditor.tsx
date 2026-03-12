@@ -36,8 +36,10 @@ export default function RiskMatrixEditor({ processId }: RiskMatrixEditorProps) {
       if (m) {
         const c = await fetchRiskMatrixCells(m.id);
         setCells(c);
+        setImpactDescs((m.impact_descriptions as Record<string, string>) || {});
       } else {
         setCells([]);
+        setImpactDescs({});
       }
     } finally {
       setLoading(false);
