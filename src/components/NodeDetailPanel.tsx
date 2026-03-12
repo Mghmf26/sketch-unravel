@@ -310,8 +310,8 @@ export default function NodeDetailPanel({ node, risks, controls, regulations, in
     if (!controlForm.name.trim() || !contextRiskId) return;
     setSaving(true);
     try {
-      await insertControl({ risk_id: contextRiskId, name: controlForm.name.trim(), description: controlForm.description || null, type: controlForm.type, effectiveness: controlForm.effectiveness });
-      toast({ title: 'Control added' }); setAddDialog(null); setControlForm({ name: '', description: '', type: 'preventive', effectiveness: 'effective' }); onDataChanged?.();
+      await insertControl({ risk_id: contextRiskId, name: controlForm.name.trim(), description: controlForm.description || null, type: controlForm.type, effectiveness: controlForm.effectiveness, automation_level: controlForm.automation_level || null, frequency: controlForm.frequency || null, last_tested: controlForm.last_tested || null } as any);
+      toast({ title: 'Control added' }); setAddDialog(null); setControlForm({ name: '', description: '', type: 'preventive', effectiveness: 'effective', automation_level: '', frequency: '', last_tested: '' }); onDataChanged?.();
     } catch { toast({ title: 'Failed to add control', variant: 'destructive' }); }
     setSaving(false);
   };
