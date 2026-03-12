@@ -675,6 +675,15 @@ export default function ProcessEditTab({ processId }: ProcessEditTabProps) {
                                                               </Select>
                                                             </div>
 
+                                                            {/* Answer */}
+                                                            <div className="border-t pt-2">
+                                                              <Label className="text-[10px] text-muted-foreground font-medium mb-1 block">Answer:</Label>
+                                                              <AnswerField
+                                                                value={questLinks.find(l => l.question_id === q.id && l.step_id === step.id)?.answer || ''}
+                                                                onSave={(answer) => handleAnswerSave(q.id, step.id, answer)}
+                                                              />
+                                                            </div>
+
                                                             {/* Step relevance */}
                                                             <div className="border-t pt-2">
                                                               <p className="text-[10px] font-medium text-muted-foreground mb-1.5">
