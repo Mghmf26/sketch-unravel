@@ -501,7 +501,7 @@ export default function Clients() {
                 </div>
                 <div className="grid grid-cols-2 gap-4">
                   <div className="grid gap-1.5">
-                    <Label>Engagement Period Start</Label>
+                    <Label>Engagement Period Start *</Label>
                     <Input type="date" value={form.engagement_period_start} onChange={(e) => setForm({ ...form, engagement_period_start: e.target.value })} />
                   </div>
                   <div className="grid gap-1.5">
