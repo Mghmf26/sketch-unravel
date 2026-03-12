@@ -8,6 +8,7 @@ export interface RiskMatrix {
   description: string | null;
   impact_levels: string[];
   frequency_levels: string[];
+  impact_descriptions: Record<string, string>;
   created_at: string;
   updated_at: string;
 }
