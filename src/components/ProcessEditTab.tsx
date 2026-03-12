@@ -30,8 +30,10 @@ import {
   insertIncident, deleteIncident, updateIncident,
   insertMainframeImport, deleteMainframeImport,
   insertMFQuestion, deleteMFQuestion,
+  fetchStepRaci, insertStepRaci, deleteStepRaci,
   type ProcessStep, type StepConnection, type Risk, type Control,
   type Regulation, type Incident, type MainframeImport, type MFQuestion,
+  type StepRaci,
 } from '@/lib/api';
 import {
   fetchProcessRaci, insertProcessRaci, updateProcessRaci, deleteProcessRaci,
@@ -92,7 +94,7 @@ function getTypeStyle(type: string) {
   return typeColors[type] || typeColors['in-scope'];
 }
 
-type AddDialog = 'step' | 'risk' | 'control' | 'regulation' | 'incident' | 'import' | 'mfq' | 'connection' | 'raci' | 'application' | null;
+type AddDialog = 'step' | 'risk' | 'control' | 'regulation' | 'incident' | 'import' | 'mfq' | 'connection' | 'raci' | 'application' | 'step-raci' | null;
 
 // Multi-person RACI field with tags
 function RaciPeopleField({ label, color, value, onSave }: {
@@ -263,6 +265,7 @@ export default function ProcessEditTab({ processId }: ProcessEditTabProps) {
   const [applications, setApplications] = useState<StepApplication[]>([]);
   const [raciEntries, setRaciEntries] = useState<ProcessRaci[]>([]);
   const [raciStepLinks, setRaciStepLinks] = useState<ProcessRaciStepLink[]>([]);
+  const [stepRaciList, setStepRaciList] = useState<StepRaci[]>([]);
   const [mfFlows, setMfFlows] = useState<MainframeFlow[]>([]);
   const [mfFlowNodes, setMfFlowNodes] = useState<MFFlowNode[]>([]);
   const [questQuestions, setQuestQuestions] = useState<QuestionnaireQuestion[]>([]);
@@ -318,7 +321,7 @@ export default function ProcessEditTab({ processId }: ProcessEditTabProps) {
   const collapseAllSteps = () => setExpandedSteps(new Set());
 
   const reload = useCallback(async () => {
-    const [s, c, r, ctrl, reg, inc, imp, mfq, raci, raciLinks, apps, flows, qq, ql] = await Promise.all([
+    const [s, c, r, ctrl, reg, inc, imp, mfq, raci, raciLinks, apps, flows, qq, ql, sRaci] = await Promise.all([
       fetchSteps(processId), fetchStepConnections(processId),
       fetchRisks(processId), fetchAllControls(),
       fetchRegulations(processId), fetchIncidents(processId),
@@ -328,6 +331,7 @@ export default function ProcessEditTab({ processId }: ProcessEditTabProps) {
       fetchMainframeFlows(processId),
       fetchQuestions(),
       fetchStepLinks(processId),
+      fetchStepRaci(processId),
     ]);
     setSteps(s);
     setConnections(c);
@@ -340,6 +344,7 @@ export default function ProcessEditTab({ processId }: ProcessEditTabProps) {
     setMfQuestions(mfq);
     setRaciEntries(raci);
     setRaciStepLinks(raciLinks);
+    setStepRaciList(sRaci);
     setApplications(apps);
     setMfFlows(flows);
     setQuestQuestions(qq.filter(q => q.is_active));
@@ -982,35 +987,86 @@ export default function ProcessEditTab({ processId }: ProcessEditTabProps) {
                             </div>
                           )}
 
-                          {/* RACI (inherited from process level) */}
+                          {/* RACI (inherited from process level + step-specific assignments) */}
                           {canAccessModule('raci') && (() => {
                             const stepLinks = getStepRaciLinks(step.id);
                             const linkedRacis = stepLinks.map(l => raciEntries.find(r => r.id === l.raci_id)).filter(Boolean) as ProcessRaci[];
-                            return linkedRacis.length > 0 ? (
+                            // Collect all people from process RACI for the picker
+                            const allPeopleFromRaci = (() => {
+                              const peopleSet = new Set<string>();
+                              raciEntries.forEach(r => {
+                                const fields = [r.responsible, r.accountable, r.consulted, r.informed];
+                                fields.forEach(f => {
+                                  if (f) f.split(',').map(p => p.trim()).filter(Boolean).forEach(p => {
+                                    peopleSet.add(`${p} (${r.role_name})`);
+                                  });
+                                });
+                              });
+                              return Array.from(peopleSet).sort();
+                            })();
+                            const stepRaciData = stepRaciList.filter(sr => sr.step_id === step.id);
+                            const hasData = linkedRacis.length > 0 || stepRaciData.length > 0 || raciEntries.length > 0;
+                            return hasData ? (
                               <div className="space-y-2">
                                 <div className="flex items-center gap-1.5 justify-between">
                                   <div className="flex items-center gap-1.5 cursor-pointer" onClick={() => toggleStepSection(step.id, 'raci')}>
                                     {isStepSectionVisible(step.id, 'raci') ? <ChevronDown className="h-3 w-3 text-cyan-500" /> : <ChevronRight className="h-3 w-3 text-cyan-500" />}
                                     <Users className="h-3 w-3 text-cyan-500" />
-                                    <span className="text-[11px] font-semibold text-cyan-700">RACI ({linkedRacis.length} linked)</span>
+                                    <span className="text-[11px] font-semibold text-cyan-700">RACI ({linkedRacis.length} inherited, {stepRaciData.length} step-specific)</span>
                                   </div>
-                                  <Button variant="ghost" size="sm" className="h-5 text-[10px] text-muted-foreground" onClick={() => toggleStepSection(step.id, 'raci')}>
-                                    {isStepSectionVisible(step.id, 'raci') ? 'Hide' : 'Show'}
-                                  </Button>
+                                  <div className="flex items-center gap-1">
+                                    <Button variant="ghost" size="sm" className="h-5 text-[10px] text-muted-foreground" onClick={() => toggleStepSection(step.id, 'raci')}>
+                                      {isStepSectionVisible(step.id, 'raci') ? 'Hide' : 'Show'}
+                                    </Button>
+                                    {allPeopleFromRaci.length > 0 && (
+                                      <Button variant="ghost" size="sm" className="h-5 text-[10px] text-cyan-600" onClick={() => { setContextStepId(step.id); setAddDialog('step-raci'); }}>
+                                        <Plus className="h-3 w-3 mr-0.5" /> Assign
+                                      </Button>
+                                    )}
+                                  </div>
                                 </div>
                                 {isStepSectionVisible(step.id, 'raci') && (
                                   <>
-                                {linkedRacis.map(raci => (
-                                  <div key={raci.id} className="ml-4 pl-3 border-l-2 border-cyan-200 py-1">
-                                    <span className="text-sm font-medium">{raci.role_name}</span>
-                                    <div className="flex gap-3 mt-1 flex-wrap text-[10px]">
-                                      {raci.responsible && <Badge className="border-0 bg-emerald-100 text-emerald-700 text-[9px]">R: {raci.responsible}</Badge>}
-                                      {raci.accountable && <Badge className="border-0 bg-blue-100 text-blue-700 text-[9px]">A: {raci.accountable}</Badge>}
-                                      {raci.consulted && <Badge className="border-0 bg-amber-100 text-amber-700 text-[9px]">C: {raci.consulted}</Badge>}
-                                      {raci.informed && <Badge className="border-0 bg-purple-100 text-purple-700 text-[9px]">I: {raci.informed}</Badge>}
-                                    </div>
-                                  </div>
-                                ))}
+                                    {/* Inherited process-level RACI */}
+                                    {linkedRacis.length > 0 && (
+                                      <div className="space-y-1">
+                                        <span className="text-[9px] uppercase tracking-wider text-muted-foreground font-semibold ml-4">Inherited from Process</span>
+                                        {linkedRacis.map(raci => (
+                                          <div key={raci.id} className="ml-4 pl-3 border-l-2 border-cyan-200 py-1">
+                                            <span className="text-sm font-medium">{raci.role_name}</span>
+                                            <div className="flex gap-3 mt-1 flex-wrap text-[10px]">
+                                              {raci.responsible && <Badge className="border-0 bg-emerald-100 text-emerald-700 text-[9px]">R: {raci.responsible}</Badge>}
+                                              {raci.accountable && <Badge className="border-0 bg-blue-100 text-blue-700 text-[9px]">A: {raci.accountable}</Badge>}
+                                              {raci.consulted && <Badge className="border-0 bg-amber-100 text-amber-700 text-[9px]">C: {raci.consulted}</Badge>}
+                                              {raci.informed && <Badge className="border-0 bg-purple-100 text-purple-700 text-[9px]">I: {raci.informed}</Badge>}
+                                            </div>
+                                          </div>
+                                        ))}
+                                      </div>
+                                    )}
+                                    {/* Step-specific RACI assignments */}
+                                    {stepRaciData.length > 0 && (
+                                      <div className="space-y-1">
+                                        <span className="text-[9px] uppercase tracking-wider text-muted-foreground font-semibold ml-4">Step-Specific Assignments</span>
+                                        {stepRaciData.map(sr => (
+                                          <div key={sr.id} className="ml-4 pl-3 border-l-2 border-teal-300 py-1 group/sr">
+                                            <div className="flex items-center gap-2">
+                                              <span className="text-sm font-medium">{sr.role_name}</span>
+                                              <Button variant="ghost" size="icon" className="h-4 w-4 opacity-0 group-hover/sr:opacity-100 text-muted-foreground hover:text-destructive"
+                                                onClick={() => deleteStepRaci(sr.id).then(reload)}>
+                                                <Trash2 className="h-2.5 w-2.5" />
+                                              </Button>
+                                            </div>
+                                            <div className="flex gap-3 mt-1 flex-wrap text-[10px]">
+                                              {sr.responsible && <Badge className="border-0 bg-emerald-100 text-emerald-700 text-[9px]">R: {sr.responsible}</Badge>}
+                                              {sr.accountable && <Badge className="border-0 bg-blue-100 text-blue-700 text-[9px]">A: {sr.accountable}</Badge>}
+                                              {sr.consulted && <Badge className="border-0 bg-amber-100 text-amber-700 text-[9px]">C: {sr.consulted}</Badge>}
+                                              {sr.informed && <Badge className="border-0 bg-purple-100 text-purple-700 text-[9px]">I: {sr.informed}</Badge>}
+                                            </div>
+                                          </div>
+                                        ))}
+                                      </div>
+                                    )}
                                   </>
                                 )}
                               </div>
@@ -1532,6 +1588,10 @@ export default function ProcessEditTab({ processId }: ProcessEditTabProps) {
       )}
       {addDialog === 'raci' && (
         <AddRaciDialog processId={processId} onClose={() => setAddDialog(null)} onRefresh={reload} />
+      )}
+      {addDialog === 'step-raci' && contextStepId && (
+        <AddStepRaciDialog processId={processId} stepId={contextStepId} raciEntries={raciEntries}
+          onClose={() => { setAddDialog(null); setContextStepId(null); }} onRefresh={reload} />
       )}
       {addDialog === 'application' && contextStepId && (
         <AddApplicationDialog 
@@ -2250,6 +2310,145 @@ function AddApplicationDialog({ processId, stepId, parentScreenId, screens, onCl
           </div>
         </div>
         <DialogFooter><Button variant="outline" onClick={onClose}>Cancel</Button><Button onClick={submit} disabled={!name.trim()}>Add {appType === 'screen' ? 'Screen' : 'Application'}</Button></DialogFooter>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
+// Step-level RACI Assignment Dialog - pick people from process RACI
+function AddStepRaciDialog({ processId, stepId, raciEntries, onClose, onRefresh }: {
+  processId: string; stepId: string; raciEntries: ProcessRaci[]; onClose: () => void; onRefresh: () => void;
+}) {
+  const [roleName, setRoleName] = useState('');
+  const [responsible, setResponsible] = useState<string[]>([]);
+  const [accountable, setAccountable] = useState<string[]>([]);
+  const [consulted, setConsulted] = useState<string[]>([]);
+  const [informed, setInformed] = useState<string[]>([]);
+
+  // Build people pool from all process RACI entries: "Person (Role)"
+  const peoplePool = useMemo(() => {
+    const pool: { label: string; person: string; role: string }[] = [];
+    const seen = new Set<string>();
+    raciEntries.forEach(r => {
+      const fields = [
+        { field: r.responsible, type: 'R' },
+        { field: r.accountable, type: 'A' },
+        { field: r.consulted, type: 'C' },
+        { field: r.informed, type: 'I' },
+      ];
+      fields.forEach(({ field }) => {
+        if (field) {
+          field.split(',').map(p => p.trim()).filter(Boolean).forEach(person => {
+            const label = `${person} (${r.role_name})`;
+            if (!seen.has(label)) {
+              seen.add(label);
+              pool.push({ label, person, role: r.role_name });
+            }
+          });
+        }
+      });
+    });
+    return pool.sort((a, b) => a.label.localeCompare(b.label));
+  }, [raciEntries]);
+
+  const roleNames = useMemo(() => {
+    const names = new Set(raciEntries.map(r => r.role_name));
+    return Array.from(names).sort();
+  }, [raciEntries]);
+
+  const togglePerson = (list: string[], setList: (v: string[]) => void, label: string) => {
+    if (list.includes(label)) setList(list.filter(l => l !== label));
+    else setList([...list, label]);
+  };
+
+  const submit = async () => {
+    if (!roleName.trim()) {
+      toast({ title: 'Please enter or select a role name', variant: 'destructive' });
+      return;
+    }
+    await insertStepRaci({
+      process_id: processId,
+      step_id: stepId,
+      role_name: roleName.trim(),
+      responsible: responsible.join(', ') || null,
+      accountable: accountable.join(', ') || null,
+      consulted: consulted.join(', ') || null,
+      informed: informed.join(', ') || null,
+    });
+    toast({ title: 'Step RACI assignment added' });
+    onRefresh();
+    onClose();
+  };
+
+  const PersonPicker = ({ label, color, selected, setSelected }: {
+    label: string; color: string; selected: string[]; setSelected: (v: string[]) => void;
+  }) => {
+    const colorMap: Record<string, string> = {
+      emerald: 'bg-emerald-100 text-emerald-700',
+      blue: 'bg-blue-100 text-blue-700',
+      amber: 'bg-amber-100 text-amber-700',
+      purple: 'bg-purple-100 text-purple-700',
+    };
+    const cls = colorMap[color] || colorMap.emerald;
+
+    return (
+      <div className="space-y-1.5">
+        <Label className="text-xs font-semibold">{label}</Label>
+        <div className="flex gap-1 flex-wrap">
+          {selected.map(s => (
+            <Badge key={s} className={`border-0 ${cls} text-[9px] gap-1 cursor-pointer hover:opacity-70`}
+              onClick={() => togglePerson(selected, setSelected, s)}>
+              {s} ×
+            </Badge>
+          ))}
+        </div>
+        <div className="max-h-[120px] overflow-y-auto border rounded-md p-1.5 space-y-0.5">
+          {peoplePool.length === 0 && <p className="text-[10px] text-muted-foreground italic">No people in process RACI</p>}
+          {peoplePool.map(p => (
+            <label key={p.label} className="flex items-center gap-2 px-1.5 py-0.5 rounded hover:bg-muted/50 cursor-pointer text-xs">
+              <Checkbox checked={selected.includes(p.label)} onCheckedChange={() => togglePerson(selected, setSelected, p.label)} className="h-3 w-3" />
+              {p.label}
+            </label>
+          ))}
+        </div>
+      </div>
+    );
+  };
+
+  return (
+    <Dialog open onOpenChange={onClose}>
+      <DialogContent className="sm:max-w-lg max-h-[85vh] overflow-y-auto">
+        <DialogHeader>
+          <DialogTitle className="flex items-center gap-2"><Users className="h-5 w-5 text-cyan-500" /> Assign RACI for Step</DialogTitle>
+          <DialogDescription>Select people from the process-level RACI to assign specific roles for this step. A person who is Responsible at the process level can be Accountable or Consulted for this step.</DialogDescription>
+        </DialogHeader>
+        <div className="grid gap-3 py-2">
+          <div className="grid gap-1.5">
+            <Label>Role Name *</Label>
+            {roleNames.length > 0 ? (
+              <Select value={roleName} onValueChange={setRoleName}>
+                <SelectTrigger><SelectValue placeholder="Select a role..." /></SelectTrigger>
+                <SelectContent>
+                  {roleNames.map(n => <SelectItem key={n} value={n}>{n}</SelectItem>)}
+                </SelectContent>
+              </Select>
+            ) : (
+              <Input value={roleName} onChange={e => setRoleName(e.target.value)} placeholder="e.g. Finance Manager" />
+            )}
+          </div>
+          <Separator />
+          <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Pick people from process RACI</p>
+          <div className="grid grid-cols-2 gap-3">
+            <PersonPicker label="Responsible" color="emerald" selected={responsible} setSelected={setResponsible} />
+            <PersonPicker label="Accountable" color="blue" selected={accountable} setSelected={setAccountable} />
+            <PersonPicker label="Consulted" color="amber" selected={consulted} setSelected={setConsulted} />
+            <PersonPicker label="Informed" color="purple" selected={informed} setSelected={setInformed} />
+          </div>
+        </div>
+        <DialogFooter>
+          <Button variant="outline" onClick={onClose}>Cancel</Button>
+          <Button onClick={submit} disabled={!roleName.trim()}>Assign</Button>
+        </DialogFooter>
       </DialogContent>
     </Dialog>
   );
