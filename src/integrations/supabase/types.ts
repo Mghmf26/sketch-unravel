@@ -880,6 +880,100 @@ export type Database = {
         }
         Relationships: []
       }
+      questionnaire_questions: {
+        Row: {
+          created_at: string
+          id: string
+          importance_level: number
+          is_active: boolean
+          observation_text: string | null
+          position_index: number
+          question_number: number
+          question_text: string
+          section_name: string
+          section_number: number
+          step_types: string[]
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          importance_level?: number
+          is_active?: boolean
+          observation_text?: string | null
+          position_index?: number
+          question_number: number
+          question_text: string
+          section_name: string
+          section_number: number
+          step_types?: string[]
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          importance_level?: number
+          is_active?: boolean
+          observation_text?: string | null
+          position_index?: number
+          question_number?: number
+          question_text?: string
+          section_name?: string
+          section_number?: number
+          step_types?: string[]
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      questionnaire_step_links: {
+        Row: {
+          created_at: string
+          id: string
+          is_relevant: boolean
+          process_id: string
+          question_id: string
+          step_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          is_relevant?: boolean
+          process_id: string
+          question_id: string
+          step_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          is_relevant?: boolean
+          process_id?: string
+          question_id?: string
+          step_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "questionnaire_step_links_process_id_fkey"
+            columns: ["process_id"]
+            isOneToOne: false
+            referencedRelation: "business_processes"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "questionnaire_step_links_question_id_fkey"
+            columns: ["question_id"]
+            isOneToOne: false
+            referencedRelation: "questionnaire_questions"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "questionnaire_step_links_step_id_fkey"
+            columns: ["step_id"]
+            isOneToOne: false
+            referencedRelation: "process_steps"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       regulations: {
         Row: {
           authority: string | null
