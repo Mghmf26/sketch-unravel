@@ -4,10 +4,11 @@ import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
 import {
   ArrowLeft, ShieldCheck, Users, Plus, UserX, UserCheck, Trash2, Mail,
-  Clock, Building2, ChevronDown, MoreHorizontal, Pause, Play, Eye, Shield
+  Clock, Building2, ChevronDown, MoreHorizontal, Pause, Play, Eye, Shield, ClipboardList
 } from 'lucide-react';
 import UserPermissionsEditor from '@/components/UserPermissionsEditor';
 import PageVisibilityEditor from '@/components/PageVisibilityEditor';
+import QuestionnaireManager from '@/components/QuestionnaireManager';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
@@ -257,6 +258,7 @@ export default function AdminDashboard() {
         <TabsList>
           <TabsTrigger value="users">Users ({users.length})</TabsTrigger>
           <TabsTrigger value="invitations">Invitations ({invitations.length})</TabsTrigger>
+          <TabsTrigger value="questionnaire"><ClipboardList className="h-4 w-4 mr-1" /> Questionnaire</TabsTrigger>
           {isRoot && <TabsTrigger value="page-visibility">Page Visibility</TabsTrigger>}
         </TabsList>
 
@@ -397,6 +399,10 @@ export default function AdminDashboard() {
               </TableBody>
             </Table>
           </Card>
+        </TabsContent>
+
+        <TabsContent value="questionnaire">
+          <QuestionnaireManager />
         </TabsContent>
 
         {isRoot && (

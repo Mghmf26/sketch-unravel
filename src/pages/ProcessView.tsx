@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate, useSearchParams } from 'react-router-dom';
-import { ArrowLeft, Image as ImageIcon, LayoutGrid, Share2, Upload, Grid3x3, Cpu } from 'lucide-react';
+import { ArrowLeft, Image as ImageIcon, LayoutGrid, Share2, Upload, Grid3x3, Cpu, ClipboardList } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -10,6 +10,7 @@ import DiagramCanvasEditor from '@/components/DiagramCanvasEditor';
 import ProcessEditTab from '@/components/ProcessEditTab';
 import RiskMatrixEditor from '@/components/RiskMatrixEditor';
 import MainframeFlowEditor from '@/components/MainframeFlowEditor';
+import ProcessQuestionnaire from '@/components/ProcessQuestionnaire';
 import {
   fetchProcesses, fetchSteps, fetchStepConnections,
   fetchRisks, fetchAllControls, fetchRegulations, fetchIncidents,
@@ -32,6 +33,7 @@ export default function ProcessView() {
     : tabParam === 'mainframe-flows' ? 'mainframe-flows'
     : tabParam === 'diagram' ? 'diagram'
     : tabParam === 'risk-matrix' ? 'risk-matrix'
+    : tabParam === 'questionnaire' ? 'questionnaire'
     : 'image';
 
   const initialStepId = searchParams.get('stepId') || undefined;
@@ -141,6 +143,7 @@ export default function ProcessView() {
           <TabsTrigger value="diagram" className="gap-2"><Share2 className="h-4 w-4" /> Business Process Flows</TabsTrigger>
           <TabsTrigger value="mainframe-flows" className="gap-2"><Cpu className="h-4 w-4" /> Mainframe Flows</TabsTrigger>
           <TabsTrigger value="risk-matrix" className="gap-2"><Grid3x3 className="h-4 w-4" /> Risk Matrix</TabsTrigger>
+          <TabsTrigger value="questionnaire" className="gap-2"><ClipboardList className="h-4 w-4" /> Questionnaire</TabsTrigger>
         </TabsList>
 
         <TabsContent value="image" className="mt-0">
@@ -189,6 +192,10 @@ export default function ProcessView() {
 
         <TabsContent value="risk-matrix" className="mt-0">
           <RiskMatrixEditor processId={id!} />
+        </TabsContent>
+
+        <TabsContent value="questionnaire" className="mt-0">
+          <ProcessQuestionnaire processId={id!} />
         </TabsContent>
       </Tabs>
     </div>
