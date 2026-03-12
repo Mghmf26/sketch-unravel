@@ -17,15 +17,18 @@ import { Label } from '@/components/ui/label';
 import { toast } from '@/hooks/use-toast';
 import {
   LayoutGrid, Save, Undo2, Link2, Unlink, ZoomIn,
-  Users, Building2, Briefcase, Crown, ChevronRight,
+  Users, Building2, Briefcase, Crown, ChevronRight, Pencil,
 } from 'lucide-react';
 import type { ProcessRaci } from '@/lib/api-raci';
 import type { ProcessStep } from '@/lib/api';
+import EditRaciDialog from '@/components/EditRaciDialog';
 
 interface OrganigramProps {
   raciEntries: ProcessRaci[];
   steps: ProcessStep[];
+  processId: string;
   onUpdateRaci?: (id: string, field: string, value: any) => Promise<void>;
+  onRefresh?: () => void;
 }
 
 // ── Custom Org Node ──
@@ -40,7 +43,8 @@ function OrgNode({ data }: { data: any }) {
   const borderColor = seniorityColors[data.seniority] || 'border-l-primary';
 
   return (
-    <div className={`bg-background border-2 border-border rounded-xl shadow-lg min-w-[220px] max-w-[280px] overflow-hidden border-l-4 ${borderColor} transition-shadow hover:shadow-xl`}>
+    <div className={`bg-background border-2 border-border rounded-xl shadow-lg min-w-[220px] max-w-[280px] overflow-hidden border-l-4 ${borderColor} transition-shadow hover:shadow-xl cursor-pointer`}
+      onDoubleClick={() => data.onEdit?.(data.raciId)}>
       <Handle type="target" position={Position.Top} className="!bg-primary !w-3 !h-3 !border-2 !border-background" />
 
       {/* Header */}
@@ -61,6 +65,11 @@ function OrgNode({ data }: { data: any }) {
               </p>
             )}
           </div>
+          <Button variant="ghost" size="icon" className="h-5 w-5 shrink-0 opacity-50 hover:opacity-100"
+            onClick={(e) => { e.stopPropagation(); data.onEdit?.(data.raciId); }}
+            title="Edit role">
+            <Pencil className="h-3 w-3" />
+          </Button>
         </div>
       </div>
 
@@ -249,14 +258,23 @@ function LinkNodesDialog({
 }
 
 // ── Main Component ──
-export default function RaciOrganigramView({ raciEntries, steps, onUpdateRaci }: OrganigramProps) {
+export default function RaciOrganigramView({ raciEntries, steps, processId, onUpdateRaci, onRefresh }: OrganigramProps) {
   const [nodes, setNodes, onNodesChange] = useNodesState([]);
   const [edges, setEdges, onEdgesChange] = useEdgesState([]);
   const [history, setHistory] = useState<{ nodes: Node[]; edges: Edge[] }[]>([]);
   const [selectedNodeId, setSelectedNodeId] = useState<string | null>(null);
   const [linkDialogOpen, setLinkDialogOpen] = useState(false);
   const [linkSourceLabel, setLinkSourceLabel] = useState('');
+  const [editDialogOpen, setEditDialogOpen] = useState(false);
+  const [editEntry, setEditEntry] = useState<ProcessRaci | null>(null);
 
+  const handleEditRaci = useCallback((raciId: string) => {
+    const entry = raciEntries.find(r => r.id === raciId);
+    if (entry) {
+      setEditEntry(entry);
+      setEditDialogOpen(true);
+    }
+  }, [raciEntries]);
   // Build linked step counts
   const linkedStepCounts = useMemo(() => {
     // This is a lightweight map; step links are managed at RACI tab level
@@ -267,10 +285,12 @@ export default function RaciOrganigramView({ raciEntries, steps, onUpdateRaci }:
   useEffect(() => {
     if (raciEntries.length === 0) return;
     const { nodes: rawNodes, edges: rawEdges } = buildOrgHierarchy(raciEntries, linkedStepCounts);
-    const { nodes: layouted, edges: layoutedEdges } = getLayoutedElements(rawNodes, rawEdges);
+    // Inject onEdit callback into each node's data
+    const nodesWithEdit = rawNodes.map(n => ({ ...n, data: { ...n.data, onEdit: handleEditRaci } }));
+    const { nodes: layouted, edges: layoutedEdges } = getLayoutedElements(nodesWithEdit, rawEdges);
     setNodes(layouted);
     setEdges(layoutedEdges);
-  }, [raciEntries, linkedStepCounts]);
+  }, [raciEntries, linkedStepCounts, handleEditRaci]);
 
   const onConnect = useCallback((params: Connection) => {
     saveHistory();
@@ -425,6 +445,14 @@ export default function RaciOrganigramView({ raciEntries, steps, onUpdateRaci }:
           onLink={handleLink}
         />
       )}
+
+      <EditRaciDialog
+        open={editDialogOpen}
+        onClose={() => { setEditDialogOpen(false); setEditEntry(null); }}
+        onRefresh={() => onRefresh?.()}
+        entry={editEntry}
+        processId={processId}
+      />
     </div>
   );
 }

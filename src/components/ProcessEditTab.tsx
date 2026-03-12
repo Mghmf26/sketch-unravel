@@ -40,6 +40,7 @@ import {
   fetchRaciStepLinks, insertRaciStepLink, deleteRaciStepLink,
   type ProcessRaci, type ProcessRaciStepLink,
 } from '@/lib/api-raci';
+import EditRaciDialog from '@/components/EditRaciDialog';
 import { fetchStepApplications, insertStepApplication, updateStepApplication, deleteStepApplication, type StepApplication } from '@/lib/api-applications';
 import { fetchMainframeFlows, fetchMFFlowNodes, type MainframeFlow, type MFFlowNode, MF_NODE_TYPE_META } from '@/lib/api-mainframe-flows';
 import { StepTypeBadge, STEP_TYPE_OPTIONS } from '@/components/StepTypeBadge';
@@ -278,6 +279,9 @@ export default function ProcessEditTab({ processId }: ProcessEditTabProps) {
   const [contextRiskId, setContextRiskId] = useState<string | null>(null);
   const [contextScreenId, setContextScreenId] = useState<string | null>(null);
   const [expandedSteps, setExpandedSteps] = useState<Set<string>>(new Set());
+  const [editRaciEntry, setEditRaciEntry] = useState<ProcessRaci | null>(null);
+  const [editRaciDialogOpen, setEditRaciDialogOpen] = useState(false);
+  const [addRaciFromStep, setAddRaciFromStep] = useState(false);
 
   // Per-step section visibility (e.g. "stepId:risks" => true/false)
   const [stepSectionVisible, setStepSectionVisible] = useState<Record<string, boolean>>(() => {
@@ -1018,6 +1022,9 @@ export default function ProcessEditTab({ processId }: ProcessEditTabProps) {
                                     <Button variant="ghost" size="sm" className="h-5 text-[10px] text-muted-foreground" onClick={() => toggleStepSection(step.id, 'raci')}>
                                       {isStepSectionVisible(step.id, 'raci') ? 'Hide' : 'Show'}
                                     </Button>
+                                    <Button variant="ghost" size="sm" className="h-5 text-[10px] text-cyan-600" onClick={() => { setAddRaciFromStep(true); setEditRaciEntry(null); setEditRaciDialogOpen(true); }}>
+                                      <Plus className="h-3 w-3 mr-0.5" /> Add Role
+                                    </Button>
                                     {allPeopleFromRaci.length > 0 && (
                                       <Button variant="ghost" size="sm" className="h-5 text-[10px] text-cyan-600" onClick={() => { setContextStepId(step.id); setAddDialog('step-raci'); }}>
                                         <Plus className="h-3 w-3 mr-0.5" /> Assign
@@ -1032,8 +1039,12 @@ export default function ProcessEditTab({ processId }: ProcessEditTabProps) {
                                       <div className="space-y-1">
                                         <span className="text-[9px] uppercase tracking-wider text-muted-foreground font-semibold ml-4">Inherited from Process</span>
                                         {linkedRacis.map(raci => (
-                                          <div key={raci.id} className="ml-4 pl-3 border-l-2 border-cyan-200 py-1">
-                                            <span className="text-sm font-medium">{raci.role_name}</span>
+                                          <div key={raci.id} className="ml-4 pl-3 border-l-2 border-cyan-200 py-1 group/raci cursor-pointer hover:bg-cyan-50/50 rounded-r transition-colors"
+                                            onClick={() => { setEditRaciEntry(raci); setAddRaciFromStep(false); setEditRaciDialogOpen(true); }}>
+                                            <div className="flex items-center gap-2">
+                                              <span className="text-sm font-medium">{raci.role_name}</span>
+                                              <Pencil className="h-2.5 w-2.5 text-muted-foreground opacity-0 group-hover/raci:opacity-100 transition-opacity" />
+                                            </div>
                                             <div className="flex gap-3 mt-1 flex-wrap text-[10px]">
                                               {raci.responsible && <Badge className="border-0 bg-emerald-100 text-emerald-700 text-[9px]">R: {raci.responsible}</Badge>}
                                               {raci.accountable && <Badge className="border-0 bg-blue-100 text-blue-700 text-[9px]">A: {raci.accountable}</Badge>}
@@ -1593,6 +1604,13 @@ export default function ProcessEditTab({ processId }: ProcessEditTabProps) {
         <AddStepRaciDialog processId={processId} stepId={contextStepId} raciEntries={raciEntries}
           onClose={() => { setAddDialog(null); setContextStepId(null); }} onRefresh={reload} />
       )}
+      <EditRaciDialog
+        open={editRaciDialogOpen}
+        onClose={() => { setEditRaciDialogOpen(false); setEditRaciEntry(null); setAddRaciFromStep(false); }}
+        onRefresh={reload}
+        entry={editRaciEntry}
+        processId={processId}
+      />
       {addDialog === 'application' && contextStepId && (
         <AddApplicationDialog 
           processId={processId} stepId={contextStepId} 
