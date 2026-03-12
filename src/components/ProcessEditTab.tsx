@@ -709,30 +709,60 @@ export default function ProcessEditTab({ processId }: ProcessEditTabProps) {
                             const stepQs = getStepQuestions(step.id);
                             const relevantCount = stepQs.filter(q => questLinkMap[`${q.id}:${step.id}`]).length;
                             const sectionNums = [...new Set(stepQs.map(q => q.section_number))].sort();
+
+                            // If no step type set, prompt user
+                            if (!step.step_type) {
+                              return (
+                                <div className="space-y-2">
+                                  <div className="flex items-center gap-1.5">
+                                    <ClipboardList className="h-3 w-3 text-indigo-500" />
+                                    <span className="text-[11px] font-semibold text-indigo-700">Questionnaire</span>
+                                  </div>
+                                  <div className="ml-4 pl-3 border-l-2 border-indigo-200">
+                                    <div className="flex items-center gap-2 bg-amber-50 border border-amber-200 rounded-md px-3 py-2">
+                                      <CircleHelp className="h-3.5 w-3.5 text-amber-600 shrink-0" />
+                                      <p className="text-[11px] text-amber-800">
+                                        Please set the <strong>Step Type</strong> above (Critical, Decisional, or Mechanical) to see the relevant questionnaire.
+                                      </p>
+                                    </div>
+                                  </div>
+                                </div>
+                              );
+                            }
+
                             return (
                               <div className="space-y-2">
                                 <div className="flex items-center gap-1.5 justify-between">
                                   <div className="flex items-center gap-1.5">
                                     <ClipboardList className="h-3 w-3 text-indigo-500" />
                                     <span className="text-[11px] font-semibold text-indigo-700">Questionnaire</span>
-                                    {relevantCount > 0 && (
-                                      <Badge variant="outline" className="text-[9px] border-indigo-300 text-indigo-600">{relevantCount} relevant</Badge>
-                                    )}
+                                    <Badge variant="outline" className="text-[9px] border-indigo-300 text-indigo-600">
+                                      {relevantCount}/{stepQs.length} linked
+                                    </Badge>
                                   </div>
-                                  <span className="text-[10px] text-muted-foreground">{stepQs.length} questions</span>
+                                  <span className="text-[10px] text-muted-foreground capitalize">
+                                    Showing for: <strong>{step.step_type}</strong> steps
+                                  </span>
                                 </div>
                                 {stepQs.length === 0 ? (
-                                  <p className="text-[10px] text-muted-foreground italic ml-4">No questions match this step type. Set a step type above or check admin settings.</p>
+                                  <p className="text-[10px] text-muted-foreground italic ml-4">No questions configured for {step.step_type} steps.</p>
                                 ) : (
-                                  <div className="ml-4 pl-3 border-l-2 border-indigo-200 space-y-2">
+                                  <div className="ml-4 pl-3 border-l-2 border-indigo-200 space-y-3">
+                                    <p className="text-[10px] text-muted-foreground">
+                                      Select the questions relevant to this step. Level 3 (Not Important) questions are excluded.
+                                    </p>
                                     {sectionNums.map(sn => {
                                       const sectionQs = stepQs.filter(q => q.section_number === sn);
                                       const sectionName = sectionQs[0]?.section_name || '';
+                                      const sectionRelevant = sectionQs.filter(q => questLinkMap[`${q.id}:${step.id}`]).length;
                                       return (
-                                        <div key={sn}>
-                                          <p className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider mb-1">
-                                            S{sn}: {sectionName}
-                                          </p>
+                                        <div key={sn} className="space-y-1">
+                                          <div className="flex items-center justify-between">
+                                            <p className="text-[10px] font-semibold text-indigo-600 uppercase tracking-wider">
+                                              Section {sn}: {sectionName}
+                                            </p>
+                                            <span className="text-[9px] text-muted-foreground">{sectionRelevant}/{sectionQs.length}</span>
+                                          </div>
                                           <div className="space-y-1">
                                             {sectionQs.map(q => {
                                               const key = `${q.id}:${step.id}`;
@@ -741,11 +771,11 @@ export default function ProcessEditTab({ processId }: ProcessEditTabProps) {
                                               return (
                                                 <label
                                                   key={q.id}
-                                                  className={`flex items-start gap-2 text-xs px-2 py-1.5 rounded-md border cursor-pointer transition-colors ${
+                                                  className={`flex items-start gap-2 text-xs px-2.5 py-2 rounded-md border cursor-pointer transition-all ${
                                                     isChecked
-                                                      ? 'bg-indigo-50 border-indigo-200'
-                                                      : 'bg-muted/20 border-border hover:bg-muted/40'
-                                                  } ${isSaving ? 'opacity-50' : ''}`}
+                                                      ? 'bg-indigo-50 border-indigo-200 shadow-sm'
+                                                      : 'bg-card border-border hover:bg-muted/40 hover:border-muted-foreground/20'
+                                                  } ${isSaving ? 'opacity-50 pointer-events-none' : ''}`}
                                                 >
                                                   <Checkbox
                                                     checked={isChecked}
@@ -758,15 +788,15 @@ export default function ProcessEditTab({ processId }: ProcessEditTabProps) {
                                                       <span className="font-mono text-muted-foreground mr-1">Q{q.question_number}.</span>
                                                       {q.question_text}
                                                     </span>
+                                                    {q.observation_text && (
+                                                      <p className="text-[10px] text-muted-foreground mt-0.5 italic">
+                                                        ↳ {q.observation_text}
+                                                      </p>
+                                                    )}
                                                   </div>
-                                                  <div className="flex items-center gap-1 shrink-0">
-                                                    {q.step_types.map(t => (
-                                                      <Badge key={t} variant="outline" className="text-[8px] capitalize px-1 py-0">{t.charAt(0).toUpperCase()}</Badge>
-                                                    ))}
-                                                    <Badge variant="outline" className={`text-[8px] px-1 py-0 ${q.importance_level === 1 ? 'border-destructive/30 text-destructive' : 'border-amber-300 text-amber-700'}`}>
-                                                      L{q.importance_level}
-                                                    </Badge>
-                                                  </div>
+                                                  <Badge variant="outline" className={`text-[8px] px-1 py-0 shrink-0 ${q.importance_level === 1 ? 'border-destructive/30 text-destructive' : 'border-amber-300 text-amber-700'}`}>
+                                                    L{q.importance_level}
+                                                  </Badge>
                                                 </label>
                                               );
                                             })}
