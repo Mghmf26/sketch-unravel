@@ -276,6 +276,24 @@ export default function ProcessEditTab({ processId }: ProcessEditTabProps) {
   const [contextScreenId, setContextScreenId] = useState<string | null>(null);
   const [expandedSteps, setExpandedSteps] = useState<Set<string>>(new Set());
 
+  // Section visibility toggles for expanded steps
+  const [hiddenSections, setHiddenSections] = useState<Record<string, boolean>>(() => {
+    try {
+      const stored = localStorage.getItem(`edit-data-hidden-sections-${processId}`);
+      return stored ? JSON.parse(stored) : {};
+    } catch { return {}; }
+  });
+
+  const toggleSectionVisibility = (key: string) => {
+    setHiddenSections(prev => {
+      const next = { ...prev, [key]: !prev[key] };
+      localStorage.setItem(`edit-data-hidden-sections-${processId}`, JSON.stringify(next));
+      return next;
+    });
+  };
+
+  const isSectionVisible = (key: string) => !hiddenSections[key];
+
   // Global sections
   const [openSections, setOpenSections] = useState<Record<string, boolean>>({
     steps: true, connections: true, imports: true, mfq: true, raci: true,
