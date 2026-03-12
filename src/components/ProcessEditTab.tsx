@@ -1887,6 +1887,7 @@ function AddRegulationDialog({ processId, stepId, onClose, onRefresh }: { proces
 }
 
 function AddIncidentDialog({ processId, stepId, onClose, onRefresh }: { processId: string; stepId: string; onClose: () => void; onRefresh: () => void }) {
+  const [mode, setMode] = useState<'new' | 'existing'>('new');
   const [title, setTitle] = useState('');
   const [severity, setSeverity] = useState('medium');
   const [desc, setDesc] = useState('');
@@ -1894,31 +1895,75 @@ function AddIncidentDialog({ processId, stepId, onClose, onRefresh }: { processI
   const [moneyLossAmount, setMoneyLossAmount] = useState('');
   const [lossThreshold, setLossThreshold] = useState('');
   const [rootCause, setRootCause] = useState('');
+  const [allIncidents, setAllIncidents] = useState<Incident[]>([]);
+  const [search, setSearch] = useState('');
+  const [loading, setLoading] = useState(false);
+
+  useEffect(() => {
+    if (mode === 'existing') {
+      setLoading(true);
+      fetchIncidents().then(i => { setAllIncidents(i); setLoading(false); });
+    }
+  }, [mode]);
+
   const submit = async () => {
     if (!title.trim()) return;
     await insertIncident({ process_id: processId, step_id: stepId, title: title.trim(), severity, description: desc || null, owner_department: ownerDepartment || null, money_loss_amount: moneyLossAmount || null, loss_threshold: lossThreshold || null, root_cause: rootCause || null } as any);
     toast({ title: 'Incident added' }); onRefresh(); onClose();
   };
+
+  const selectExisting = async (inc: Incident) => {
+    await insertIncident({ process_id: processId, step_id: stepId, title: inc.title, severity: inc.severity, description: inc.description || null, owner_department: (inc as any).owner_department || null, money_loss_amount: (inc as any).money_loss_amount || null, loss_threshold: (inc as any).loss_threshold || null, root_cause: (inc as any).root_cause || null } as any);
+    toast({ title: 'Incident added from existing' }); onRefresh(); onClose();
+  };
+
+  const filtered = allIncidents.filter(i => i.title.toLowerCase().includes(search.toLowerCase()));
+
   return (
     <Dialog open onOpenChange={onClose}>
       <DialogContent className="sm:max-w-lg">
         <DialogHeader><DialogTitle>Add Incident</DialogTitle></DialogHeader>
-        <div className="grid gap-3 py-2">
-          <div className="grid gap-1.5"><Label>Title *</Label><Input value={title} onChange={e => setTitle(e.target.value)} /></div>
-          <div className="grid grid-cols-2 gap-3">
-            <div className="grid gap-1.5"><Label>Severity</Label><Select value={severity} onValueChange={setSeverity}><SelectTrigger><SelectValue /></SelectTrigger>
-              <SelectContent><SelectItem value="low">Low</SelectItem><SelectItem value="medium">Medium</SelectItem><SelectItem value="high">High</SelectItem><SelectItem value="critical">Critical</SelectItem></SelectContent></Select></div>
-            <div className="grid gap-1.5"><Label>Owner (Department)</Label><Input value={ownerDepartment} onChange={e => setOwnerDepartment(e.target.value)} placeholder="e.g. Finance, IT" /></div>
-          </div>
-          <div className="grid gap-1.5"><Label>Description</Label><Textarea value={desc} onChange={e => setDesc(e.target.value)} /></div>
-          <div className="grid grid-cols-2 gap-3">
-            <div className="grid gap-1.5"><Label>Money Loss Amount</Label><Input value={moneyLossAmount} onChange={e => setMoneyLossAmount(e.target.value)} placeholder="e.g. $50,000" /></div>
-            <div className="grid gap-1.5"><Label>Loss Threshold (Client)</Label><Input value={lossThreshold} onChange={e => setLossThreshold(e.target.value)} placeholder="e.g. $100,000" /></div>
-          </div>
-          <div className="grid gap-1.5"><Label>Root Cause</Label><Select value={rootCause || '__none__'} onValueChange={v => setRootCause(v === '__none__' ? '' : v)}><SelectTrigger><SelectValue /></SelectTrigger>
-            <SelectContent><SelectItem value="__none__">— Select —</SelectItem><SelectItem value="people">People</SelectItem><SelectItem value="system">System</SelectItem><SelectItem value="market">Market</SelectItem><SelectItem value="regulations">Regulations</SelectItem></SelectContent></Select></div>
+        <div className="flex gap-1 mb-2">
+          <Button size="sm" variant={mode === 'new' ? 'default' : 'outline'} className="h-7 text-xs" onClick={() => setMode('new')}>Create New</Button>
+          <Button size="sm" variant={mode === 'existing' ? 'default' : 'outline'} className="h-7 text-xs" onClick={() => setMode('existing')}>Select Existing</Button>
         </div>
-        <DialogFooter><Button variant="outline" onClick={onClose}>Cancel</Button><Button onClick={submit}>Add</Button></DialogFooter>
+        {mode === 'new' ? (
+          <div className="grid gap-3 py-2">
+            <div className="grid gap-1.5"><Label>Title *</Label><Input value={title} onChange={e => setTitle(e.target.value)} /></div>
+            <div className="grid grid-cols-2 gap-3">
+              <div className="grid gap-1.5"><Label>Severity</Label><Select value={severity} onValueChange={setSeverity}><SelectTrigger><SelectValue /></SelectTrigger>
+                <SelectContent><SelectItem value="low">Low</SelectItem><SelectItem value="medium">Medium</SelectItem><SelectItem value="high">High</SelectItem><SelectItem value="critical">Critical</SelectItem></SelectContent></Select></div>
+              <div className="grid gap-1.5"><Label>Owner (Department)</Label><Input value={ownerDepartment} onChange={e => setOwnerDepartment(e.target.value)} placeholder="e.g. Finance, IT" /></div>
+            </div>
+            <div className="grid gap-1.5"><Label>Description</Label><Textarea value={desc} onChange={e => setDesc(e.target.value)} /></div>
+            <div className="grid grid-cols-2 gap-3">
+              <div className="grid gap-1.5"><Label>Money Loss Amount</Label><Input value={moneyLossAmount} onChange={e => setMoneyLossAmount(e.target.value)} placeholder="e.g. $50,000" /></div>
+              <div className="grid gap-1.5"><Label>Loss Threshold (Client)</Label><Input value={lossThreshold} onChange={e => setLossThreshold(e.target.value)} placeholder="e.g. $100,000" /></div>
+            </div>
+            <div className="grid gap-1.5"><Label>Root Cause</Label><Select value={rootCause || '__none__'} onValueChange={v => setRootCause(v === '__none__' ? '' : v)}><SelectTrigger><SelectValue /></SelectTrigger>
+              <SelectContent><SelectItem value="__none__">— Select —</SelectItem><SelectItem value="people">People</SelectItem><SelectItem value="system">System</SelectItem><SelectItem value="market">Market</SelectItem><SelectItem value="regulations">Regulations</SelectItem></SelectContent></Select></div>
+            <DialogFooter><Button variant="outline" onClick={onClose}>Cancel</Button><Button onClick={submit}>Add</Button></DialogFooter>
+          </div>
+        ) : (
+          <div className="space-y-2">
+            <Input placeholder="Search incidents..." value={search} onChange={e => setSearch(e.target.value)} className="h-8 text-sm" />
+            <div className="max-h-[300px] overflow-y-auto space-y-1">
+              {loading ? <p className="text-xs text-muted-foreground text-center py-4">Loading...</p> :
+                filtered.length === 0 ? <p className="text-xs text-muted-foreground text-center py-4">No incidents found</p> :
+                filtered.map(i => (
+                  <div key={i.id} className="flex items-center justify-between p-2 rounded border hover:bg-muted/50 cursor-pointer group" onClick={() => selectExisting(i)}>
+                    <div className="flex-1 min-w-0">
+                      <p className="text-xs truncate font-medium">{i.title}</p>
+                      <p className="text-[10px] text-muted-foreground">Severity: {i.severity} · Status: {i.status}</p>
+                    </div>
+                    <Button size="sm" variant="ghost" className="h-6 text-[10px] opacity-0 group-hover:opacity-100 shrink-0">Select</Button>
+                  </div>
+                ))
+              }
+            </div>
+            <DialogFooter><Button variant="outline" onClick={onClose}>Cancel</Button></DialogFooter>
+          </div>
+        )}
       </DialogContent>
     </Dialog>
   );
