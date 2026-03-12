@@ -382,6 +382,19 @@ export default function ProcessEditTab({ processId }: ProcessEditTabProps) {
                               options={Object.entries(typeLabel).map(([v, l]) => ({ value: v, label: l }))}
                               onSave={v => updateStep(step.id, { type: v }).then(reload)}
                             />
+                            <TooltipProvider>
+                              <Tooltip>
+                                <TooltipTrigger asChild>
+                                  <Button variant="ghost" size="icon" className="h-5 w-5 shrink-0">
+                                    <CircleHelp className="h-3.5 w-3.5 text-muted-foreground" />
+                                  </Button>
+                                </TooltipTrigger>
+                                <TooltipContent side="right" className="max-w-[300px]">
+                                  <p className="text-xs font-medium mb-1">{typeLabel[step.type] || step.type}</p>
+                                  <p className="text-xs text-muted-foreground">{typeDescriptions[step.type] || 'No description available.'}</p>
+                                </TooltipContent>
+                              </Tooltip>
+                            </TooltipProvider>
                           </div>
 
                           {/* Step Type (Critical/Mechanical/Decisional) - only for in-scope steps */}
