@@ -411,7 +411,7 @@ export default function Clients() {
               </h3>
               <div className="grid gap-4 pl-6 border-l-2 border-primary/20">
                 <div className="grid gap-1.5">
-                  <Label htmlFor="name">Client Name *</Label>
+                <Label htmlFor="name">Client Name *</Label>
                   <Input id="name" placeholder="e.g. Acme Corporation" value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} />
                 </div>
                 <div className="grid grid-cols-2 gap-4">
