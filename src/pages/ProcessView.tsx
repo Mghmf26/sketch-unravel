@@ -10,7 +10,7 @@ import DiagramCanvasEditor from '@/components/DiagramCanvasEditor';
 import ProcessEditTab from '@/components/ProcessEditTab';
 import RiskMatrixEditor from '@/components/RiskMatrixEditor';
 import MainframeFlowEditor from '@/components/MainframeFlowEditor';
-import ProcessQuestionnaire from '@/components/ProcessQuestionnaire';
+// ProcessQuestionnaire removed — questionnaire is now integrated per step in Edit Data
 import {
   fetchProcesses, fetchSteps, fetchStepConnections,
   fetchRisks, fetchAllControls, fetchRegulations, fetchIncidents,
