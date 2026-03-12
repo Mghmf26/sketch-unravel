@@ -4,7 +4,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
 import {
   ArrowLeft, ShieldCheck, Users, Plus, UserX, UserCheck, Trash2, Mail,
-  Clock, Building2, ChevronDown, MoreHorizontal, Pause, Play, Eye, Shield, ClipboardList
+  Clock, Building2, ChevronDown, MoreHorizontal, Pause, Play, Eye, Shield
 } from 'lucide-react';
 import UserPermissionsEditor from '@/components/UserPermissionsEditor';
 import PageVisibilityEditor from '@/components/PageVisibilityEditor';
