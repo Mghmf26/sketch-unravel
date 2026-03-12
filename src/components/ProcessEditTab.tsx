@@ -1734,38 +1734,83 @@ function AddRiskDialog({ processId, stepId, onClose, onRefresh }: { processId: s
 }
 
 function AddControlDialog({ riskId, onClose, onRefresh }: { riskId: string; onClose: () => void; onRefresh: () => void }) {
+  const [mode, setMode] = useState<'new' | 'existing'>('new');
   const [name, setName] = useState('');
   const [type, setType] = useState('preventive');
   const [effectiveness, setEffectiveness] = useState('effective');
   const [automationLevel, setAutomationLevel] = useState('');
   const [frequency, setFrequency] = useState('');
   const [lastTested, setLastTested] = useState('');
+  const [allControls, setAllControls] = useState<Control[]>([]);
+  const [search, setSearch] = useState('');
+  const [loading, setLoading] = useState(false);
+
+  useEffect(() => {
+    if (mode === 'existing') {
+      setLoading(true);
+      fetchAllControls().then(c => { setAllControls(c); setLoading(false); });
+    }
+  }, [mode]);
+
   const submit = async () => {
     if (!name.trim()) return;
     await insertControl({ risk_id: riskId, name: name.trim(), type, effectiveness, automation_level: automationLevel || null, frequency: frequency || null, last_tested: lastTested || null } as any);
     toast({ title: 'Control added' }); onRefresh(); onClose();
   };
+
+  const selectExisting = async (ctrl: Control) => {
+    await insertControl({ risk_id: riskId, name: ctrl.name, type: ctrl.type, effectiveness: ctrl.effectiveness, description: ctrl.description, automation_level: (ctrl as any).automation_level || null, frequency: (ctrl as any).frequency || null, last_tested: (ctrl as any).last_tested || null } as any);
+    toast({ title: 'Control added from existing' }); onRefresh(); onClose();
+  };
+
+  const filtered = allControls.filter(c => c.name.toLowerCase().includes(search.toLowerCase()));
+
   return (
     <Dialog open onOpenChange={onClose}>
       <DialogContent className="sm:max-w-md">
         <DialogHeader><DialogTitle>Add Control</DialogTitle></DialogHeader>
-        <div className="grid gap-3 py-2">
-          <div className="grid gap-1.5"><Label>Name *</Label><Input value={name} onChange={e => setName(e.target.value)} /></div>
-          <div className="grid grid-cols-2 gap-3">
-            <div className="grid gap-1.5"><Label>Type</Label><Select value={type} onValueChange={setType}><SelectTrigger><SelectValue /></SelectTrigger>
-              <SelectContent><SelectItem value="preventive">Preventive</SelectItem><SelectItem value="detective">Detective</SelectItem><SelectItem value="corrective">Corrective</SelectItem></SelectContent></Select></div>
-            <div className="grid gap-1.5"><Label>Effectiveness</Label><Select value={effectiveness} onValueChange={setEffectiveness}><SelectTrigger><SelectValue /></SelectTrigger>
-              <SelectContent><SelectItem value="effective">Effective</SelectItem><SelectItem value="partially">Partially</SelectItem><SelectItem value="ineffective">Ineffective</SelectItem></SelectContent></Select></div>
-          </div>
-          <div className="grid grid-cols-2 gap-3">
-            <div className="grid gap-1.5"><Label>Automation Level</Label><Select value={automationLevel || '__none__'} onValueChange={v => setAutomationLevel(v === '__none__' ? '' : v)}><SelectTrigger><SelectValue /></SelectTrigger>
-              <SelectContent><SelectItem value="__none__">— Select —</SelectItem><SelectItem value="automatic">Automatic</SelectItem><SelectItem value="semi-automatic">Semi-Automatic</SelectItem><SelectItem value="manual">Manual</SelectItem></SelectContent></Select></div>
-            <div className="grid gap-1.5"><Label>Frequency</Label><Select value={frequency || '__none__'} onValueChange={v => setFrequency(v === '__none__' ? '' : v)}><SelectTrigger><SelectValue /></SelectTrigger>
-              <SelectContent><SelectItem value="__none__">— Select —</SelectItem><SelectItem value="multiple_daily">Multiple times/day</SelectItem><SelectItem value="daily">Daily</SelectItem><SelectItem value="weekly">Weekly</SelectItem><SelectItem value="monthly">Monthly</SelectItem><SelectItem value="quarterly">Quarterly</SelectItem><SelectItem value="yearly">Yearly</SelectItem></SelectContent></Select></div>
-          </div>
-          <div className="grid gap-1.5"><Label>Last Tested by Client</Label><Input value={lastTested} onChange={e => setLastTested(e.target.value)} placeholder="e.g. 2024-12-15 or N/A" /></div>
+        <div className="flex gap-1 mb-2">
+          <Button size="sm" variant={mode === 'new' ? 'default' : 'outline'} className="h-7 text-xs" onClick={() => setMode('new')}>Create New</Button>
+          <Button size="sm" variant={mode === 'existing' ? 'default' : 'outline'} className="h-7 text-xs" onClick={() => setMode('existing')}>Select Existing</Button>
         </div>
-        <DialogFooter><Button variant="outline" onClick={onClose}>Cancel</Button><Button onClick={submit}>Add</Button></DialogFooter>
+        {mode === 'new' ? (
+          <div className="grid gap-3 py-2">
+            <div className="grid gap-1.5"><Label>Name *</Label><Input value={name} onChange={e => setName(e.target.value)} /></div>
+            <div className="grid grid-cols-2 gap-3">
+              <div className="grid gap-1.5"><Label>Type</Label><Select value={type} onValueChange={setType}><SelectTrigger><SelectValue /></SelectTrigger>
+                <SelectContent><SelectItem value="preventive">Preventive</SelectItem><SelectItem value="detective">Detective</SelectItem><SelectItem value="corrective">Corrective</SelectItem></SelectContent></Select></div>
+              <div className="grid gap-1.5"><Label>Effectiveness</Label><Select value={effectiveness} onValueChange={setEffectiveness}><SelectTrigger><SelectValue /></SelectTrigger>
+                <SelectContent><SelectItem value="effective">Effective</SelectItem><SelectItem value="partially">Partially</SelectItem><SelectItem value="ineffective">Ineffective</SelectItem></SelectContent></Select></div>
+            </div>
+            <div className="grid grid-cols-2 gap-3">
+              <div className="grid gap-1.5"><Label>Automation Level</Label><Select value={automationLevel || '__none__'} onValueChange={v => setAutomationLevel(v === '__none__' ? '' : v)}><SelectTrigger><SelectValue /></SelectTrigger>
+                <SelectContent><SelectItem value="__none__">— Select —</SelectItem><SelectItem value="automatic">Automatic</SelectItem><SelectItem value="semi-automatic">Semi-Automatic</SelectItem><SelectItem value="manual">Manual</SelectItem></SelectContent></Select></div>
+              <div className="grid gap-1.5"><Label>Frequency</Label><Select value={frequency || '__none__'} onValueChange={v => setFrequency(v === '__none__' ? '' : v)}><SelectTrigger><SelectValue /></SelectTrigger>
+                <SelectContent><SelectItem value="__none__">— Select —</SelectItem><SelectItem value="multiple_daily">Multiple times/day</SelectItem><SelectItem value="daily">Daily</SelectItem><SelectItem value="weekly">Weekly</SelectItem><SelectItem value="monthly">Monthly</SelectItem><SelectItem value="quarterly">Quarterly</SelectItem><SelectItem value="yearly">Yearly</SelectItem></SelectContent></Select></div>
+            </div>
+            <div className="grid gap-1.5"><Label>Last Tested by Client</Label><Input value={lastTested} onChange={e => setLastTested(e.target.value)} placeholder="e.g. 2024-12-15 or N/A" /></div>
+            <DialogFooter><Button variant="outline" onClick={onClose}>Cancel</Button><Button onClick={submit}>Add</Button></DialogFooter>
+          </div>
+        ) : (
+          <div className="space-y-2">
+            <Input placeholder="Search controls..." value={search} onChange={e => setSearch(e.target.value)} className="h-8 text-sm" />
+            <div className="max-h-[300px] overflow-y-auto space-y-1">
+              {loading ? <p className="text-xs text-muted-foreground text-center py-4">Loading...</p> :
+                filtered.length === 0 ? <p className="text-xs text-muted-foreground text-center py-4">No controls found</p> :
+                filtered.map(c => (
+                  <div key={c.id} className="flex items-center justify-between p-2 rounded border hover:bg-muted/50 cursor-pointer group" onClick={() => selectExisting(c)}>
+                    <div className="flex-1 min-w-0">
+                      <p className="text-xs truncate font-medium">{c.name}</p>
+                      <p className="text-[10px] text-muted-foreground">Type: {c.type} · Effectiveness: {c.effectiveness}</p>
+                    </div>
+                    <Button size="sm" variant="ghost" className="h-6 text-[10px] opacity-0 group-hover:opacity-100 shrink-0">Select</Button>
+                  </div>
+                ))
+              }
+            </div>
+            <DialogFooter><Button variant="outline" onClick={onClose}>Cancel</Button></DialogFooter>
+          </div>
+        )}
       </DialogContent>
     </Dialog>
   );
