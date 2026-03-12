@@ -1729,30 +1729,138 @@ function AddMFQuestionDialog({ processId, onClose, onRefresh }: { processId: str
 
 function AddRaciDialog({ processId, onClose, onRefresh }: { processId: string; onClose: () => void; onRefresh: () => void }) {
   const [roleName, setRoleName] = useState('');
+  const [jobTitle, setJobTitle] = useState('');
+  const [jobDesc, setJobDesc] = useState('');
+  const [functionDept, setFunctionDept] = useState('');
+  const [subFunction, setSubFunction] = useState('');
+  const [seniority, setSeniority] = useState('');
+  const [tenure, setTenure] = useState('');
+  const [grade, setGrade] = useState('');
+  const [fte, setFte] = useState('');
+  const [salary, setSalary] = useState('');
+  const [managerStatus, setManagerStatus] = useState('');
+  const [spanOfControl, setSpanOfControl] = useState('');
   const [responsible, setResponsible] = useState('');
   const [accountable, setAccountable] = useState('');
   const [consulted, setConsulted] = useState('');
   const [informed, setInformed] = useState('');
   const submit = async () => {
-    if (!roleName.trim()) return;
+    if (!roleName.trim() || !jobTitle.trim() || !functionDept.trim()) {
+      toast({ title: 'Please fill in all mandatory fields (Role Name, Job Title, Function)', variant: 'destructive' });
+      return;
+    }
     await insertProcessRaci({
       process_id: processId, role_name: roleName.trim(),
+      job_title: jobTitle.trim(),
+      job_description: jobDesc.trim() || null,
+      function_dept: functionDept.trim(),
+      sub_function: subFunction.trim() || null,
+      seniority: seniority.trim() || null,
+      tenure: tenure.trim() || null,
+      grade: grade.trim() || null,
+      fte: fte ? parseFloat(fte) : null,
+      salary: salary ? parseFloat(salary) : null,
+      manager_status: managerStatus || null,
+      span_of_control: spanOfControl ? parseInt(spanOfControl) : null,
       responsible: responsible || null, accountable: accountable || null,
       consulted: consulted || null, informed: informed || null,
-    });
+    } as any);
     toast({ title: 'RACI role added to process' }); onRefresh(); onClose();
   };
   return (
     <Dialog open onOpenChange={onClose}>
-      <DialogContent className="sm:max-w-md">
+      <DialogContent className="sm:max-w-2xl max-h-[85vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>Add RACI Role / Function</DialogTitle>
-          <DialogDescription>Define a role at the business process level. You can then link it to specific steps.</DialogDescription>
+          <DialogDescription>Define a role at the business process level. Fields marked with * are mandatory.</DialogDescription>
         </DialogHeader>
         <div className="grid gap-3 py-2">
-          <div className="grid gap-1.5"><Label>Role / Function Name *</Label><Input value={roleName} onChange={e => setRoleName(e.target.value)} placeholder="e.g. Finance Manager, IT Operations" /></div>
+          <div className="grid gap-1.5">
+            <Label>Role / Function Name *</Label>
+            <Input value={roleName} onChange={e => setRoleName(e.target.value)} placeholder="e.g. Finance Manager, IT Operations" />
+          </div>
+
+          <Separator />
+          <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Role Details</p>
+
           <div className="grid grid-cols-2 gap-3">
-            <div className="grid gap-1.5"><Label>Responsible</Label><Input value={responsible} onChange={e => setResponsible(e.target.value)} placeholder="Person / team" /></div>
+            <div className="grid gap-1.5">
+              <Label>Job Title *</Label>
+              <Input value={jobTitle} onChange={e => setJobTitle(e.target.value)} placeholder="Standardized role title" />
+              <p className="text-[10px] text-muted-foreground">The standardized title representing the role analysed.</p>
+            </div>
+            <div className="grid gap-1.5">
+              <Label>Function (Department) *</Label>
+              <Input value={functionDept} onChange={e => setFunctionDept(e.target.value)} placeholder="e.g. Finance, IT, Operations" />
+              <p className="text-[10px] text-muted-foreground">Main business area where the role sits.</p>
+            </div>
+          </div>
+
+          <div className="grid gap-1.5">
+            <Label>Job Description</Label>
+            <Textarea value={jobDesc} onChange={e => setJobDesc(e.target.value)} placeholder="Short description summarizing the main purpose and key activities of the role" className="min-h-[60px]" />
+          </div>
+
+          <div className="grid grid-cols-2 gap-3">
+            <div className="grid gap-1.5">
+              <Label>Sub Function</Label>
+              <Input value={subFunction} onChange={e => setSubFunction(e.target.value)} placeholder="e.g. Accounts Payable, Network Security" />
+              <p className="text-[10px] text-muted-foreground">Specific specialization within the function.</p>
+            </div>
+            <div className="grid gap-1.5">
+              <Label>Seniority</Label>
+              <Input value={seniority} onChange={e => setSeniority(e.target.value)} placeholder="e.g. Senior, Junior, Lead" />
+              <p className="text-[10px] text-muted-foreground">Hierarchical level reflecting expertise and autonomy.</p>
+            </div>
+          </div>
+
+          <div className="grid grid-cols-3 gap-3">
+            <div className="grid gap-1.5">
+              <Label>Tenure</Label>
+              <Input value={tenure} onChange={e => setTenure(e.target.value)} placeholder="e.g. 5 years" />
+            </div>
+            <div className="grid gap-1.5">
+              <Label>Grade</Label>
+              <Input value={grade} onChange={e => setGrade(e.target.value)} placeholder="e.g. Band 7, Level 3" />
+              <p className="text-[10px] text-muted-foreground">Internal organizational level or band.</p>
+            </div>
+            <div className="grid gap-1.5">
+              <Label>FTE *</Label>
+              <Input type="number" step="0.1" value={fte} onChange={e => setFte(e.target.value)} placeholder="e.g. 12.5" />
+              <p className="text-[10px] text-muted-foreground">Total FTE volume for this role.</p>
+            </div>
+          </div>
+
+          <div className="grid grid-cols-3 gap-3">
+            <div className="grid gap-1.5">
+              <Label>Salary</Label>
+              <Input type="number" value={salary} onChange={e => setSalary(e.target.value)} placeholder="Annual base salary" />
+              <p className="text-[10px] text-muted-foreground">Average annual base salary.</p>
+            </div>
+            <div className="grid gap-1.5">
+              <Label>Manager Status</Label>
+              <Select value={managerStatus || '__none__'} onValueChange={v => setManagerStatus(v === '__none__' ? '' : v)}>
+                <SelectTrigger><SelectValue placeholder="Select..." /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="__none__">— Select —</SelectItem>
+                  <SelectItem value="yes">Yes</SelectItem>
+                  <SelectItem value="no">No</SelectItem>
+                </SelectContent>
+              </Select>
+              <p className="text-[10px] text-muted-foreground">Includes managerial duties?</p>
+            </div>
+            <div className="grid gap-1.5">
+              <Label>Span of Control</Label>
+              <Input type="number" value={spanOfControl} onChange={e => setSpanOfControl(e.target.value)} placeholder="Direct reports" />
+              <p className="text-[10px] text-muted-foreground">Avg. direct reports per manager.</p>
+            </div>
+          </div>
+
+          <Separator />
+          <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">RACI Assignments (comma-separate for multiple people)</p>
+
+          <div className="grid grid-cols-2 gap-3">
+            <div className="grid gap-1.5"><Label>Responsible</Label><Input value={responsible} onChange={e => setResponsible(e.target.value)} placeholder="e.g. John Doe, Jane Smith" /></div>
             <div className="grid gap-1.5"><Label>Accountable</Label><Input value={accountable} onChange={e => setAccountable(e.target.value)} placeholder="Person / team" /></div>
           </div>
           <div className="grid grid-cols-2 gap-3">
