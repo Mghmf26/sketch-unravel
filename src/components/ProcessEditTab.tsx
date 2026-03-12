@@ -30,8 +30,10 @@ import {
   insertIncident, deleteIncident, updateIncident,
   insertMainframeImport, deleteMainframeImport,
   insertMFQuestion, deleteMFQuestion,
+  fetchStepRaci, insertStepRaci, deleteStepRaci,
   type ProcessStep, type StepConnection, type Risk, type Control,
   type Regulation, type Incident, type MainframeImport, type MFQuestion,
+  type StepRaci,
 } from '@/lib/api';
 import {
   fetchProcessRaci, insertProcessRaci, updateProcessRaci, deleteProcessRaci,
