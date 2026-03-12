@@ -33,7 +33,6 @@ export default function ProcessView() {
     : tabParam === 'mainframe-flows' ? 'mainframe-flows'
     : tabParam === 'diagram' ? 'diagram'
     : tabParam === 'risk-matrix' ? 'risk-matrix'
-    : tabParam === 'questionnaire' ? 'questionnaire'
     : 'image';
 
   const initialStepId = searchParams.get('stepId') || undefined;
