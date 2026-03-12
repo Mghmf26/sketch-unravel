@@ -172,6 +172,7 @@ export default function ProcessQuestionnaireConfig() {
                       {STEP_TYPES.map(st => (
                         <TableHead key={st.value} className="text-[10px] font-semibold uppercase w-24 text-center">{st.label}</TableHead>
                       ))}
+                      <TableHead className="text-[10px] font-semibold uppercase w-16 text-center">All</TableHead>
                       <TableHead className="text-[10px] font-semibold uppercase w-36 text-center">Importance</TableHead>
                     </TableRow>
                   </TableHeader>
