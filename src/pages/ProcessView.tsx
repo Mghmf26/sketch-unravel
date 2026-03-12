@@ -35,6 +35,7 @@ export default function ProcessView() {
     : tabParam === 'diagram' ? 'diagram'
     : tabParam === 'risk-matrix' ? 'risk-matrix'
     : tabParam === 'questionnaire' ? 'questionnaire'
+    : tabParam === 'raci' ? 'raci'
     : 'image';
 
   const initialStepId = searchParams.get('stepId') || undefined;
