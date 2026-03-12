@@ -11,6 +11,7 @@ import ProcessEditTab from '@/components/ProcessEditTab';
 import RiskMatrixEditor from '@/components/RiskMatrixEditor';
 import MainframeFlowEditor from '@/components/MainframeFlowEditor';
 import ProcessQuestionnaireConfig from '@/components/ProcessQuestionnaireConfig';
+import RaciManagementTab from '@/components/RaciManagementTab';
 import {
   fetchProcesses, fetchSteps, fetchStepConnections,
   fetchRisks, fetchAllControls, fetchRegulations, fetchIncidents,
