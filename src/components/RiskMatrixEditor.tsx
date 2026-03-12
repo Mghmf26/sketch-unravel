@@ -7,7 +7,7 @@ import { toast } from '@/hooks/use-toast';
 import { Grid3x3, Shield, CheckCircle, XCircle, Info, Copy, FileText } from 'lucide-react';
 import {
   fetchRiskMatrix, fetchRiskMatrixCells, upsertRiskMatrix,
-  saveCellAcceptability, applyTemplateMatrix,
+  saveCellAcceptability, applyTemplateMatrix, saveImpactDescriptions,
   LEVEL_LABELS, STANDARD_TEMPLATES,
   type RiskMatrix, type RiskMatrixCell, type RiskMatrixTemplate,
 } from '@/lib/api-risk-matrix';
