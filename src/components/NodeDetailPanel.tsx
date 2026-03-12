@@ -549,6 +549,14 @@ export default function NodeDetailPanel({ node, risks, controls, regulations, in
                   <EditableSelect label="Effectiveness" value={ctrl.effectiveness || 'effective'} options={['effective', 'partially', 'ineffective']}
                     onSave={val => saveField(() => updateControl(ctrl.id, { effectiveness: val }), 'Effectiveness updated')} />
                 </div>
+                <div className="flex gap-3">
+                  <EditableSelect label="Automation" value={(ctrl as any).automation_level || '__none__'} options={['__none__', 'automatic', 'semi-automatic', 'manual']}
+                    onSave={val => saveField(() => updateControl(ctrl.id, { automation_level: val === '__none__' ? null : val } as any), 'Automation updated')} />
+                  <EditableSelect label="Frequency" value={(ctrl as any).frequency || '__none__'} options={['__none__', 'multiple_daily', 'daily', 'weekly', 'monthly', 'quarterly', 'yearly']}
+                    onSave={val => saveField(() => updateControl(ctrl.id, { frequency: val === '__none__' ? null : val } as any), 'Frequency updated')} />
+                </div>
+                <EditableField label="Last Tested by Client" value={(ctrl as any).last_tested || ''}
+                  onSave={val => saveField(() => updateControl(ctrl.id, { last_tested: val } as any), 'Last tested updated')} />
                 {derivedProcessId && <EntityNotesSection entityType="control" entityId={ctrl.id} processId={derivedProcessId} />}
               </div>
             ))}
