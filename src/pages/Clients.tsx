@@ -460,7 +460,7 @@ export default function Clients() {
                     <Input id="contact_email" type="email" placeholder="john@acme.com" value={form.contact_email} onChange={(e) => setForm({ ...form, contact_email: e.target.value })} />
                   </div>
                   <div className="grid gap-1.5">
-                    <Label htmlFor="contact_phone">Phone</Label>
+                    <Label htmlFor="contact_phone">Phone *</Label>
                     <Input id="contact_phone" placeholder="+1 234 567 890" value={form.contact_phone} onChange={(e) => setForm({ ...form, contact_phone: e.target.value })} />
                   </div>
                 </div>
