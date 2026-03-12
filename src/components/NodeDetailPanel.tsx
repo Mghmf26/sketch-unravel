@@ -330,8 +330,8 @@ export default function NodeDetailPanel({ node, risks, controls, regulations, in
     if (!incidentForm.title.trim() || !derivedProcessId) return;
     setSaving(true);
     try {
-      await insertIncident({ step_id: node.id, process_id: derivedProcessId, title: incidentForm.title.trim(), description: incidentForm.description || null, severity: incidentForm.severity, status: incidentForm.status });
-      toast({ title: 'Incident added' }); setAddDialog(null); setIncidentForm({ title: '', description: '', severity: 'medium', status: 'open' }); onDataChanged?.();
+      await insertIncident({ step_id: node.id, process_id: derivedProcessId, title: incidentForm.title.trim(), description: incidentForm.description || null, severity: incidentForm.severity, status: incidentForm.status, owner_department: incidentForm.owner_department || null, money_loss_amount: incidentForm.money_loss_amount || null, loss_threshold: incidentForm.loss_threshold || null, root_cause: incidentForm.root_cause || null } as any);
+      toast({ title: 'Incident added' }); setAddDialog(null); setIncidentForm({ title: '', description: '', severity: 'medium', status: 'open', owner_department: '', money_loss_amount: '', loss_threshold: '', root_cause: '' }); onDataChanged?.();
     } catch { toast({ title: 'Failed to add incident', variant: 'destructive' }); }
     setSaving(false);
   };
