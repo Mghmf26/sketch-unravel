@@ -40,6 +40,10 @@ import {
 import { fetchStepApplications, insertStepApplication, updateStepApplication, deleteStepApplication, type StepApplication } from '@/lib/api-applications';
 import { fetchMainframeFlows, fetchMFFlowNodes, type MainframeFlow, type MFFlowNode, MF_NODE_TYPE_META } from '@/lib/api-mainframe-flows';
 import { StepTypeBadge, STEP_TYPE_OPTIONS } from '@/components/StepTypeBadge';
+import {
+  fetchActiveQuestions, fetchStepLinks, upsertStepLink,
+  type QuestionnaireQuestion, type QuestionnaireStepLink,
+} from '@/lib/api-questionnaire';
 
 interface ProcessEditTabProps {
   processId: string;
