@@ -201,7 +201,7 @@ export default function ProcessEditTab({ processId }: ProcessEditTabProps) {
   const collapseAllSteps = () => setExpandedSteps(new Set());
 
   const reload = useCallback(async () => {
-    const [s, c, r, ctrl, reg, inc, imp, mfq, raci, raciLinks, apps, flows] = await Promise.all([
+    const [s, c, r, ctrl, reg, inc, imp, mfq, raci, raciLinks, apps, flows, qq, ql] = await Promise.all([
       fetchSteps(processId), fetchStepConnections(processId),
       fetchRisks(processId), fetchAllControls(),
       fetchRegulations(processId), fetchIncidents(processId),
@@ -209,6 +209,8 @@ export default function ProcessEditTab({ processId }: ProcessEditTabProps) {
       fetchProcessRaci(processId), fetchRaciStepLinks(processId),
       fetchStepApplications(processId),
       fetchMainframeFlows(processId),
+      fetchActiveQuestions(),
+      fetchStepLinks(processId),
     ]);
     setSteps(s);
     setConnections(c);
@@ -223,6 +225,8 @@ export default function ProcessEditTab({ processId }: ProcessEditTabProps) {
     setRaciStepLinks(raciLinks);
     setApplications(apps);
     setMfFlows(flows);
+    setQuestQuestions(qq.filter(q => q.importance_level !== 3));
+    setQuestLinks(ql);
     // Fetch all flow nodes
     const allNodes = await Promise.all(flows.map(f => fetchMFFlowNodes(f.id)));
     setMfFlowNodes(allNodes.flat());
