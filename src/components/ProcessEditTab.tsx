@@ -1154,7 +1154,63 @@ export default function ProcessEditTab({ processId }: ProcessEditTabProps) {
         <Card>
           <CardHeader className="py-2 px-4">
             <SectionHeader icon={Users} title="RACI Roles / Functions" count={raciEntries.length} sectionKey="raci"
-              onAdd={() => setAddDialog('raci')} />
+              onAdd={() => setAddDialog('raci')}
+              extra={
+                <div className="flex gap-1">
+                  <Button size="sm" variant="ghost" className="h-6 text-[10px] text-muted-foreground gap-1" onClick={() => {
+                    exportRaciToExcel({
+                      processName: 'Process',
+                      raciEntries, raciStepLinks, steps,
+                    });
+                    toast({ title: 'RACI exported to Excel' });
+                  }}>
+                    <Download className="h-3 w-3" /> Export
+                  </Button>
+                  <label className="cursor-pointer">
+                    <Button size="sm" variant="ghost" className="h-6 text-[10px] text-muted-foreground gap-1 pointer-events-none" asChild>
+                      <span><UploadIcon className="h-3 w-3" /> Import</span>
+                    </Button>
+                    <input type="file" className="hidden" accept=".xlsx,.xls,.csv" onChange={async (e) => {
+                      const file = e.target.files?.[0];
+                      if (!file) return;
+                      try {
+                        const rows = await parseRaciExcel(file);
+                        if (rows.length === 0) { toast({ title: 'No data found', variant: 'destructive' }); return; }
+                        let imported = 0;
+                        for (const row of rows) {
+                          if (!row.role_name) continue;
+                          await insertProcessRaci({
+                            process_id: processId,
+                            role_name: row.role_name,
+                            job_title: row.job_title || null,
+                            job_description: row.job_description || null,
+                            function_dept: row.function_dept || null,
+                            sub_function: row.sub_function || null,
+                            seniority: row.seniority || null,
+                            tenure: row.tenure || null,
+                            grade: row.grade || null,
+                            fte: row.fte,
+                            salary: row.salary,
+                            manager_status: row.manager_status || null,
+                            span_of_control: row.span_of_control,
+                            responsible: row.responsible || null,
+                            accountable: row.accountable || null,
+                            consulted: row.consulted || null,
+                            informed: row.informed || null,
+                          });
+                          imported++;
+                        }
+                        toast({ title: `Imported ${imported} RACI roles` });
+                        reload();
+                      } catch (err: any) {
+                        toast({ title: 'Import failed', description: err.message, variant: 'destructive' });
+                      }
+                      e.target.value = '';
+                    }} />
+                  </label>
+                </div>
+              }
+            />
           </CardHeader>
           <CollapsibleContent>
             <CardContent className="p-0">
@@ -1176,12 +1232,68 @@ export default function ProcessEditTab({ processId }: ProcessEditTabProps) {
                             <Trash2 className="h-2.5 w-2.5" />
                           </Button>
                         </div>
-                        <div className="flex gap-3 flex-wrap text-[10px]">
-                          {raci.responsible && <Badge className="border-0 bg-emerald-100 text-emerald-700 text-[9px]">R: {raci.responsible}</Badge>}
-                          {raci.accountable && <Badge className="border-0 bg-blue-100 text-blue-700 text-[9px]">A: {raci.accountable}</Badge>}
-                          {raci.consulted && <Badge className="border-0 bg-amber-100 text-amber-700 text-[9px]">C: {raci.consulted}</Badge>}
-                          {raci.informed && <Badge className="border-0 bg-purple-100 text-purple-700 text-[9px]">I: {raci.informed}</Badge>}
+
+                        {/* Metadata fields */}
+                        <div className="grid grid-cols-2 md:grid-cols-4 gap-x-4 gap-y-1 text-[10px]">
+                          <div>
+                            <span className="text-muted-foreground font-medium">Job Title:</span>{' '}
+                            <InlineEdit value={raci.job_title || ''} onSave={v => updateProcessRaci(raci.id, { job_title: v } as any).then(reload)} className="text-[10px] font-medium" />
+                          </div>
+                          <div>
+                            <span className="text-muted-foreground font-medium">Function:</span>{' '}
+                            <InlineEdit value={raci.function_dept || ''} onSave={v => updateProcessRaci(raci.id, { function_dept: v } as any).then(reload)} className="text-[10px]" />
+                          </div>
+                          <div>
+                            <span className="text-muted-foreground font-medium">Sub Function:</span>{' '}
+                            <InlineEdit value={raci.sub_function || ''} onSave={v => updateProcessRaci(raci.id, { sub_function: v } as any).then(reload)} className="text-[10px]" />
+                          </div>
+                          <div>
+                            <span className="text-muted-foreground font-medium">Seniority:</span>{' '}
+                            <InlineEdit value={raci.seniority || ''} onSave={v => updateProcessRaci(raci.id, { seniority: v } as any).then(reload)} className="text-[10px]" />
+                          </div>
+                          <div>
+                            <span className="text-muted-foreground font-medium">Tenure:</span>{' '}
+                            <InlineEdit value={raci.tenure || ''} onSave={v => updateProcessRaci(raci.id, { tenure: v } as any).then(reload)} className="text-[10px]" />
+                          </div>
+                          <div>
+                            <span className="text-muted-foreground font-medium">Grade:</span>{' '}
+                            <InlineEdit value={raci.grade || ''} onSave={v => updateProcessRaci(raci.id, { grade: v } as any).then(reload)} className="text-[10px]" />
+                          </div>
+                          <div>
+                            <span className="text-muted-foreground font-medium">FTE:</span>{' '}
+                            <InlineEdit value={raci.fte != null ? String(raci.fte) : ''} onSave={v => updateProcessRaci(raci.id, { fte: parseFloat(v) || null } as any).then(reload)} className="text-[10px] font-medium" />
+                          </div>
+                          <div>
+                            <span className="text-muted-foreground font-medium">Salary:</span>{' '}
+                            <InlineEdit value={raci.salary != null ? String(raci.salary) : ''} onSave={v => updateProcessRaci(raci.id, { salary: parseFloat(v) || null } as any).then(reload)} className="text-[10px]" />
+                          </div>
+                          <div>
+                            <span className="text-muted-foreground font-medium">Manager:</span>{' '}
+                            <InlineSelect value={raci.manager_status || '__none__'}
+                              options={[{ value: '__none__', label: '— Select —' }, { value: 'yes', label: 'Yes' }, { value: 'no', label: 'No' }]}
+                              onSave={v => updateProcessRaci(raci.id, { manager_status: v === '__none__' ? null : v } as any).then(reload)} />
+                          </div>
+                          <div>
+                            <span className="text-muted-foreground font-medium">Span of Control:</span>{' '}
+                            <InlineEdit value={raci.span_of_control != null ? String(raci.span_of_control) : ''} onSave={v => updateProcessRaci(raci.id, { span_of_control: parseInt(v) || null } as any).then(reload)} className="text-[10px]" />
+                          </div>
                         </div>
+
+                        {raci.job_description && (
+                          <div className="text-[10px]">
+                            <span className="text-muted-foreground font-medium">Description:</span>{' '}
+                            <span className="text-muted-foreground italic">{raci.job_description}</span>
+                          </div>
+                        )}
+
+                        {/* RACI assignments with multi-person tags */}
+                        <div className="flex gap-3 flex-wrap text-[10px]">
+                          <RaciPeopleField label="R" color="emerald" value={raci.responsible || ''} onSave={v => updateProcessRaci(raci.id, { responsible: v || null }).then(reload)} />
+                          <RaciPeopleField label="A" color="blue" value={raci.accountable || ''} onSave={v => updateProcessRaci(raci.id, { accountable: v || null }).then(reload)} />
+                          <RaciPeopleField label="C" color="amber" value={raci.consulted || ''} onSave={v => updateProcessRaci(raci.id, { consulted: v || null }).then(reload)} />
+                          <RaciPeopleField label="I" color="purple" value={raci.informed || ''} onSave={v => updateProcessRaci(raci.id, { informed: v || null }).then(reload)} />
+                        </div>
+
                         {/* Linked Steps */}
                         <div className="mt-2">
                           <span className="text-[10px] font-semibold text-muted-foreground uppercase">Linked Steps:</span>
