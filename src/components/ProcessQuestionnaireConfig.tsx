@@ -72,6 +72,25 @@ export default function ProcessQuestionnaireConfig() {
     }
   };
 
+  const handleSelectAll = async (question: QuestionnaireQuestion) => {
+    const allTypes = STEP_TYPES.map(st => st.value);
+    try {
+      await updateQuestion(question.id, { step_types: allTypes });
+      setQuestions(prev => prev.map(q => q.id === question.id ? { ...q, step_types: allTypes } : q));
+    } catch (err: any) {
+      toast({ title: 'Error', description: err.message, variant: 'destructive' });
+    }
+  };
+
+  const handleUnselectAll = async (question: QuestionnaireQuestion) => {
+    try {
+      await updateQuestion(question.id, { step_types: [] });
+      setQuestions(prev => prev.map(q => q.id === question.id ? { ...q, step_types: [] } : q));
+    } catch (err: any) {
+      toast({ title: 'Error', description: err.message, variant: 'destructive' });
+    }
+  };
+
   const handleImportanceChange = async (question: QuestionnaireQuestion, level: number) => {
     try {
       await updateQuestion(question.id, { importance_level: level });
