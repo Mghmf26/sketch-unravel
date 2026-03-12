@@ -511,7 +511,7 @@ export default function Clients() {
                 </div>
                 <div className="grid grid-cols-2 gap-4">
                   <div className="grid gap-1.5">
-                    <Label>Estimated Report Issuance Date</Label>
+                    <Label>Estimated Report Issuance Date *</Label>
                     <Input type="date" value={form.report_issuance_date} onChange={(e) => setForm({ ...form, report_issuance_date: e.target.value })} />
                   </div>
                   <div />
