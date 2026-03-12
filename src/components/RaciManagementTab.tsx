@@ -152,6 +152,8 @@ export default function RaciManagementTab({ processId, processName }: RaciManage
   const [importProcessDialogOpen, setImportProcessDialogOpen] = useState(false);
   const [expandedId, setExpandedId] = useState<string | null>(null);
   const [viewMode, setViewMode] = useState<'table' | 'matrix' | 'organigram'>('table');
+  const [editEntry, setEditEntry] = useState<ProcessRaci | null>(null);
+  const [editDialogOpen, setEditDialogOpen] = useState(false);
 
   const colSettings = useColumnSettings('raci-tab', RACI_COLUMNS);
 
