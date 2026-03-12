@@ -276,23 +276,27 @@ export default function ProcessEditTab({ processId }: ProcessEditTabProps) {
   const [contextScreenId, setContextScreenId] = useState<string | null>(null);
   const [expandedSteps, setExpandedSteps] = useState<Set<string>>(new Set());
 
-  // Section visibility toggles for expanded steps
-  const [hiddenSections, setHiddenSections] = useState<Record<string, boolean>>(() => {
+  // Per-step section visibility (e.g. "stepId:risks" => true/false)
+  const [stepSectionVisible, setStepSectionVisible] = useState<Record<string, boolean>>(() => {
     try {
-      const stored = localStorage.getItem(`edit-data-hidden-sections-${processId}`);
+      const stored = localStorage.getItem(`edit-data-step-sections-${processId}`);
       return stored ? JSON.parse(stored) : {};
     } catch { return {}; }
   });
 
-  const toggleSectionVisibility = (key: string) => {
-    setHiddenSections(prev => {
-      const next = { ...prev, [key]: !prev[key] };
-      localStorage.setItem(`edit-data-hidden-sections-${processId}`, JSON.stringify(next));
+  const toggleStepSection = (stepId: string, section: string) => {
+    const key = `${stepId}:${section}`;
+    setStepSectionVisible(prev => {
+      const next = { ...prev, [key]: prev[key] === undefined ? false : !prev[key] };
+      localStorage.setItem(`edit-data-step-sections-${processId}`, JSON.stringify(next));
       return next;
     });
   };
 
-  const isSectionVisible = (key: string) => !hiddenSections[key];
+  const isStepSectionVisible = (stepId: string, section: string) => {
+    const key = `${stepId}:${section}`;
+    return stepSectionVisible[key] !== false; // default visible
+  };
 
   // Global sections
   const [openSections, setOpenSections] = useState<Record<string, boolean>>({
@@ -598,31 +602,8 @@ export default function ProcessEditTab({ processId }: ProcessEditTabProps) {
                           </div>
                           )}
 
-                          {/* Section visibility toggles */}
-                          <div className="flex items-center gap-1 flex-wrap py-1">
-                            <span className="text-[10px] text-muted-foreground font-medium mr-1">Show:</span>
-                            {[
-                              { key: 'questionnaire', label: 'Questionnaire', color: 'text-indigo-600 border-indigo-300' },
-                              { key: 'risks', label: 'Risks', color: 'text-orange-600 border-orange-300' },
-                              { key: 'regulations', label: 'Regulations', color: 'text-purple-600 border-purple-300' },
-                              { key: 'incidents', label: 'Incidents', color: 'text-red-600 border-red-300' },
-                              { key: 'raci', label: 'RACI', color: 'text-cyan-600 border-cyan-300' },
-                              { key: 'applications', label: 'Scr./Apps', color: 'text-sky-600 border-sky-300' },
-                            ].map(sec => (
-                              <Button
-                                key={sec.key}
-                                variant={isSectionVisible(sec.key) ? 'outline' : 'ghost'}
-                                size="sm"
-                                className={`h-5 text-[9px] px-2 ${isSectionVisible(sec.key) ? sec.color : 'text-muted-foreground opacity-50'}`}
-                                onClick={() => toggleSectionVisibility(sec.key)}
-                              >
-                                {isSectionVisible(sec.key) ? '✓' : '○'} {sec.label}
-                              </Button>
-                            ))}
-                          </div>
-
                           {/* Business Process Questionnaire — after step type, before risks */}
-                          {isSectionVisible('questionnaire') && step.type === 'in-scope' && (() => {
+                          {step.type === 'in-scope' && (() => {
                             const stepQs = getStepQuestions(step.id);
                             const relevantCount = stepQs.filter(q => questLinkMap[`${q.id}:${step.id}`]).length;
                             const sectionNums = [...new Set(stepQs.map(q => q.section_number))].sort();
@@ -819,17 +800,24 @@ export default function ProcessEditTab({ processId }: ProcessEditTabProps) {
                           })()}
 
                           {/* Risks & Controls */}
-                          {isSectionVisible('risks') && canAccessModule('risks') && (
+                          {canAccessModule('risks') && (
                             <div className="space-y-2">
                               <div className="flex items-center gap-1.5 justify-between">
-                                <div className="flex items-center gap-1.5">
+                                <div className="flex items-center gap-1.5 cursor-pointer" onClick={() => toggleStepSection(step.id, 'risks')}>
+                                  {isStepSectionVisible(step.id, 'risks') ? <ChevronDown className="h-3 w-3 text-orange-500" /> : <ChevronRight className="h-3 w-3 text-orange-500" />}
                                   <ShieldAlert className="h-3 w-3 text-orange-500" />
                                   <span className="text-[11px] font-semibold text-orange-700">Risks ({stepRisks.length})</span>
                                 </div>
-                                <Button variant="ghost" size="sm" className="h-5 text-[10px] text-orange-600" onClick={() => { setContextStepId(step.id); setAddDialog('risk'); }}>
+                                <div className="flex items-center gap-1">
+                                  <Button variant="ghost" size="sm" className="h-5 text-[10px] text-muted-foreground" onClick={() => toggleStepSection(step.id, 'risks')}>
+                                    {isStepSectionVisible(step.id, 'risks') ? 'Hide' : 'Show'}
+                                  </Button>
+                                  <Button variant="ghost" size="sm" className="h-5 text-[10px] text-orange-600" onClick={() => { setContextStepId(step.id); setAddDialog('risk'); }}>
                                   <Plus className="h-3 w-3 mr-0.5" /> Add
                                 </Button>
+                                </div>
                               </div>
+                              {isStepSectionVisible(step.id, 'risks') && (<>
                               {stepRisks.map(risk => {
                                 const ctrls = getRiskControls(risk.id);
                                 return (
@@ -857,7 +845,6 @@ export default function ProcessEditTab({ processId }: ProcessEditTabProps) {
                                         </Button>
                                       </div>
                                     </div>
-                                    {/* Controls under risk */}
                                     {ctrls.length > 0 && (
                                       <div className="ml-3 pl-3 border-l-2 border-blue-200 space-y-1">
                                         {ctrls.map(ctrl => (
@@ -894,21 +881,29 @@ export default function ProcessEditTab({ processId }: ProcessEditTabProps) {
                                 );
                               })}
                               {stepRisks.length === 0 && <p className="text-[10px] text-muted-foreground italic ml-4">No risks</p>}
+                              </>)}
                             </div>
                           )}
 
                           {/* Regulations */}
-                          {isSectionVisible('regulations') && canAccessModule('regulations') && (
+                          {canAccessModule('regulations') && (
                             <div className="space-y-2">
                               <div className="flex items-center gap-1.5 justify-between">
-                                <div className="flex items-center gap-1.5">
+                                <div className="flex items-center gap-1.5 cursor-pointer" onClick={() => toggleStepSection(step.id, 'regulations')}>
+                                  {isStepSectionVisible(step.id, 'regulations') ? <ChevronDown className="h-3 w-3 text-purple-500" /> : <ChevronRight className="h-3 w-3 text-purple-500" />}
                                   <Scale className="h-3 w-3 text-purple-500" />
                                   <span className="text-[11px] font-semibold text-purple-700">Regulations ({stepRegs.length})</span>
                                 </div>
-                                <Button variant="ghost" size="sm" className="h-5 text-[10px] text-purple-600" onClick={() => { setContextStepId(step.id); setAddDialog('regulation'); }}>
-                                  <Plus className="h-3 w-3 mr-0.5" /> Add
-                                </Button>
+                                <div className="flex items-center gap-1">
+                                  <Button variant="ghost" size="sm" className="h-5 text-[10px] text-muted-foreground" onClick={() => toggleStepSection(step.id, 'regulations')}>
+                                    {isStepSectionVisible(step.id, 'regulations') ? 'Hide' : 'Show'}
+                                  </Button>
+                                  <Button variant="ghost" size="sm" className="h-5 text-[10px] text-purple-600" onClick={() => { setContextStepId(step.id); setAddDialog('regulation'); }}>
+                                    <Plus className="h-3 w-3 mr-0.5" /> Add
+                                  </Button>
+                                </div>
                               </div>
+                              {isStepSectionVisible(step.id, 'regulations') && (<>
                               {stepRegs.map(reg => (
                                 <div key={reg.id} className="ml-4 pl-3 border-l-2 border-purple-200 flex items-center gap-2 group/reg py-1">
                                   <InlineEdit value={reg.name} onSave={v => updateRegulation(reg.id, { name: v }).then(reload)} className="text-sm font-medium" />
@@ -925,21 +920,29 @@ export default function ProcessEditTab({ processId }: ProcessEditTabProps) {
                                 </div>
                               ))}
                               {stepRegs.length === 0 && <p className="text-[10px] text-muted-foreground italic ml-4">No regulations</p>}
+                              </>)}
                             </div>
                           )}
 
                           {/* Incidents */}
-                          {isSectionVisible('incidents') && canAccessModule('incidents') && (
+                          {canAccessModule('incidents') && (
                             <div className="space-y-2">
                               <div className="flex items-center gap-1.5 justify-between">
-                                <div className="flex items-center gap-1.5">
+                                <div className="flex items-center gap-1.5 cursor-pointer" onClick={() => toggleStepSection(step.id, 'incidents')}>
+                                  {isStepSectionVisible(step.id, 'incidents') ? <ChevronDown className="h-3 w-3 text-red-500" /> : <ChevronRight className="h-3 w-3 text-red-500" />}
                                   <AlertCircle className="h-3 w-3 text-red-500" />
                                   <span className="text-[11px] font-semibold text-red-700">Incidents ({stepIncs.length})</span>
                                 </div>
-                                <Button variant="ghost" size="sm" className="h-5 text-[10px] text-red-600" onClick={() => { setContextStepId(step.id); setAddDialog('incident'); }}>
-                                  <Plus className="h-3 w-3 mr-0.5" /> Add
-                                </Button>
+                                <div className="flex items-center gap-1">
+                                  <Button variant="ghost" size="sm" className="h-5 text-[10px] text-muted-foreground" onClick={() => toggleStepSection(step.id, 'incidents')}>
+                                    {isStepSectionVisible(step.id, 'incidents') ? 'Hide' : 'Show'}
+                                  </Button>
+                                  <Button variant="ghost" size="sm" className="h-5 text-[10px] text-red-600" onClick={() => { setContextStepId(step.id); setAddDialog('incident'); }}>
+                                    <Plus className="h-3 w-3 mr-0.5" /> Add
+                                  </Button>
+                                </div>
                               </div>
+                              {isStepSectionVisible(step.id, 'incidents') && (<>
                               {stepIncs.map(inc => (
                                 <div key={inc.id} className="ml-4 pl-3 border-l-2 border-red-200 group/inc py-1 space-y-1">
                                   <div className="flex items-center gap-2">
@@ -973,19 +976,28 @@ export default function ProcessEditTab({ processId }: ProcessEditTabProps) {
                                 </div>
                               ))}
                               {stepIncs.length === 0 && <p className="text-[10px] text-muted-foreground italic ml-4">No incidents</p>}
+                              </>)}
                             </div>
                           )}
 
                           {/* RACI (inherited from process level) */}
-                          {isSectionVisible('raci') && canAccessModule('raci') && (() => {
+                          {canAccessModule('raci') && (() => {
                             const stepLinks = getStepRaciLinks(step.id);
                             const linkedRacis = stepLinks.map(l => raciEntries.find(r => r.id === l.raci_id)).filter(Boolean) as ProcessRaci[];
                             return linkedRacis.length > 0 ? (
                               <div className="space-y-2">
-                                <div className="flex items-center gap-1.5">
-                                  <Users className="h-3 w-3 text-cyan-500" />
-                                  <span className="text-[11px] font-semibold text-cyan-700">RACI ({linkedRacis.length} linked)</span>
+                                <div className="flex items-center gap-1.5 justify-between">
+                                  <div className="flex items-center gap-1.5 cursor-pointer" onClick={() => toggleStepSection(step.id, 'raci')}>
+                                    {isStepSectionVisible(step.id, 'raci') ? <ChevronDown className="h-3 w-3 text-cyan-500" /> : <ChevronRight className="h-3 w-3 text-cyan-500" />}
+                                    <Users className="h-3 w-3 text-cyan-500" />
+                                    <span className="text-[11px] font-semibold text-cyan-700">RACI ({linkedRacis.length} linked)</span>
+                                  </div>
+                                  <Button variant="ghost" size="sm" className="h-5 text-[10px] text-muted-foreground" onClick={() => toggleStepSection(step.id, 'raci')}>
+                                    {isStepSectionVisible(step.id, 'raci') ? 'Hide' : 'Show'}
+                                  </Button>
                                 </div>
+                                {isStepSectionVisible(step.id, 'raci') && (
+                                  <>
                                 {linkedRacis.map(raci => (
                                   <div key={raci.id} className="ml-4 pl-3 border-l-2 border-cyan-200 py-1">
                                     <span className="text-sm font-medium">{raci.role_name}</span>
@@ -997,23 +1009,30 @@ export default function ProcessEditTab({ processId }: ProcessEditTabProps) {
                                     </div>
                                   </div>
                                 ))}
+                                  </>
+                                )}
                               </div>
                             ) : null;
                           })()}
 
                           {/* Applications */}
-                          {isSectionVisible('applications') && (
                           <div className="space-y-2">
                             <div className="flex items-center gap-1.5 justify-between">
-                              <div className="flex items-center gap-1.5">
+                              <div className="flex items-center gap-1.5 cursor-pointer" onClick={() => toggleStepSection(step.id, 'applications')}>
+                                {isStepSectionVisible(step.id, 'applications') ? <ChevronDown className="h-3 w-3 text-sky-500" /> : <ChevronRight className="h-3 w-3 text-sky-500" />}
                                 <Monitor className="h-3 w-3 text-sky-500" />
                                 <span className="text-[11px] font-semibold text-sky-700">Screens / Applications ({stepApps.length})</span>
                               </div>
-                              <Button variant="ghost" size="sm" className="h-5 text-[10px] text-sky-600" onClick={() => { setContextStepId(step.id); setAddDialog('application'); }}>
-                                <Plus className="h-3 w-3 mr-0.5" /> Add
-                              </Button>
+                              <div className="flex items-center gap-1">
+                                <Button variant="ghost" size="sm" className="h-5 text-[10px] text-muted-foreground" onClick={() => toggleStepSection(step.id, 'applications')}>
+                                  {isStepSectionVisible(step.id, 'applications') ? 'Hide' : 'Show'}
+                                </Button>
+                                <Button variant="ghost" size="sm" className="h-5 text-[10px] text-sky-600" onClick={() => { setContextStepId(step.id); setAddDialog('application'); }}>
+                                  <Plus className="h-3 w-3 mr-0.5" /> Add
+                                </Button>
+                              </div>
                             </div>
-                            {/* Screens with nested apps */}
+                            {isStepSectionVisible(step.id, 'applications') && (<>
                             {stepApps.filter(a => a.app_type === 'screen' && !a.parent_id).map(screen => {
                               const childApps = stepApps.filter(a => a.parent_id === screen.id);
                               return (
@@ -1051,7 +1070,6 @@ export default function ProcessEditTab({ processId }: ProcessEditTabProps) {
                                 </div>
                               );
                             })}
-                            {/* Standalone applications (no parent, not screens) */}
                             {stepApps.filter(a => a.app_type !== 'screen' && !a.parent_id).map(app => (
                               <div key={app.id} className="ml-4 pl-3 border-l-2 border-sky-200 flex items-center gap-2 group/app py-1">
                                 <Monitor className="h-3 w-3 text-sky-400 shrink-0" />
@@ -1065,8 +1083,8 @@ export default function ProcessEditTab({ processId }: ProcessEditTabProps) {
                               </div>
                             ))}
                             {stepApps.length === 0 && <p className="text-[10px] text-muted-foreground italic ml-4">No applications</p>}
+                            </>)}
                           </div>
-                          )}
                         </div>
                       )}
                     </div>
