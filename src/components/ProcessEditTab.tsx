@@ -602,31 +602,8 @@ export default function ProcessEditTab({ processId }: ProcessEditTabProps) {
                           </div>
                           )}
 
-                          {/* Section visibility toggles */}
-                          <div className="flex items-center gap-1 flex-wrap py-1">
-                            <span className="text-[10px] text-muted-foreground font-medium mr-1">Show:</span>
-                            {[
-                              { key: 'questionnaire', label: 'Questionnaire', color: 'text-indigo-600 border-indigo-300' },
-                              { key: 'risks', label: 'Risks', color: 'text-orange-600 border-orange-300' },
-                              { key: 'regulations', label: 'Regulations', color: 'text-purple-600 border-purple-300' },
-                              { key: 'incidents', label: 'Incidents', color: 'text-red-600 border-red-300' },
-                              { key: 'raci', label: 'RACI', color: 'text-cyan-600 border-cyan-300' },
-                              { key: 'applications', label: 'Scr./Apps', color: 'text-sky-600 border-sky-300' },
-                            ].map(sec => (
-                              <Button
-                                key={sec.key}
-                                variant={isSectionVisible(sec.key) ? 'outline' : 'ghost'}
-                                size="sm"
-                                className={`h-5 text-[9px] px-2 ${isSectionVisible(sec.key) ? sec.color : 'text-muted-foreground opacity-50'}`}
-                                onClick={() => toggleSectionVisibility(sec.key)}
-                              >
-                                {isSectionVisible(sec.key) ? '✓' : '○'} {sec.label}
-                              </Button>
-                            ))}
-                          </div>
-
                           {/* Business Process Questionnaire — after step type, before risks */}
-                          {isSectionVisible('questionnaire') && step.type === 'in-scope' && (() => {
+                          {step.type === 'in-scope' && (() => {
                             const stepQs = getStepQuestions(step.id);
                             const relevantCount = stepQs.filter(q => questLinkMap[`${q.id}:${step.id}`]).length;
                             const sectionNums = [...new Set(stepQs.map(q => q.section_number))].sort();
