@@ -285,10 +285,12 @@ export default function RaciOrganigramView({ raciEntries, steps, processId, onUp
   useEffect(() => {
     if (raciEntries.length === 0) return;
     const { nodes: rawNodes, edges: rawEdges } = buildOrgHierarchy(raciEntries, linkedStepCounts);
-    const { nodes: layouted, edges: layoutedEdges } = getLayoutedElements(rawNodes, rawEdges);
+    // Inject onEdit callback into each node's data
+    const nodesWithEdit = rawNodes.map(n => ({ ...n, data: { ...n.data, onEdit: handleEditRaci } }));
+    const { nodes: layouted, edges: layoutedEdges } = getLayoutedElements(nodesWithEdit, rawEdges);
     setNodes(layouted);
     setEdges(layoutedEdges);
-  }, [raciEntries, linkedStepCounts]);
+  }, [raciEntries, linkedStepCounts, handleEditRaci]);
 
   const onConnect = useCallback((params: Connection) => {
     saveHistory();
