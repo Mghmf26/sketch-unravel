@@ -7,7 +7,7 @@ import { toast } from '@/hooks/use-toast';
 import { Grid3x3, Shield, CheckCircle, XCircle, Info, Copy, FileText } from 'lucide-react';
 import {
   fetchRiskMatrix, fetchRiskMatrixCells, upsertRiskMatrix,
-  saveCellAcceptability, applyTemplateMatrix,
+  saveCellAcceptability, applyTemplateMatrix, saveImpactDescriptions,
   LEVEL_LABELS, STANDARD_TEMPLATES,
   type RiskMatrix, type RiskMatrixCell, type RiskMatrixTemplate,
 } from '@/lib/api-risk-matrix';
@@ -21,6 +21,7 @@ interface RiskMatrixEditorProps {
 export default function RiskMatrixEditor({ processId }: RiskMatrixEditorProps) {
   const [matrix, setMatrix] = useState<RiskMatrix | null>(null);
   const [cells, setCells] = useState<RiskMatrixCell[]>([]);
+  const [impactDescs, setImpactDescs] = useState<Record<string, string>>({});
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
 
@@ -35,8 +36,10 @@ export default function RiskMatrixEditor({ processId }: RiskMatrixEditorProps) {
       if (m) {
         const c = await fetchRiskMatrixCells(m.id);
         setCells(c);
+        setImpactDescs((m.impact_descriptions as Record<string, string>) || {});
       } else {
         setCells([]);
+        setImpactDescs({});
       }
     } finally {
       setLoading(false);
@@ -112,6 +115,18 @@ export default function RiskMatrixEditor({ processId }: RiskMatrixEditorProps) {
       toast({ title: 'Error duplicating matrix', variant: 'destructive' });
     } finally {
       setSaving(false);
+    }
+  };
+
+  const handleImpactDescChange = async (level: string, value: string) => {
+    const updated = { ...impactDescs, [level]: value };
+    setImpactDescs(updated);
+    if (matrix) {
+      try {
+        await saveImpactDescriptions(matrix.id, updated);
+      } catch {
+        // silent – optimistic update
+      }
     }
   };
 
@@ -198,6 +213,8 @@ export default function RiskMatrixEditor({ processId }: RiskMatrixEditorProps) {
             isAcceptable={isAcceptable}
             onCellClick={handleCellToggle}
             readonly={isStandard}
+            impactDescriptions={impactDescs}
+            onImpactDescriptionChange={!isStandard ? handleImpactDescChange : undefined}
           />
         </div>
 

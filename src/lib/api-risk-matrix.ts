@@ -8,6 +8,7 @@ export interface RiskMatrix {
   description: string | null;
   impact_levels: string[];
   frequency_levels: string[];
+  impact_descriptions: Record<string, string>;
   created_at: string;
   updated_at: string;
 }
@@ -121,6 +122,7 @@ export async function upsertRiskMatrix(
   if (impactLevels) payload.impact_levels = impactLevels;
   if (frequencyLevels) payload.frequency_levels = frequencyLevels;
 
+
   const existing = await fetchRiskMatrix(processId);
   if (existing) {
     const { data, error } = await supabase
@@ -183,6 +185,15 @@ export async function applyTemplateMatrix(matrixId: string, templateKey?: string
     }
   }
   const { error } = await supabase.from('risk_matrix_cells').insert(cells);
+  if (error) throw error;
+}
+
+/** Save risk appetite / impact descriptions for a matrix */
+export async function saveImpactDescriptions(matrixId: string, descriptions: Record<string, string>) {
+  const { error } = await supabase
+    .from('risk_matrices')
+    .update({ impact_descriptions: descriptions } as any)
+    .eq('id', matrixId);
   if (error) throw error;
 }
 

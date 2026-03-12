@@ -1,5 +1,8 @@
-import { CheckCircle, XCircle } from 'lucide-react';
+import { useState } from 'react';
+import { CheckCircle, XCircle, Pencil } from 'lucide-react';
 import { LEVEL_LABELS } from '@/lib/api-risk-matrix';
+import { Input } from '@/components/ui/input';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 
 interface MatrixGridProps {
   impactLevels: string[];
@@ -8,11 +11,16 @@ interface MatrixGridProps {
   isAcceptable: (impact: string, freq: string) => boolean | null;
   onCellClick: (impact: string, freq: string) => void;
   readonly?: boolean;
+  impactDescriptions?: Record<string, string>;
+  onImpactDescriptionChange?: (level: string, value: string) => void;
 }
 
 export default function MatrixGrid({
   impactLevels, freqLevels, getCellColor, isAcceptable, onCellClick, readonly,
+  impactDescriptions = {}, onImpactDescriptionChange,
 }: MatrixGridProps) {
+  const [editingLevel, setEditingLevel] = useState<string | null>(null);
+
   return (
     <div className="inline-flex flex-col">
       {/* Column header */}
@@ -69,6 +77,47 @@ export default function MatrixGrid({
               })}
             </div>
           ))}
+        </div>
+      </div>
+
+      {/* Risk Appetite / Impact Descriptions */}
+      <div className="mt-4 pt-3 border-t">
+        <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider mb-2">
+          Risk Appetite — Impact Definitions
+        </p>
+        <div className="grid gap-1.5">
+          {[...impactLevels].reverse().reverse().map(level => {
+            const desc = impactDescriptions[level] || '';
+            const isEditing = editingLevel === level;
+            return (
+              <div key={level} className="flex items-center gap-2">
+                <span className="text-[10px] font-semibold text-muted-foreground w-[60px] text-right shrink-0">
+                  {LEVEL_LABELS[level] || level}:
+                </span>
+                {isEditing && onImpactDescriptionChange ? (
+                  <Input
+                    autoFocus
+                    className="h-7 text-xs flex-1"
+                    value={desc}
+                    placeholder={`e.g. €1M – €2M loss`}
+                    onChange={e => onImpactDescriptionChange(level, e.target.value)}
+                    onBlur={() => setEditingLevel(null)}
+                    onKeyDown={e => e.key === 'Enter' && setEditingLevel(null)}
+                  />
+                ) : (
+                  <div
+                    className={`flex-1 text-xs rounded px-2 py-1 border min-h-[28px] flex items-center gap-1 ${
+                      onImpactDescriptionChange ? 'cursor-pointer hover:bg-muted/50' : ''
+                    } ${desc ? 'text-foreground border-border' : 'text-muted-foreground/50 border-dashed border-muted-foreground/30'}`}
+                    onClick={() => onImpactDescriptionChange && setEditingLevel(level)}
+                  >
+                    {desc || 'Click to define risk appetite…'}
+                    {onImpactDescriptionChange && <Pencil className="h-3 w-3 text-muted-foreground/50 shrink-0 ml-auto" />}
+                  </div>
+                )}
+              </div>
+            );
+          })}
         </div>
       </div>
     </div>

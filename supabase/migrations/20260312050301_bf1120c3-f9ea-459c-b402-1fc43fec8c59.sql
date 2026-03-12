@@ -1,0 +1,1 @@
+ALTER TABLE public.risk_matrices ADD COLUMN IF NOT EXISTS impact_descriptions jsonb DEFAULT '{}'::jsonb;
