@@ -798,6 +798,38 @@ export default function NodeDetailPanel({ node, risks, controls, regulations, in
                 </SelectContent>
               </Select>
             </div>
+          <div className="grid grid-cols-2 gap-3">
+            <div className="grid gap-1.5">
+              <Label>Automation Level</Label>
+              <Select value={controlForm.automation_level || '__none__'} onValueChange={v => setControlForm(f => ({ ...f, automation_level: v === '__none__' ? '' : v }))}>
+                <SelectTrigger><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="__none__">— Select —</SelectItem>
+                  <SelectItem value="automatic">Automatic</SelectItem>
+                  <SelectItem value="semi-automatic">Semi-Automatic</SelectItem>
+                  <SelectItem value="manual">Manual</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="grid gap-1.5">
+              <Label>Frequency</Label>
+              <Select value={controlForm.frequency || '__none__'} onValueChange={v => setControlForm(f => ({ ...f, frequency: v === '__none__' ? '' : v }))}>
+                <SelectTrigger><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="__none__">— Select —</SelectItem>
+                  <SelectItem value="multiple_daily">Multiple times/day</SelectItem>
+                  <SelectItem value="daily">Daily</SelectItem>
+                  <SelectItem value="weekly">Weekly</SelectItem>
+                  <SelectItem value="monthly">Monthly</SelectItem>
+                  <SelectItem value="quarterly">Quarterly</SelectItem>
+                  <SelectItem value="yearly">Yearly</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+          <div className="grid gap-1.5">
+            <Label>Last Tested by Client</Label>
+            <Input value={controlForm.last_tested} onChange={e => setControlForm(f => ({ ...f, last_tested: e.target.value }))} placeholder="e.g. 2024-12-15 or N/A" />
           </div>
         </div>
         <DialogFooter>
@@ -808,16 +840,6 @@ export default function NodeDetailPanel({ node, risks, controls, regulations, in
         </DialogFooter>
       </DialogContent>
     </Dialog>
-
-    {/* Add Regulation Dialog */}
-    <Dialog open={addDialog === 'regulation'} onOpenChange={v => !v && setAddDialog(null)}>
-      <DialogContent className="sm:max-w-md">
-        <DialogHeader>
-          <DialogTitle className="flex items-center gap-2"><Scale className="h-5 w-5 text-purple-500" /> Add Regulation</DialogTitle>
-          <DialogDescription>Link a regulation to this step.</DialogDescription>
-        </DialogHeader>
-        <div className="grid gap-3 py-2">
-          <div className="grid gap-1.5">
             <Label>Regulation Name *</Label>
             <Input value={regulationForm.name} onChange={e => setRegulationForm(f => ({ ...f, name: e.target.value }))} placeholder="e.g. SOX Section 404" />
           </div>
