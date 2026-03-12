@@ -885,7 +885,7 @@ export default function NodeDetailPanel({ node, risks, controls, regulations, in
 
     {/* Add Incident Dialog */}
     <Dialog open={addDialog === 'incident'} onOpenChange={v => !v && setAddDialog(null)}>
-      <DialogContent className="sm:max-w-md">
+      <DialogContent className="sm:max-w-lg">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2"><AlertCircle className="h-5 w-5 text-red-500" /> Add Incident</DialogTitle>
           <DialogDescription>Report a new incident for this step.</DialogDescription>
@@ -917,6 +917,35 @@ export default function NodeDetailPanel({ node, risks, controls, regulations, in
                   {['open', 'investigating', 'resolved', 'closed'].map(o => <SelectItem key={o} value={o} className="capitalize">{o}</SelectItem>)}
                 </SelectContent>
               </Select>
+            </div>
+          </div>
+          <div className="grid grid-cols-2 gap-3">
+            <div className="grid gap-1.5">
+              <Label>Owner (Department)</Label>
+              <Input value={incidentForm.owner_department} onChange={e => setIncidentForm(f => ({ ...f, owner_department: e.target.value }))} placeholder="e.g. Finance, IT" />
+            </div>
+            <div className="grid gap-1.5">
+              <Label>Root Cause</Label>
+              <Select value={incidentForm.root_cause || '__none__'} onValueChange={v => setIncidentForm(f => ({ ...f, root_cause: v === '__none__' ? '' : v }))}>
+                <SelectTrigger><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="__none__">— Select —</SelectItem>
+                  <SelectItem value="people">People</SelectItem>
+                  <SelectItem value="system">System</SelectItem>
+                  <SelectItem value="market">Market</SelectItem>
+                  <SelectItem value="regulations">Regulations</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+          <div className="grid grid-cols-2 gap-3">
+            <div className="grid gap-1.5">
+              <Label>Money Loss Amount</Label>
+              <Input value={incidentForm.money_loss_amount} onChange={e => setIncidentForm(f => ({ ...f, money_loss_amount: e.target.value }))} placeholder="e.g. $50,000" />
+            </div>
+            <div className="grid gap-1.5">
+              <Label>Loss Threshold (Client)</Label>
+              <Input value={incidentForm.loss_threshold} onChange={e => setIncidentForm(f => ({ ...f, loss_threshold: e.target.value }))} placeholder="e.g. $100,000" />
             </div>
           </div>
         </div>
