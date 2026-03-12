@@ -620,6 +620,18 @@ export default function NodeDetailPanel({ node, risks, controls, regulations, in
                   <EditableSelect label="Status" value={inc.status || 'open'} options={['open', 'investigating', 'resolved', 'closed']}
                     onSave={val => saveField(() => updateIncident(inc.id, { status: val }), 'Status updated')} />
                 </div>
+                <div className="flex gap-3">
+                  <EditableField label="Owner (Dept)" value={(inc as any).owner_department || ''}
+                    onSave={val => saveField(() => updateIncident(inc.id, { owner_department: val } as any), 'Owner updated')} />
+                  <EditableSelect label="Root Cause" value={(inc as any).root_cause || '__none__'} options={['__none__', 'people', 'system', 'market', 'regulations']}
+                    onSave={val => saveField(() => updateIncident(inc.id, { root_cause: val === '__none__' ? null : val } as any), 'Root cause updated')} />
+                </div>
+                <div className="flex gap-3">
+                  <EditableField label="Money Loss" value={(inc as any).money_loss_amount || ''}
+                    onSave={val => saveField(() => updateIncident(inc.id, { money_loss_amount: val } as any), 'Loss updated')} />
+                  <EditableField label="Loss Threshold" value={(inc as any).loss_threshold || ''}
+                    onSave={val => saveField(() => updateIncident(inc.id, { loss_threshold: val } as any), 'Threshold updated')} />
+                </div>
                 {derivedProcessId && <EntityNotesSection entityType="incident" entityId={inc.id} processId={derivedProcessId} />}
               </div>
             ))}
