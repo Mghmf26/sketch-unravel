@@ -193,6 +193,10 @@ export default function ProcessView() {
         <TabsContent value="risk-matrix" className="mt-0">
           <RiskMatrixEditor processId={id!} />
         </TabsContent>
+
+        <TabsContent value="questionnaire" className="mt-0">
+          <ProcessQuestionnaire processId={id!} />
+        </TabsContent>
       </Tabs>
     </div>
   );
