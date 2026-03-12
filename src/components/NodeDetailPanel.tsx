@@ -798,6 +798,7 @@ export default function NodeDetailPanel({ node, risks, controls, regulations, in
                 </SelectContent>
               </Select>
             </div>
+          </div>
           <div className="grid grid-cols-2 gap-3">
             <div className="grid gap-1.5">
               <Label>Automation Level</Label>
