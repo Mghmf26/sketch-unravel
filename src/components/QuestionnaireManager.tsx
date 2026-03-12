@@ -17,18 +17,6 @@ import { toast } from '@/hooks/use-toast';
 import { Plus, Pencil, Trash2, Search, Filter } from 'lucide-react';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 
-const STEP_TYPE_OPTIONS = [
-  { value: 'critical', label: 'Critical' },
-  { value: 'decisional', label: 'Decisional' },
-  { value: 'mechanical', label: 'Mechanical' },
-];
-
-const LEVEL_OPTIONS = [
-  { value: 1, label: 'Level 1 — Very Important', color: 'bg-destructive/10 text-destructive border-destructive/30' },
-  { value: 2, label: 'Level 2 — Important', color: 'bg-amber-500/10 text-amber-700 border-amber-300' },
-  { value: 3, label: 'Level 3 — Not Important', color: 'bg-muted text-muted-foreground border-border' },
-];
-
 const EMPTY_FORM = {
   section_number: 1,
   section_name: '',
@@ -128,31 +116,17 @@ export default function QuestionnaireManager() {
     }
   };
 
-  const toggleStepType = (type: string) => {
-    setForm(f => ({
-      ...f,
-      step_types: f.step_types.includes(type)
-        ? f.step_types.filter(t => t !== type)
-        : [...f.step_types, type],
-    }));
-  };
-
-  const levelBadge = (level: number) => {
-    const opt = LEVEL_OPTIONS.find(l => l.value === level);
-    return (
-      <Badge variant="outline" className={`text-[10px] ${opt?.color || ''}`}>
-        L{level}
-      </Badge>
-    );
-  };
-
   return (
     <Card className="border-0 shadow-sm">
       <CardHeader className="pb-4">
         <div className="flex items-center justify-between">
           <div>
             <CardTitle className="text-lg">Business Process Analysis Questionnaire</CardTitle>
-            <CardDescription>Manage questions used during step analysis. {questions.length} questions across {sectionNumbers.length} sections.</CardDescription>
+            <CardDescription>
+              Manage questions used during step analysis. {questions.length} questions across {sectionNumbers.length} sections.
+              <br />
+              <span className="text-[11px] text-muted-foreground">Step types, importance levels, and step linkage are configured by users from the Edit Data tab per process.</span>
+            </CardDescription>
           </div>
           <Button onClick={openAdd} size="sm" className="gap-2">
             <Plus className="h-4 w-4" /> Add Question
@@ -195,8 +169,6 @@ export default function QuestionnaireManager() {
                     <TableRow className="bg-muted/30">
                       <TableHead className="text-[10px] font-semibold uppercase w-12">#</TableHead>
                       <TableHead className="text-[10px] font-semibold uppercase">Question</TableHead>
-                      <TableHead className="text-[10px] font-semibold uppercase w-36">Step Types</TableHead>
-                      <TableHead className="text-[10px] font-semibold uppercase w-20 text-center">Level</TableHead>
                       <TableHead className="text-[10px] font-semibold uppercase w-16 text-center">Active</TableHead>
                       <TableHead className="text-[10px] font-semibold uppercase w-20 text-center">Actions</TableHead>
                     </TableRow>
@@ -211,14 +183,6 @@ export default function QuestionnaireManager() {
                             <p className="text-[11px] text-muted-foreground mt-0.5 italic">↳ {q.observation_text}</p>
                           )}
                         </TableCell>
-                        <TableCell>
-                          <div className="flex flex-wrap gap-1">
-                            {(q.step_types || []).map(t => (
-                              <Badge key={t} variant="secondary" className="text-[9px] capitalize">{t}</Badge>
-                            ))}
-                          </div>
-                        </TableCell>
-                        <TableCell className="text-center">{levelBadge(q.importance_level)}</TableCell>
                         <TableCell className="text-center">
                           <Badge variant="outline" className={`text-[9px] ${q.is_active ? 'border-emerald-300 text-emerald-700' : 'border-destructive/30 text-destructive'}`}>
                             {q.is_active ? 'Yes' : 'No'}
@@ -276,34 +240,6 @@ export default function QuestionnaireManager() {
             <div>
               <Label>What to Observe</Label>
               <Input value={form.observation_text} onChange={e => setForm(f => ({ ...f, observation_text: e.target.value }))} placeholder="Observation guidance..." />
-            </div>
-            <div>
-              <Label>Applicable Step Types</Label>
-              <div className="flex gap-4 mt-1">
-                {STEP_TYPE_OPTIONS.map(opt => (
-                  <label key={opt.value} className="flex items-center gap-2 text-sm cursor-pointer">
-                    <Checkbox
-                      checked={form.step_types.includes(opt.value)}
-                      onCheckedChange={() => toggleStepType(opt.value)}
-                    />
-                    {opt.label}
-                  </label>
-                ))}
-              </div>
-            </div>
-            <div>
-              <Label>Importance Level</Label>
-              <Select value={String(form.importance_level)} onValueChange={v => setForm(f => ({ ...f, importance_level: parseInt(v) }))}>
-                <SelectTrigger><SelectValue /></SelectTrigger>
-                <SelectContent>
-                  {LEVEL_OPTIONS.map(l => (
-                    <SelectItem key={l.value} value={String(l.value)}>{l.label}</SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-              {form.importance_level === 3 && (
-                <p className="text-[11px] text-amber-600 mt-1">Level 3 questions will be hidden during step creation.</p>
-              )}
             </div>
             <div>
               <label className="flex items-center gap-2 text-sm cursor-pointer">
