@@ -276,23 +276,27 @@ export default function ProcessEditTab({ processId }: ProcessEditTabProps) {
   const [contextScreenId, setContextScreenId] = useState<string | null>(null);
   const [expandedSteps, setExpandedSteps] = useState<Set<string>>(new Set());
 
-  // Section visibility toggles for expanded steps
-  const [hiddenSections, setHiddenSections] = useState<Record<string, boolean>>(() => {
+  // Per-step section visibility (e.g. "stepId:risks" => true/false)
+  const [stepSectionVisible, setStepSectionVisible] = useState<Record<string, boolean>>(() => {
     try {
-      const stored = localStorage.getItem(`edit-data-hidden-sections-${processId}`);
+      const stored = localStorage.getItem(`edit-data-step-sections-${processId}`);
       return stored ? JSON.parse(stored) : {};
     } catch { return {}; }
   });
 
-  const toggleSectionVisibility = (key: string) => {
-    setHiddenSections(prev => {
-      const next = { ...prev, [key]: !prev[key] };
-      localStorage.setItem(`edit-data-hidden-sections-${processId}`, JSON.stringify(next));
+  const toggleStepSection = (stepId: string, section: string) => {
+    const key = `${stepId}:${section}`;
+    setStepSectionVisible(prev => {
+      const next = { ...prev, [key]: prev[key] === undefined ? false : !prev[key] };
+      localStorage.setItem(`edit-data-step-sections-${processId}`, JSON.stringify(next));
       return next;
     });
   };
 
-  const isSectionVisible = (key: string) => !hiddenSections[key];
+  const isStepSectionVisible = (stepId: string, section: string) => {
+    const key = `${stepId}:${section}`;
+    return stepSectionVisible[key] !== false; // default visible
+  };
 
   // Global sections
   const [openSections, setOpenSections] = useState<Record<string, boolean>>({
