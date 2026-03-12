@@ -26,6 +26,7 @@ import { fetchSteps, type ProcessStep } from '@/lib/api';
 import { exportRaciToExcel, parseRaciExcel } from '@/lib/raci-excel';
 import { useColumnSettings, type ColumnDef } from '@/hooks/useColumnSettings';
 import { ColumnSettingsDropdown } from '@/components/ColumnSettingsDropdown';
+import RaciOrganigramView from '@/components/RaciOrganigramView';
 
 interface RaciManagementTabProps {
   processId: string;
@@ -149,7 +150,7 @@ export default function RaciManagementTab({ processId, processName }: RaciManage
   const [addDialogOpen, setAddDialogOpen] = useState(false);
   const [importProcessDialogOpen, setImportProcessDialogOpen] = useState(false);
   const [expandedId, setExpandedId] = useState<string | null>(null);
-  const [viewMode, setViewMode] = useState<'table' | 'matrix'>('table');
+  const [viewMode, setViewMode] = useState<'table' | 'matrix' | 'organigram'>('table');
 
   const colSettings = useColumnSettings('raci-tab', RACI_COLUMNS);
 
@@ -360,6 +361,7 @@ export default function RaciManagementTab({ processId, processName }: RaciManage
         <TabsList className="h-8 bg-muted/50">
           <TabsTrigger value="table" className="text-xs h-7 px-3">Table View</TabsTrigger>
           <TabsTrigger value="matrix" className="text-xs h-7 px-3">RACI Matrix</TabsTrigger>
+          <TabsTrigger value="organigram" className="text-xs h-7 px-3">Organigram</TabsTrigger>
         </TabsList>
 
         <TabsContent value="table" className="mt-3">
@@ -559,6 +561,14 @@ export default function RaciManagementTab({ processId, processName }: RaciManage
 
         <TabsContent value="matrix" className="mt-3">
           <RaciMatrixView raciEntries={filtered} steps={inScopeSteps} raciStepLinks={raciStepLinks} />
+        </TabsContent>
+
+        <TabsContent value="organigram" className="mt-3">
+          <RaciOrganigramView
+            raciEntries={filtered}
+            steps={inScopeSteps}
+            onUpdateRaci={handleUpdate}
+          />
         </TabsContent>
       </Tabs>
 
