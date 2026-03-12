@@ -533,20 +533,35 @@ export default function ProcessEditTab({ processId }: ProcessEditTabProps) {
                                 </Button>
                               </div>
                               {stepIncs.map(inc => (
-                                <div key={inc.id} className="ml-4 pl-3 border-l-2 border-red-200 flex items-center gap-2 group/inc py-1">
-                                  <InlineEdit value={inc.title} onSave={v => updateIncident(inc.id, { title: v }).then(reload)} className="text-sm font-medium" />
-                                  <InlineSelect value={inc.severity || 'medium'}
-                                    options={[{ value: 'low', label: 'Low' }, { value: 'medium', label: 'Medium' }, { value: 'high', label: 'High' }, { value: 'critical', label: 'Critical' }]}
-                                    onSave={v => updateIncident(inc.id, { severity: v }).then(reload)}
-                                    className={inc.severity === 'critical' ? 'text-red-700' : inc.severity === 'high' ? 'text-orange-700' : 'text-yellow-700'} />
-                                  <InlineSelect value={inc.status || 'open'}
-                                    options={[{ value: 'open', label: 'Open' }, { value: 'investigating', label: 'Investigating' }, { value: 'resolved', label: 'Resolved' }, { value: 'closed', label: 'Closed' }]}
-                                    onSave={v => updateIncident(inc.id, { status: v }).then(reload)} />
-                                  <span className="flex-1" />
-                                  <Button variant="ghost" size="icon" className="h-5 w-5 opacity-0 group-hover/inc:opacity-100 text-muted-foreground hover:text-destructive"
-                                    onClick={() => deleteIncident(inc.id).then(reload)}>
-                                    <Trash2 className="h-2.5 w-2.5" />
-                                  </Button>
+                                <div key={inc.id} className="ml-4 pl-3 border-l-2 border-red-200 group/inc py-1 space-y-1">
+                                  <div className="flex items-center gap-2">
+                                    <InlineEdit value={inc.title} onSave={v => updateIncident(inc.id, { title: v }).then(reload)} className="text-sm font-medium" />
+                                    <InlineSelect value={inc.severity || 'medium'}
+                                      options={[{ value: 'low', label: 'Low' }, { value: 'medium', label: 'Medium' }, { value: 'high', label: 'High' }, { value: 'critical', label: 'Critical' }]}
+                                      onSave={v => updateIncident(inc.id, { severity: v }).then(reload)}
+                                      className={inc.severity === 'critical' ? 'text-red-700' : inc.severity === 'high' ? 'text-orange-700' : 'text-yellow-700'} />
+                                    <InlineSelect value={inc.status || 'open'}
+                                      options={[{ value: 'open', label: 'Open' }, { value: 'investigating', label: 'Investigating' }, { value: 'resolved', label: 'Resolved' }, { value: 'closed', label: 'Closed' }]}
+                                      onSave={v => updateIncident(inc.id, { status: v }).then(reload)} />
+                                    <span className="flex-1" />
+                                    <Button variant="ghost" size="icon" className="h-5 w-5 opacity-0 group-hover/inc:opacity-100 text-muted-foreground hover:text-destructive"
+                                      onClick={() => deleteIncident(inc.id).then(reload)}>
+                                      <Trash2 className="h-2.5 w-2.5" />
+                                    </Button>
+                                  </div>
+                                  <div className="flex items-center gap-2 text-xs ml-1">
+                                    <span className="text-[10px] text-muted-foreground">Owner:</span>
+                                    <InlineEdit value={(inc as any).owner_department || ''} onSave={v => updateIncident(inc.id, { owner_department: v } as any).then(reload)} className="text-[10px]" />
+                                    <InlineSelect value={(inc as any).root_cause || '__none__'}
+                                      options={[{ value: '__none__', label: '— Root Cause —' }, { value: 'people', label: 'People' }, { value: 'system', label: 'System' }, { value: 'market', label: 'Market' }, { value: 'regulations', label: 'Regulations' }]}
+                                      onSave={v => updateIncident(inc.id, { root_cause: v === '__none__' ? null : v } as any).then(reload)} />
+                                  </div>
+                                  <div className="flex items-center gap-2 text-xs ml-1">
+                                    <span className="text-[10px] text-muted-foreground">Loss:</span>
+                                    <InlineEdit value={(inc as any).money_loss_amount || ''} onSave={v => updateIncident(inc.id, { money_loss_amount: v } as any).then(reload)} className="text-[10px]" />
+                                    <span className="text-[10px] text-muted-foreground">Threshold:</span>
+                                    <InlineEdit value={(inc as any).loss_threshold || ''} onSave={v => updateIncident(inc.id, { loss_threshold: v } as any).then(reload)} className="text-[10px]" />
+                                  </div>
                                 </div>
                               ))}
                               {stepIncs.length === 0 && <p className="text-[10px] text-muted-foreground italic ml-4">No incidents</p>}
