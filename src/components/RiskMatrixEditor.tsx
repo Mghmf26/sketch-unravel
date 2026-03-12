@@ -21,6 +21,7 @@ interface RiskMatrixEditorProps {
 export default function RiskMatrixEditor({ processId }: RiskMatrixEditorProps) {
   const [matrix, setMatrix] = useState<RiskMatrix | null>(null);
   const [cells, setCells] = useState<RiskMatrixCell[]>([]);
+  const [impactDescs, setImpactDescs] = useState<Record<string, string>>({});
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
 
