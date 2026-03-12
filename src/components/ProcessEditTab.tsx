@@ -477,7 +477,7 @@ export default function ProcessEditTab({ processId }: ProcessEditTabProps) {
                           </div>
                           )}
 
-                          {/* Questionnaire — after step type, before risks */}
+                          {/* Business Process Questionnaire — after step type, before risks */}
                           {step.type === 'in-scope' && (() => {
                             const stepQs = getStepQuestions(step.id);
                             const relevantCount = stepQs.filter(q => questLinkMap[`${q.id}:${step.id}`]).length;
@@ -489,7 +489,7 @@ export default function ProcessEditTab({ processId }: ProcessEditTabProps) {
                                 <div className="space-y-2">
                                   <div className="flex items-center gap-1.5">
                                     <ClipboardList className="h-3 w-3 text-indigo-500" />
-                                    <span className="text-[11px] font-semibold text-indigo-700">Questionnaire</span>
+                                    <span className="text-[11px] font-semibold text-indigo-700">Business Process Questionnaire</span>
                                   </div>
                                   <div className="ml-4 pl-3 border-l-2 border-indigo-200">
                                     <div className="flex items-center gap-2 bg-amber-50 border border-amber-200 rounded-md px-3 py-2">
@@ -509,7 +509,7 @@ export default function ProcessEditTab({ processId }: ProcessEditTabProps) {
                                   <div className="flex items-center gap-1.5 cursor-pointer" onClick={() => toggleQuestVisible(step.id)}>
                                     {isQuestVisible ? <ChevronDown className="h-3 w-3 text-indigo-500" /> : <ChevronRight className="h-3 w-3 text-indigo-500" />}
                                     <ClipboardList className="h-3 w-3 text-indigo-500" />
-                                    <span className="text-[11px] font-semibold text-indigo-700">Questionnaire</span>
+                                    <span className="text-[11px] font-semibold text-indigo-700">Business Process Questionnaire</span>
                                     <Badge variant="outline" className="text-[9px] border-indigo-300 text-indigo-600">
                                       {relevantCount}/{stepQs.length} linked
                                     </Badge>
@@ -527,11 +527,11 @@ export default function ProcessEditTab({ processId }: ProcessEditTabProps) {
                                 {isQuestVisible && (
                                   <>
                                     {stepQs.length === 0 ? (
-                                      <p className="text-[10px] text-muted-foreground italic ml-4">No questions configured for {step.step_type} steps.</p>
+                                      <p className="text-[10px] text-muted-foreground italic ml-4">No questions available for {step.step_type} steps.</p>
                                     ) : (
                                       <div className="ml-4 pl-3 border-l-2 border-indigo-200 space-y-3">
                                         <p className="text-[10px] text-muted-foreground">
-                                          Link questions to this step and mark which other steps they apply to. Level 3 (Not Important) questions are hidden.
+                                          Select relevant questions, set their importance, and choose which other steps they also apply to.
                                         </p>
                                         {sectionNums.map(sn => {
                                           const sectionQs = stepQs.filter(q => q.section_number === sn);
@@ -558,94 +558,97 @@ export default function ProcessEditTab({ processId }: ProcessEditTabProps) {
                                               {isSectionOpen && (
                                                 <div className="space-y-2 ml-1">
                                                   {sectionQs.map(q => {
+                                                    const isLinkedToThis = !!questLinkMap[`${q.id}:${step.id}`];
                                                     const linkedSteps = inScopeSteps.filter(s => questLinkMap[`${q.id}:${s.id}`]);
+                                                    const lKey = `${q.id}:${step.id}`;
+                                                    const isSaving = savingQuestLink === lKey;
                                                     return (
-                                                      <div key={q.id} className="rounded-lg border bg-card p-3 space-y-2.5">
+                                                      <div key={q.id} className={`rounded-lg border p-3 space-y-2.5 transition-colors ${isLinkedToThis ? 'bg-indigo-50/50 border-indigo-200' : 'bg-card'}`}>
+                                                        {/* Question with link checkbox */}
                                                         <div className="flex items-start gap-2">
-                                                          <span className="font-mono text-[10px] text-muted-foreground mt-0.5 shrink-0">Q{q.question_number}.</span>
+                                                          <Checkbox
+                                                            checked={isLinkedToThis}
+                                                            onCheckedChange={() => handleQuestToggle(q.id, step.id, isLinkedToThis)}
+                                                            disabled={isSaving}
+                                                            className="h-4 w-4 mt-0.5"
+                                                          />
                                                           <div className="flex-1 min-w-0">
-                                                            <p className="text-[11px] leading-relaxed font-medium">{q.question_text}</p>
+                                                            <p className="text-[11px] leading-relaxed font-medium">
+                                                              <span className="font-mono text-muted-foreground mr-1">Q{q.question_number}.</span>
+                                                              {q.question_text}
+                                                            </p>
                                                             {q.observation_text && (
                                                               <p className="text-[10px] text-muted-foreground mt-0.5 italic">↳ {q.observation_text}</p>
                                                             )}
                                                           </div>
+                                                          {/* Importance badge */}
+                                                          <Badge variant="outline" className={`text-[8px] shrink-0 ${q.importance_level === 1 ? 'border-red-300 text-red-600' : 'border-yellow-300 text-yellow-700'}`}>
+                                                            L{q.importance_level}
+                                                          </Badge>
                                                         </div>
 
-                                                        <div className="flex items-center gap-4 flex-wrap border-t pt-2">
-                                                          <div className="flex items-center gap-2">
-                                                            <span className="text-[10px] text-muted-foreground font-medium">Applies to:</span>
-                                                            {['critical', 'decisional', 'mechanical'].map(t => (
-                                                              <label key={t} className="flex items-center gap-1 text-[10px] cursor-pointer">
-                                                                <Checkbox
-                                                                  checked={q.step_types.includes(t)}
-                                                                  onCheckedChange={() => {
-                                                                    const newTypes = q.step_types.includes(t)
-                                                                      ? q.step_types.filter(x => x !== t)
-                                                                      : [...q.step_types, t];
-                                                                    handleQuestionConfigChange(q.id, { step_types: newTypes });
-                                                                  }}
-                                                                  className="h-3 w-3"
-                                                                />
-                                                                <span className="capitalize">{t}</span>
-                                                              </label>
-                                                            ))}
-                                                          </div>
-                                                          <div className="flex items-center gap-2">
-                                                            <span className="text-[10px] text-muted-foreground font-medium">Importance:</span>
-                                                            <Select
-                                                              value={String(q.importance_level)}
-                                                              onValueChange={v => handleQuestionConfigChange(q.id, { importance_level: parseInt(v) })}
-                                                            >
-                                                              <SelectTrigger className="h-5 text-[10px] w-auto min-w-[110px] border-dashed">
-                                                                <SelectValue />
-                                                              </SelectTrigger>
-                                                              <SelectContent>
-                                                                <SelectItem value="1">L1 — Very Important</SelectItem>
-                                                                <SelectItem value="2">L2 — Important</SelectItem>
-                                                                <SelectItem value="3">L3 — Not Important</SelectItem>
-                                                              </SelectContent>
-                                                            </Select>
-                                                          </div>
-                                                        </div>
+                                                        {/* Show details only when linked */}
+                                                        {isLinkedToThis && (
+                                                          <>
+                                                            {/* Importance selector */}
+                                                            <div className="flex items-center gap-2 border-t pt-2">
+                                                              <span className="text-[10px] text-muted-foreground font-medium">Importance:</span>
+                                                              <Select
+                                                                value={String(q.importance_level)}
+                                                                onValueChange={v => handleQuestionConfigChange(q.id, { importance_level: parseInt(v) })}
+                                                              >
+                                                                <SelectTrigger className="h-5 text-[10px] w-auto min-w-[110px] border-dashed">
+                                                                  <SelectValue />
+                                                                </SelectTrigger>
+                                                                <SelectContent>
+                                                                  <SelectItem value="1">L1 — Very Important</SelectItem>
+                                                                  <SelectItem value="2">L2 — Important</SelectItem>
+                                                                  <SelectItem value="3">L3 — Not Important</SelectItem>
+                                                                </SelectContent>
+                                                              </Select>
+                                                            </div>
 
-                                                        <div className="border-t pt-2">
-                                                          <p className="text-[10px] font-medium text-muted-foreground mb-1.5">
-                                                            Is this question relevant for the following steps?
-                                                          </p>
-                                                          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-1.5">
-                                                            {inScopeSteps.map(s => {
-                                                              const lKey = `${q.id}:${s.id}`;
-                                                              const isLinked = !!questLinkMap[lKey];
-                                                              const isSaving = savingQuestLink === lKey;
-                                                              return (
-                                                                <label
-                                                                  key={s.id}
-                                                                  className={`flex items-center gap-1.5 text-[10px] px-2 py-1.5 rounded border cursor-pointer transition-all ${
-                                                                    isLinked
-                                                                      ? 'bg-indigo-50 border-indigo-200'
-                                                                      : 'bg-muted/20 border-border hover:bg-muted/40'
-                                                                  } ${isSaving ? 'opacity-50' : ''}`}
-                                                                >
-                                                                  <Checkbox
-                                                                    checked={isLinked}
-                                                                    onCheckedChange={() => handleQuestToggle(q.id, s.id, isLinked)}
-                                                                    disabled={isSaving}
-                                                                    className="h-3 w-3"
-                                                                  />
-                                                                  <span className="truncate">{s.label}</span>
-                                                                  {s.step_type && (
-                                                                    <Badge variant="outline" className="text-[7px] px-1 py-0 ml-auto shrink-0 capitalize">{s.step_type.charAt(0)}</Badge>
-                                                                  )}
-                                                                </label>
-                                                              );
-                                                            })}
-                                                          </div>
-                                                          {linkedSteps.length > 0 && (
-                                                            <p className="text-[9px] text-indigo-600 mt-1">
-                                                              Linked to {linkedSteps.length} step{linkedSteps.length > 1 ? 's' : ''}
-                                                            </p>
-                                                          )}
-                                                        </div>
+                                                            {/* Step relevance */}
+                                                            <div className="border-t pt-2">
+                                                              <p className="text-[10px] font-medium text-muted-foreground mb-1.5">
+                                                                Also relevant for these steps:
+                                                              </p>
+                                                              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-1.5">
+                                                                {inScopeSteps.filter(s => s.id !== step.id).map(s => {
+                                                                  const sKey = `${q.id}:${s.id}`;
+                                                                  const isOtherLinked = !!questLinkMap[sKey];
+                                                                  const isOtherSaving = savingQuestLink === sKey;
+                                                                  return (
+                                                                    <label
+                                                                      key={s.id}
+                                                                      className={`flex items-center gap-1.5 text-[10px] px-2 py-1.5 rounded border cursor-pointer transition-all ${
+                                                                        isOtherLinked
+                                                                          ? 'bg-indigo-50 border-indigo-200'
+                                                                          : 'bg-muted/20 border-border hover:bg-muted/40'
+                                                                      } ${isOtherSaving ? 'opacity-50' : ''}`}
+                                                                    >
+                                                                      <Checkbox
+                                                                        checked={isOtherLinked}
+                                                                        onCheckedChange={() => handleQuestToggle(q.id, s.id, isOtherLinked)}
+                                                                        disabled={isOtherSaving}
+                                                                        className="h-3 w-3"
+                                                                      />
+                                                                      <span className="truncate">{s.label}</span>
+                                                                      {s.step_type && (
+                                                                        <Badge variant="outline" className="text-[7px] px-1 py-0 ml-auto shrink-0 capitalize">{s.step_type.charAt(0)}</Badge>
+                                                                      )}
+                                                                    </label>
+                                                                  );
+                                                                })}
+                                                              </div>
+                                                              {linkedSteps.length > 1 && (
+                                                                <p className="text-[9px] text-indigo-600 mt-1">
+                                                                  Linked to {linkedSteps.length} steps total
+                                                                </p>
+                                                              )}
+                                                            </div>
+                                                          </>
+                                                        )}
                                                       </div>
                                                     );
                                                   })}
