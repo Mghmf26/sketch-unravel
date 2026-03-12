@@ -815,7 +815,9 @@ export default function ProcessEditTab({ processId }: ProcessEditTabProps) {
                                   <Button variant="ghost" size="sm" className="h-5 text-[10px] text-orange-600" onClick={() => { setContextStepId(step.id); setAddDialog('risk'); }}>
                                   <Plus className="h-3 w-3 mr-0.5" /> Add
                                 </Button>
+                                </div>
                               </div>
+                              {isStepSectionVisible(step.id, 'risks') && (<>
                               {stepRisks.map(risk => {
                                 const ctrls = getRiskControls(risk.id);
                                 return (
