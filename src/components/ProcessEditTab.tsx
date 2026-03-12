@@ -70,6 +70,18 @@ const typeLabel: Record<string, string> = {
   'document': 'Document',
 };
 
+const typeDescriptions: Record<string, string> = {
+  'in-scope': 'A core process step that is within the scope of the audit/review. Risks, controls, regulations, and incidents can be attached.',
+  'interface': 'A reference to another business process that connects to this flow. Used for cross-process linkage.',
+  'event': 'An event that triggers or results from a process activity (e.g., receiving an email, timer expiring).',
+  'xor': 'An exclusive gateway (XOR) where the flow splits into exactly one of multiple paths based on a condition.',
+  'decision': 'A decision point where a choice or judgment is made that affects the process flow.',
+  'start-end': 'Marks the beginning or end of the process flow.',
+  'storage': 'A data store or repository where information is saved or retrieved.',
+  'delay': 'A waiting period or delay in the process (e.g., approval pending, batch processing window).',
+  'document': 'A document or report that is produced, consumed, or referenced in the process.',
+};
+
 function getTypeStyle(type: string) {
   return typeColors[type] || typeColors['in-scope'];
 }
