@@ -453,19 +453,31 @@ export default function ProcessEditTab({ processId }: ProcessEditTabProps) {
                                     {ctrls.length > 0 && (
                                       <div className="ml-3 pl-3 border-l-2 border-blue-200 space-y-1">
                                         {ctrls.map(ctrl => (
-                                          <div key={ctrl.id} className="flex items-center gap-2 text-xs py-1 group/ctrl">
-                                            <ShieldCheck className="h-3 w-3 text-blue-400 shrink-0" />
-                                            <InlineEdit value={ctrl.name} onSave={v => updateControl(ctrl.id, { name: v }).then(reload)} className="font-medium" />
-                                            <InlineSelect value={ctrl.type || 'preventive'} options={[{ value: 'preventive', label: 'Preventive' }, { value: 'detective', label: 'Detective' }, { value: 'corrective', label: 'Corrective' }]}
-                                              onSave={v => updateControl(ctrl.id, { type: v }).then(reload)} />
-                                            <InlineSelect value={ctrl.effectiveness || 'effective'} options={[{ value: 'effective', label: 'Effective' }, { value: 'partially', label: 'Partial' }, { value: 'ineffective', label: 'Ineffective' }]}
-                                              onSave={v => updateControl(ctrl.id, { effectiveness: v }).then(reload)}
-                                              className={ctrl.effectiveness === 'effective' ? 'text-emerald-700' : ctrl.effectiveness === 'ineffective' ? 'text-red-700' : 'text-yellow-700'} />
-                                            <span className="flex-1" />
-                                            <Button variant="ghost" size="icon" className="h-5 w-5 opacity-0 group-hover/ctrl:opacity-100 text-muted-foreground hover:text-destructive"
-                                              onClick={() => deleteControl(ctrl.id).then(reload)}>
-                                              <Trash2 className="h-2.5 w-2.5" />
-                                            </Button>
+                                          <div key={ctrl.id} className="text-xs py-1 group/ctrl space-y-1">
+                                            <div className="flex items-center gap-2">
+                                              <ShieldCheck className="h-3 w-3 text-blue-400 shrink-0" />
+                                              <InlineEdit value={ctrl.name} onSave={v => updateControl(ctrl.id, { name: v }).then(reload)} className="font-medium" />
+                                              <InlineSelect value={ctrl.type || 'preventive'} options={[{ value: 'preventive', label: 'Preventive' }, { value: 'detective', label: 'Detective' }, { value: 'corrective', label: 'Corrective' }]}
+                                                onSave={v => updateControl(ctrl.id, { type: v }).then(reload)} />
+                                              <InlineSelect value={ctrl.effectiveness || 'effective'} options={[{ value: 'effective', label: 'Effective' }, { value: 'partially', label: 'Partial' }, { value: 'ineffective', label: 'Ineffective' }]}
+                                                onSave={v => updateControl(ctrl.id, { effectiveness: v }).then(reload)}
+                                                className={ctrl.effectiveness === 'effective' ? 'text-emerald-700' : ctrl.effectiveness === 'ineffective' ? 'text-red-700' : 'text-yellow-700'} />
+                                              <span className="flex-1" />
+                                              <Button variant="ghost" size="icon" className="h-5 w-5 opacity-0 group-hover/ctrl:opacity-100 text-muted-foreground hover:text-destructive"
+                                                onClick={() => deleteControl(ctrl.id).then(reload)}>
+                                                <Trash2 className="h-2.5 w-2.5" />
+                                              </Button>
+                                            </div>
+                                            <div className="flex items-center gap-2 ml-5">
+                                              <InlineSelect value={(ctrl as any).automation_level || '__none__'} 
+                                                options={[{ value: '__none__', label: '— Automation —' }, { value: 'automatic', label: 'Automatic' }, { value: 'semi-automatic', label: 'Semi-Automatic' }, { value: 'manual', label: 'Manual' }]}
+                                                onSave={v => updateControl(ctrl.id, { automation_level: v === '__none__' ? null : v } as any).then(reload)} />
+                                              <InlineSelect value={(ctrl as any).frequency || '__none__'} 
+                                                options={[{ value: '__none__', label: '— Frequency —' }, { value: 'multiple_daily', label: 'Multiple/Day' }, { value: 'daily', label: 'Daily' }, { value: 'weekly', label: 'Weekly' }, { value: 'monthly', label: 'Monthly' }, { value: 'quarterly', label: 'Quarterly' }, { value: 'yearly', label: 'Yearly' }]}
+                                                onSave={v => updateControl(ctrl.id, { frequency: v === '__none__' ? null : v } as any).then(reload)} />
+                                              <span className="text-[10px] text-muted-foreground">Last tested:</span>
+                                              <InlineEdit value={(ctrl as any).last_tested || ''} onSave={v => updateControl(ctrl.id, { last_tested: v } as any).then(reload)} className="text-[10px]" />
+                                            </div>
                                           </div>
                                         ))}
                                       </div>
