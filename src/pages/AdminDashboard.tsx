@@ -258,6 +258,7 @@ export default function AdminDashboard() {
         <TabsList>
           <TabsTrigger value="users">Users ({users.length})</TabsTrigger>
           <TabsTrigger value="invitations">Invitations ({invitations.length})</TabsTrigger>
+          <TabsTrigger value="questionnaire"><ClipboardList className="h-4 w-4 mr-1" /> Questionnaire</TabsTrigger>
           {isRoot && <TabsTrigger value="page-visibility">Page Visibility</TabsTrigger>}
         </TabsList>
 
