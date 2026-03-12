@@ -2,8 +2,9 @@ import { useState, useEffect, useCallback } from 'react';
 import {
   Plus, Trash2, ArrowRight, ShieldAlert, ShieldCheck, Scale,
   AlertCircle, Database, HelpCircle, ChevronDown, ChevronRight, Pencil, Users,
-  Check, X, Save, Monitor, Cpu, Link2
+  Check, X, Save, Monitor, Cpu, Link2, CircleHelp
 } from 'lucide-react';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { usePermissions } from '@/hooks/usePermissions';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
