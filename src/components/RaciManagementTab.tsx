@@ -146,6 +146,7 @@ export default function RaciManagementTab({ processId, processName }: RaciManage
   const [search, setSearch] = useState('');
   const [filterDept, setFilterDept] = useState('__all__');
   const [addDialogOpen, setAddDialogOpen] = useState(false);
+  const [importProcessDialogOpen, setImportProcessDialogOpen] = useState(false);
   const [expandedId, setExpandedId] = useState<string | null>(null);
   const [viewMode, setViewMode] = useState<'table' | 'matrix'>('table');
 
