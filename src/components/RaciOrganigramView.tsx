@@ -43,7 +43,8 @@ function OrgNode({ data }: { data: any }) {
   const borderColor = seniorityColors[data.seniority] || 'border-l-primary';
 
   return (
-    <div className={`bg-background border-2 border-border rounded-xl shadow-lg min-w-[220px] max-w-[280px] overflow-hidden border-l-4 ${borderColor} transition-shadow hover:shadow-xl`}>
+    <div className={`bg-background border-2 border-border rounded-xl shadow-lg min-w-[220px] max-w-[280px] overflow-hidden border-l-4 ${borderColor} transition-shadow hover:shadow-xl cursor-pointer`}
+      onDoubleClick={() => data.onEdit?.(data.raciId)}>
       <Handle type="target" position={Position.Top} className="!bg-primary !w-3 !h-3 !border-2 !border-background" />
 
       {/* Header */}
