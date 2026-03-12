@@ -149,8 +149,25 @@ export default function Clients() {
   };
 
   const handleSave = async () => {
-    if (!form.name.trim()) {
-      toast({ title: 'Client name is required', variant: 'destructive' });
+    // Validate all mandatory fields
+    const requiredFields: { key: keyof typeof form; label: string }[] = [
+      { key: 'name', label: 'Client Name' },
+      { key: 'industry', label: 'Industry' },
+      { key: 'entity_type', label: 'Entity Type' },
+      { key: 'contact_person', label: 'Contact Person' },
+      { key: 'contact_email', label: 'Email' },
+      { key: 'contact_phone', label: 'Phone' },
+      { key: 'address', label: 'Address' },
+      { key: 'status', label: 'Status' },
+      { key: 'engagement_mode', label: 'Engagement Mode' },
+      { key: 'wbs_code', label: 'WBS Code' },
+      { key: 'engagement_period_start', label: 'Engagement Period Start' },
+      { key: 'engagement_period_end', label: 'Engagement Period End' },
+      { key: 'report_issuance_date', label: 'Report Issuance Date' },
+    ];
+    const missing = requiredFields.filter(f => !form[f.key]?.toString().trim());
+    if (missing.length > 0) {
+      toast({ title: 'Please fill all required fields', description: `Missing: ${missing.map(m => m.label).join(', ')}`, variant: 'destructive' });
       return;
     }
     setSaving(true);
