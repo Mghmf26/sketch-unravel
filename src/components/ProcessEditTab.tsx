@@ -94,7 +94,7 @@ function getTypeStyle(type: string) {
   return typeColors[type] || typeColors['in-scope'];
 }
 
-type AddDialog = 'step' | 'risk' | 'control' | 'regulation' | 'incident' | 'import' | 'mfq' | 'connection' | 'raci' | 'application' | null;
+type AddDialog = 'step' | 'risk' | 'control' | 'regulation' | 'incident' | 'import' | 'mfq' | 'connection' | 'raci' | 'application' | 'step-raci' | null;
 
 // Multi-person RACI field with tags
 function RaciPeopleField({ label, color, value, onSave }: {
