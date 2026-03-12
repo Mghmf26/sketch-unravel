@@ -122,6 +122,7 @@ export async function upsertRiskMatrix(
   if (impactLevels) payload.impact_levels = impactLevels;
   if (frequencyLevels) payload.frequency_levels = frequencyLevels;
 
+
   const existing = await fetchRiskMatrix(processId);
   if (existing) {
     const { data, error } = await supabase
