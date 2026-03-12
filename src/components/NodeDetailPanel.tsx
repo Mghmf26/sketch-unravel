@@ -840,6 +840,16 @@ export default function NodeDetailPanel({ node, risks, controls, regulations, in
         </DialogFooter>
       </DialogContent>
     </Dialog>
+
+    {/* Add Regulation Dialog */}
+    <Dialog open={addDialog === 'regulation'} onOpenChange={v => !v && setAddDialog(null)}>
+      <DialogContent className="sm:max-w-md">
+        <DialogHeader>
+          <DialogTitle className="flex items-center gap-2"><Scale className="h-5 w-5 text-purple-500" /> Add Regulation</DialogTitle>
+          <DialogDescription>Link a regulation to this step.</DialogDescription>
+        </DialogHeader>
+        <div className="grid gap-3 py-2">
+          <div className="grid gap-1.5">
             <Label>Regulation Name *</Label>
             <Input value={regulationForm.name} onChange={e => setRegulationForm(f => ({ ...f, name: e.target.value }))} placeholder="e.g. SOX Section 404" />
           </div>
