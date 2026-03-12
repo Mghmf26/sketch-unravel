@@ -1,8 +1,8 @@
-import { useState, useEffect, useCallback, useMemo } from 'react';
+import { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import {
   Plus, Trash2, ArrowRight, ShieldAlert, ShieldCheck, Scale,
   AlertCircle, Database, HelpCircle, ChevronDown, ChevronRight, Pencil, Users,
-  Check, X, Save, Monitor, Cpu, Link2, CircleHelp, ClipboardList
+  Check, X, Save, Monitor, Cpu, Link2, CircleHelp, ClipboardList, Download, Upload as UploadIcon
 } from 'lucide-react';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { usePermissions } from '@/hooks/usePermissions';
