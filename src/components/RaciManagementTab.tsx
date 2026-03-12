@@ -498,12 +498,19 @@ export default function RaciManagementTab({ processId, processName }: RaciManage
                                     </div>
                                   </td>
                                 )}
-                                <td className="px-2 py-2 text-right">
-                                  <Button variant="ghost" size="icon" className="h-5 w-5 opacity-0 group-hover:opacity-100 text-muted-foreground hover:text-destructive"
-                                    onClick={e => { e.stopPropagation(); handleDelete(raci.id); }}>
-                                    <Trash2 className="h-3 w-3" />
-                                  </Button>
-                                </td>
+                                 <td className="px-2 py-2 text-right">
+                                   <div className="flex items-center gap-0.5 justify-end">
+                                     <Button variant="ghost" size="icon" className="h-5 w-5 opacity-0 group-hover:opacity-100 text-muted-foreground hover:text-primary"
+                                       onClick={e => { e.stopPropagation(); setEditEntry(raci); setEditDialogOpen(true); }}
+                                       title="Edit RACI role">
+                                       <Pencil className="h-3 w-3" />
+                                     </Button>
+                                     <Button variant="ghost" size="icon" className="h-5 w-5 opacity-0 group-hover:opacity-100 text-muted-foreground hover:text-destructive"
+                                       onClick={e => { e.stopPropagation(); handleDelete(raci.id); }}>
+                                       <Trash2 className="h-3 w-3" />
+                                     </Button>
+                                   </div>
+                                 </td>
                               </tr>
                             </CollapsibleTrigger>
                             <CollapsibleContent asChild>
