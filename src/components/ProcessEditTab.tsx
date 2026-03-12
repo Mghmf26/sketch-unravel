@@ -394,7 +394,7 @@ export default function ProcessEditTab({ processId }: ProcessEditTabProps) {
       if (q.step_types.length === 0) return false;
       // If step has no step_type set, don't show questionnaire
       if (!step.step_type) return false;
-      return q.step_types.includes(step.step_type);
+      return q.step_types.some(t => t.toLowerCase() === step.step_type!.toLowerCase());
     });
   };
 
