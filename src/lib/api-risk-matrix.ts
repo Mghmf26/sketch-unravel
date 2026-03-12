@@ -188,5 +188,14 @@ export async function applyTemplateMatrix(matrixId: string, templateKey?: string
   if (error) throw error;
 }
 
+/** Save risk appetite / impact descriptions for a matrix */
+export async function saveImpactDescriptions(matrixId: string, descriptions: Record<string, string>) {
+  const { error } = await supabase
+    .from('risk_matrices')
+    .update({ impact_descriptions: descriptions } as any)
+    .eq('id', matrixId);
+  if (error) throw error;
+}
+
 /** @deprecated use applyTemplateMatrix */
 export const applyStandardMatrix = (matrixId: string) => applyTemplateMatrix(matrixId, 'iso31000');
