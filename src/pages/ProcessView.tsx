@@ -145,6 +145,7 @@ export default function ProcessView() {
           <TabsTrigger value="diagram" className="gap-2"><Share2 className="h-4 w-4" /> Business Process Flows</TabsTrigger>
           <TabsTrigger value="mainframe-flows" className="gap-2"><Cpu className="h-4 w-4" /> Mainframe Flows</TabsTrigger>
           <TabsTrigger value="risk-matrix" className="gap-2"><Grid3x3 className="h-4 w-4" /> Risk Matrix</TabsTrigger>
+          <TabsTrigger value="raci" className="gap-2"><Users className="h-4 w-4" /> RACI</TabsTrigger>
           <TabsTrigger value="questionnaire" className="gap-2"><ClipboardList className="h-4 w-4" /> Questionnaire</TabsTrigger>
         </TabsList>
 
