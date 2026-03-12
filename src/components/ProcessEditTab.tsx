@@ -279,6 +279,9 @@ export default function ProcessEditTab({ processId }: ProcessEditTabProps) {
   const [contextRiskId, setContextRiskId] = useState<string | null>(null);
   const [contextScreenId, setContextScreenId] = useState<string | null>(null);
   const [expandedSteps, setExpandedSteps] = useState<Set<string>>(new Set());
+  const [editRaciEntry, setEditRaciEntry] = useState<ProcessRaci | null>(null);
+  const [editRaciDialogOpen, setEditRaciDialogOpen] = useState(false);
+  const [addRaciFromStep, setAddRaciFromStep] = useState(false);
 
   // Per-step section visibility (e.g. "stepId:risks" => true/false)
   const [stepSectionVisible, setStepSectionVisible] = useState<Record<string, boolean>>(() => {
