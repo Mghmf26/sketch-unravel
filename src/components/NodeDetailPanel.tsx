@@ -520,7 +520,7 @@ export default function NodeDetailPanel({ node, risks, controls, regulations, in
                       ))}
                     </div>
                   )}
-                  <Button size="sm" variant="ghost" className="h-5 text-[10px] text-blue-600 gap-1 px-1" onClick={() => { setContextRiskId(risk.id); setControlForm({ name: '', description: '', type: 'preventive', effectiveness: 'effective' }); setAddDialog('control'); }}>
+                  <Button size="sm" variant="ghost" className="h-5 text-[10px] text-blue-600 gap-1 px-1" onClick={() => { setContextRiskId(risk.id); setControlForm({ name: '', description: '', type: 'preventive', effectiveness: 'effective', automation_level: '', frequency: '', last_tested: '' }); setAddDialog('control'); }}>
                     <Plus className="h-2.5 w-2.5" /> Add Control
                   </Button>
                   {derivedProcessId && <EntityNotesSection entityType="risk" entityId={risk.id} processId={derivedProcessId} />}
