@@ -176,6 +176,8 @@ export default function ProcessEditTab({ processId }: ProcessEditTabProps) {
   const [questQuestions, setQuestQuestions] = useState<QuestionnaireQuestion[]>([]);
   const [questLinks, setQuestLinks] = useState<QuestionnaireStepLink[]>([]);
   const [savingQuestLink, setSavingQuestLink] = useState<string | null>(null);
+  const [questVisible, setQuestVisible] = useState<Record<string, boolean>>({});
+  const [questSectionsOpen, setQuestSectionsOpen] = useState<Record<string, boolean>>({});
   const [addDialog, setAddDialog] = useState<AddDialog>(null);
   const [contextStepId, setContextStepId] = useState<string | null>(null);
   const [contextRiskId, setContextRiskId] = useState<string | null>(null);
