@@ -118,6 +118,18 @@ export default function RiskMatrixEditor({ processId }: RiskMatrixEditorProps) {
     }
   };
 
+  const handleImpactDescChange = async (level: string, value: string) => {
+    const updated = { ...impactDescs, [level]: value };
+    setImpactDescs(updated);
+    if (matrix) {
+      try {
+        await saveImpactDescriptions(matrix.id, updated);
+      } catch {
+        // silent – optimistic update
+      }
+    }
+  };
+
   const getCellColor = (impact: string, freq: string): string => {
     const acc = isAcceptable(impact, freq);
     if (acc === true) return 'bg-emerald-100 hover:bg-emerald-200 border-emerald-300 text-emerald-800';
