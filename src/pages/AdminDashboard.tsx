@@ -401,6 +401,10 @@ export default function AdminDashboard() {
           </Card>
         </TabsContent>
 
+        <TabsContent value="questionnaire">
+          <QuestionnaireManager />
+        </TabsContent>
+
         {isRoot && (
           <TabsContent value="page-visibility">
             <PageVisibilityEditor />
