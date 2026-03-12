@@ -8,6 +8,7 @@ import {
 } from 'lucide-react';
 import UserPermissionsEditor from '@/components/UserPermissionsEditor';
 import PageVisibilityEditor from '@/components/PageVisibilityEditor';
+import QuestionnaireManager from '@/components/QuestionnaireManager';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
