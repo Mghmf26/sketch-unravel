@@ -197,6 +197,18 @@ export default function ProcessQuestionnaireConfig() {
                             </TableCell>
                           ))}
                           <TableCell className="text-center">
+                            <div className="flex gap-0.5 justify-center">
+                              <Button variant="ghost" size="icon" className="h-5 w-5" title="Select All"
+                                onClick={() => handleSelectAll(q)} disabled={q.step_types.length === STEP_TYPES.length}>
+                                <CheckSquare className="h-3 w-3 text-emerald-600" />
+                              </Button>
+                              <Button variant="ghost" size="icon" className="h-5 w-5" title="Unselect All"
+                                onClick={() => handleUnselectAll(q)} disabled={q.step_types.length === 0}>
+                                <XSquare className="h-3 w-3 text-muted-foreground" />
+                              </Button>
+                            </div>
+                          </TableCell>
+                          <TableCell className="text-center">
                             <Select
                               value={String(q.importance_level)}
                               onValueChange={v => handleImportanceChange(q, parseInt(v))}
