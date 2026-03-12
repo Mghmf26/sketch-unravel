@@ -416,7 +416,7 @@ export default function Clients() {
                 </div>
                 <div className="grid grid-cols-2 gap-4">
                   <div className="grid gap-1.5">
-                    <Label htmlFor="industry">Industry</Label>
+                    <Label htmlFor="industry">Industry *</Label>
                     <Select value={form.industry} onValueChange={(v) => setForm({ ...form, industry: v })}>
                       <SelectTrigger><SelectValue placeholder="Select industry" /></SelectTrigger>
                       <SelectContent>
