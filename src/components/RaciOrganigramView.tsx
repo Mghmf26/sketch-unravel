@@ -265,7 +265,16 @@ export default function RaciOrganigramView({ raciEntries, steps, processId, onUp
   const [selectedNodeId, setSelectedNodeId] = useState<string | null>(null);
   const [linkDialogOpen, setLinkDialogOpen] = useState(false);
   const [linkSourceLabel, setLinkSourceLabel] = useState('');
+  const [editDialogOpen, setEditDialogOpen] = useState(false);
+  const [editEntry, setEditEntry] = useState<ProcessRaci | null>(null);
 
+  const handleEditRaci = useCallback((raciId: string) => {
+    const entry = raciEntries.find(r => r.id === raciId);
+    if (entry) {
+      setEditEntry(entry);
+      setEditDialogOpen(true);
+    }
+  }, [raciEntries]);
   // Build linked step counts
   const linkedStepCounts = useMemo(() => {
     // This is a lightweight map; step links are managed at RACI tab level
