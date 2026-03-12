@@ -1817,25 +1817,70 @@ function AddControlDialog({ riskId, onClose, onRefresh }: { riskId: string; onCl
 }
 
 function AddRegulationDialog({ processId, stepId, onClose, onRefresh }: { processId: string; stepId: string; onClose: () => void; onRefresh: () => void }) {
+  const [mode, setMode] = useState<'new' | 'existing'>('new');
   const [name, setName] = useState('');
   const [authority, setAuthority] = useState('');
   const [status, setStatus] = useState('partial');
+  const [allRegulations, setAllRegulations] = useState<Regulation[]>([]);
+  const [search, setSearch] = useState('');
+  const [loading, setLoading] = useState(false);
+
+  useEffect(() => {
+    if (mode === 'existing') {
+      setLoading(true);
+      fetchRegulations().then(r => { setAllRegulations(r); setLoading(false); });
+    }
+  }, [mode]);
+
   const submit = async () => {
     if (!name.trim()) return;
     await insertRegulation({ process_id: processId, step_id: stepId, name: name.trim(), authority: authority || null, compliance_status: status });
     toast({ title: 'Regulation added' }); onRefresh(); onClose();
   };
+
+  const selectExisting = async (reg: Regulation) => {
+    await insertRegulation({ process_id: processId, step_id: stepId, name: reg.name, authority: reg.authority || null, compliance_status: reg.compliance_status, description: reg.description || null });
+    toast({ title: 'Regulation added from existing' }); onRefresh(); onClose();
+  };
+
+  const filtered = allRegulations.filter(r => r.name.toLowerCase().includes(search.toLowerCase()));
+
   return (
     <Dialog open onOpenChange={onClose}>
       <DialogContent className="sm:max-w-md">
         <DialogHeader><DialogTitle>Add Regulation</DialogTitle></DialogHeader>
-        <div className="grid gap-3 py-2">
-          <div className="grid gap-1.5"><Label>Name *</Label><Input value={name} onChange={e => setName(e.target.value)} /></div>
-          <div className="grid gap-1.5"><Label>Authority</Label><Input value={authority} onChange={e => setAuthority(e.target.value)} /></div>
-          <div className="grid gap-1.5"><Label>Compliance Status</Label><Select value={status} onValueChange={setStatus}><SelectTrigger><SelectValue /></SelectTrigger>
-            <SelectContent><SelectItem value="compliant">Compliant</SelectItem><SelectItem value="partial">Partial</SelectItem><SelectItem value="non-compliant">Non-Compliant</SelectItem></SelectContent></Select></div>
+        <div className="flex gap-1 mb-2">
+          <Button size="sm" variant={mode === 'new' ? 'default' : 'outline'} className="h-7 text-xs" onClick={() => setMode('new')}>Create New</Button>
+          <Button size="sm" variant={mode === 'existing' ? 'default' : 'outline'} className="h-7 text-xs" onClick={() => setMode('existing')}>Select Existing</Button>
         </div>
-        <DialogFooter><Button variant="outline" onClick={onClose}>Cancel</Button><Button onClick={submit}>Add</Button></DialogFooter>
+        {mode === 'new' ? (
+          <div className="grid gap-3 py-2">
+            <div className="grid gap-1.5"><Label>Name *</Label><Input value={name} onChange={e => setName(e.target.value)} /></div>
+            <div className="grid gap-1.5"><Label>Authority</Label><Input value={authority} onChange={e => setAuthority(e.target.value)} /></div>
+            <div className="grid gap-1.5"><Label>Compliance Status</Label><Select value={status} onValueChange={setStatus}><SelectTrigger><SelectValue /></SelectTrigger>
+              <SelectContent><SelectItem value="compliant">Compliant</SelectItem><SelectItem value="partial">Partial</SelectItem><SelectItem value="non-compliant">Non-Compliant</SelectItem></SelectContent></Select></div>
+            <DialogFooter><Button variant="outline" onClick={onClose}>Cancel</Button><Button onClick={submit}>Add</Button></DialogFooter>
+          </div>
+        ) : (
+          <div className="space-y-2">
+            <Input placeholder="Search regulations..." value={search} onChange={e => setSearch(e.target.value)} className="h-8 text-sm" />
+            <div className="max-h-[300px] overflow-y-auto space-y-1">
+              {loading ? <p className="text-xs text-muted-foreground text-center py-4">Loading...</p> :
+                filtered.length === 0 ? <p className="text-xs text-muted-foreground text-center py-4">No regulations found</p> :
+                filtered.map(r => (
+                  <div key={r.id} className="flex items-center justify-between p-2 rounded border hover:bg-muted/50 cursor-pointer group" onClick={() => selectExisting(r)}>
+                    <div className="flex-1 min-w-0">
+                      <p className="text-xs truncate font-medium">{r.name}</p>
+                      <p className="text-[10px] text-muted-foreground">{r.authority || 'No authority'} · {r.compliance_status}</p>
+                    </div>
+                    <Button size="sm" variant="ghost" className="h-6 text-[10px] opacity-0 group-hover:opacity-100 shrink-0">Select</Button>
+                  </div>
+                ))
+              }
+            </div>
+            <DialogFooter><Button variant="outline" onClick={onClose}>Cancel</Button></DialogFooter>
+          </div>
+        )}
       </DialogContent>
     </Dialog>
   );
