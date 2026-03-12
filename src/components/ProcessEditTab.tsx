@@ -1661,97 +1661,233 @@ function AddConnectionDialog({ processId, steps, onClose, onRefresh }: { process
 }
 
 function AddRiskDialog({ processId, stepId, onClose, onRefresh }: { processId: string; stepId: string; onClose: () => void; onRefresh: () => void }) {
+  const [mode, setMode] = useState<'new' | 'existing'>('new');
   const [desc, setDesc] = useState('');
   const [likelihood, setLikelihood] = useState('medium');
   const [impact, setImpact] = useState('medium');
+  const [allRisks, setAllRisks] = useState<Risk[]>([]);
+  const [search, setSearch] = useState('');
+  const [loading, setLoading] = useState(false);
+
+  useEffect(() => {
+    if (mode === 'existing') {
+      setLoading(true);
+      fetchRisks().then(r => { setAllRisks(r); setLoading(false); });
+    }
+  }, [mode]);
+
   const submit = async () => {
     if (!desc.trim()) return;
     await insertRisk({ process_id: processId, step_id: stepId, description: desc.trim(), likelihood, impact });
     toast({ title: 'Risk added' }); onRefresh(); onClose();
   };
+
+  const selectExisting = async (risk: Risk) => {
+    await insertRisk({ process_id: processId, step_id: stepId, description: risk.description, likelihood: risk.likelihood, impact: risk.impact });
+    toast({ title: 'Risk added from existing' }); onRefresh(); onClose();
+  };
+
+  const filtered = allRisks.filter(r => r.description.toLowerCase().includes(search.toLowerCase()));
+
   return (
     <Dialog open onOpenChange={onClose}>
       <DialogContent className="sm:max-w-md">
         <DialogHeader><DialogTitle>Add Risk</DialogTitle></DialogHeader>
-        <div className="grid gap-3 py-2">
-          <div className="grid gap-1.5"><Label>Description *</Label><Textarea value={desc} onChange={e => setDesc(e.target.value)} /></div>
-          <div className="grid grid-cols-2 gap-3">
-            <div className="grid gap-1.5"><Label>Likelihood</Label><Select value={likelihood} onValueChange={setLikelihood}><SelectTrigger><SelectValue /></SelectTrigger>
-              <SelectContent><SelectItem value="low">Low</SelectItem><SelectItem value="medium">Medium</SelectItem><SelectItem value="high">High</SelectItem></SelectContent></Select></div>
-            <div className="grid gap-1.5"><Label>Impact</Label><Select value={impact} onValueChange={setImpact}><SelectTrigger><SelectValue /></SelectTrigger>
-              <SelectContent><SelectItem value="low">Low</SelectItem><SelectItem value="medium">Medium</SelectItem><SelectItem value="high">High</SelectItem></SelectContent></Select></div>
-          </div>
+        <div className="flex gap-1 mb-2">
+          <Button size="sm" variant={mode === 'new' ? 'default' : 'outline'} className="h-7 text-xs" onClick={() => setMode('new')}>Create New</Button>
+          <Button size="sm" variant={mode === 'existing' ? 'default' : 'outline'} className="h-7 text-xs" onClick={() => setMode('existing')}>Select Existing</Button>
         </div>
-        <DialogFooter><Button variant="outline" onClick={onClose}>Cancel</Button><Button onClick={submit}>Add</Button></DialogFooter>
+        {mode === 'new' ? (
+          <div className="grid gap-3 py-2">
+            <div className="grid gap-1.5"><Label>Description *</Label><Textarea value={desc} onChange={e => setDesc(e.target.value)} /></div>
+            <div className="grid grid-cols-2 gap-3">
+              <div className="grid gap-1.5"><Label>Likelihood</Label><Select value={likelihood} onValueChange={setLikelihood}><SelectTrigger><SelectValue /></SelectTrigger>
+                <SelectContent><SelectItem value="low">Low</SelectItem><SelectItem value="medium">Medium</SelectItem><SelectItem value="high">High</SelectItem></SelectContent></Select></div>
+              <div className="grid gap-1.5"><Label>Impact</Label><Select value={impact} onValueChange={setImpact}><SelectTrigger><SelectValue /></SelectTrigger>
+                <SelectContent><SelectItem value="low">Low</SelectItem><SelectItem value="medium">Medium</SelectItem><SelectItem value="high">High</SelectItem></SelectContent></Select></div>
+            </div>
+            <DialogFooter><Button variant="outline" onClick={onClose}>Cancel</Button><Button onClick={submit}>Add</Button></DialogFooter>
+          </div>
+        ) : (
+          <div className="space-y-2">
+            <Input placeholder="Search risks..." value={search} onChange={e => setSearch(e.target.value)} className="h-8 text-sm" />
+            <div className="max-h-[300px] overflow-y-auto space-y-1">
+              {loading ? <p className="text-xs text-muted-foreground text-center py-4">Loading...</p> :
+                filtered.length === 0 ? <p className="text-xs text-muted-foreground text-center py-4">No risks found</p> :
+                filtered.map(r => (
+                  <div key={r.id} className="flex items-center justify-between p-2 rounded border hover:bg-muted/50 cursor-pointer group" onClick={() => selectExisting(r)}>
+                    <div className="flex-1 min-w-0">
+                      <p className="text-xs truncate">{r.description}</p>
+                      <p className="text-[10px] text-muted-foreground">Likelihood: {r.likelihood} · Impact: {r.impact}</p>
+                    </div>
+                    <Button size="sm" variant="ghost" className="h-6 text-[10px] opacity-0 group-hover:opacity-100 shrink-0">Select</Button>
+                  </div>
+                ))
+              }
+            </div>
+            <DialogFooter><Button variant="outline" onClick={onClose}>Cancel</Button></DialogFooter>
+          </div>
+        )}
       </DialogContent>
     </Dialog>
   );
 }
 
 function AddControlDialog({ riskId, onClose, onRefresh }: { riskId: string; onClose: () => void; onRefresh: () => void }) {
+  const [mode, setMode] = useState<'new' | 'existing'>('new');
   const [name, setName] = useState('');
   const [type, setType] = useState('preventive');
   const [effectiveness, setEffectiveness] = useState('effective');
   const [automationLevel, setAutomationLevel] = useState('');
   const [frequency, setFrequency] = useState('');
   const [lastTested, setLastTested] = useState('');
+  const [allControls, setAllControls] = useState<Control[]>([]);
+  const [search, setSearch] = useState('');
+  const [loading, setLoading] = useState(false);
+
+  useEffect(() => {
+    if (mode === 'existing') {
+      setLoading(true);
+      fetchAllControls().then(c => { setAllControls(c); setLoading(false); });
+    }
+  }, [mode]);
+
   const submit = async () => {
     if (!name.trim()) return;
     await insertControl({ risk_id: riskId, name: name.trim(), type, effectiveness, automation_level: automationLevel || null, frequency: frequency || null, last_tested: lastTested || null } as any);
     toast({ title: 'Control added' }); onRefresh(); onClose();
   };
+
+  const selectExisting = async (ctrl: Control) => {
+    await insertControl({ risk_id: riskId, name: ctrl.name, type: ctrl.type, effectiveness: ctrl.effectiveness, description: ctrl.description, automation_level: (ctrl as any).automation_level || null, frequency: (ctrl as any).frequency || null, last_tested: (ctrl as any).last_tested || null } as any);
+    toast({ title: 'Control added from existing' }); onRefresh(); onClose();
+  };
+
+  const filtered = allControls.filter(c => c.name.toLowerCase().includes(search.toLowerCase()));
+
   return (
     <Dialog open onOpenChange={onClose}>
       <DialogContent className="sm:max-w-md">
         <DialogHeader><DialogTitle>Add Control</DialogTitle></DialogHeader>
-        <div className="grid gap-3 py-2">
-          <div className="grid gap-1.5"><Label>Name *</Label><Input value={name} onChange={e => setName(e.target.value)} /></div>
-          <div className="grid grid-cols-2 gap-3">
-            <div className="grid gap-1.5"><Label>Type</Label><Select value={type} onValueChange={setType}><SelectTrigger><SelectValue /></SelectTrigger>
-              <SelectContent><SelectItem value="preventive">Preventive</SelectItem><SelectItem value="detective">Detective</SelectItem><SelectItem value="corrective">Corrective</SelectItem></SelectContent></Select></div>
-            <div className="grid gap-1.5"><Label>Effectiveness</Label><Select value={effectiveness} onValueChange={setEffectiveness}><SelectTrigger><SelectValue /></SelectTrigger>
-              <SelectContent><SelectItem value="effective">Effective</SelectItem><SelectItem value="partially">Partially</SelectItem><SelectItem value="ineffective">Ineffective</SelectItem></SelectContent></Select></div>
-          </div>
-          <div className="grid grid-cols-2 gap-3">
-            <div className="grid gap-1.5"><Label>Automation Level</Label><Select value={automationLevel || '__none__'} onValueChange={v => setAutomationLevel(v === '__none__' ? '' : v)}><SelectTrigger><SelectValue /></SelectTrigger>
-              <SelectContent><SelectItem value="__none__">— Select —</SelectItem><SelectItem value="automatic">Automatic</SelectItem><SelectItem value="semi-automatic">Semi-Automatic</SelectItem><SelectItem value="manual">Manual</SelectItem></SelectContent></Select></div>
-            <div className="grid gap-1.5"><Label>Frequency</Label><Select value={frequency || '__none__'} onValueChange={v => setFrequency(v === '__none__' ? '' : v)}><SelectTrigger><SelectValue /></SelectTrigger>
-              <SelectContent><SelectItem value="__none__">— Select —</SelectItem><SelectItem value="multiple_daily">Multiple times/day</SelectItem><SelectItem value="daily">Daily</SelectItem><SelectItem value="weekly">Weekly</SelectItem><SelectItem value="monthly">Monthly</SelectItem><SelectItem value="quarterly">Quarterly</SelectItem><SelectItem value="yearly">Yearly</SelectItem></SelectContent></Select></div>
-          </div>
-          <div className="grid gap-1.5"><Label>Last Tested by Client</Label><Input value={lastTested} onChange={e => setLastTested(e.target.value)} placeholder="e.g. 2024-12-15 or N/A" /></div>
+        <div className="flex gap-1 mb-2">
+          <Button size="sm" variant={mode === 'new' ? 'default' : 'outline'} className="h-7 text-xs" onClick={() => setMode('new')}>Create New</Button>
+          <Button size="sm" variant={mode === 'existing' ? 'default' : 'outline'} className="h-7 text-xs" onClick={() => setMode('existing')}>Select Existing</Button>
         </div>
-        <DialogFooter><Button variant="outline" onClick={onClose}>Cancel</Button><Button onClick={submit}>Add</Button></DialogFooter>
+        {mode === 'new' ? (
+          <div className="grid gap-3 py-2">
+            <div className="grid gap-1.5"><Label>Name *</Label><Input value={name} onChange={e => setName(e.target.value)} /></div>
+            <div className="grid grid-cols-2 gap-3">
+              <div className="grid gap-1.5"><Label>Type</Label><Select value={type} onValueChange={setType}><SelectTrigger><SelectValue /></SelectTrigger>
+                <SelectContent><SelectItem value="preventive">Preventive</SelectItem><SelectItem value="detective">Detective</SelectItem><SelectItem value="corrective">Corrective</SelectItem></SelectContent></Select></div>
+              <div className="grid gap-1.5"><Label>Effectiveness</Label><Select value={effectiveness} onValueChange={setEffectiveness}><SelectTrigger><SelectValue /></SelectTrigger>
+                <SelectContent><SelectItem value="effective">Effective</SelectItem><SelectItem value="partially">Partially</SelectItem><SelectItem value="ineffective">Ineffective</SelectItem></SelectContent></Select></div>
+            </div>
+            <div className="grid grid-cols-2 gap-3">
+              <div className="grid gap-1.5"><Label>Automation Level</Label><Select value={automationLevel || '__none__'} onValueChange={v => setAutomationLevel(v === '__none__' ? '' : v)}><SelectTrigger><SelectValue /></SelectTrigger>
+                <SelectContent><SelectItem value="__none__">— Select —</SelectItem><SelectItem value="automatic">Automatic</SelectItem><SelectItem value="semi-automatic">Semi-Automatic</SelectItem><SelectItem value="manual">Manual</SelectItem></SelectContent></Select></div>
+              <div className="grid gap-1.5"><Label>Frequency</Label><Select value={frequency || '__none__'} onValueChange={v => setFrequency(v === '__none__' ? '' : v)}><SelectTrigger><SelectValue /></SelectTrigger>
+                <SelectContent><SelectItem value="__none__">— Select —</SelectItem><SelectItem value="multiple_daily">Multiple times/day</SelectItem><SelectItem value="daily">Daily</SelectItem><SelectItem value="weekly">Weekly</SelectItem><SelectItem value="monthly">Monthly</SelectItem><SelectItem value="quarterly">Quarterly</SelectItem><SelectItem value="yearly">Yearly</SelectItem></SelectContent></Select></div>
+            </div>
+            <div className="grid gap-1.5"><Label>Last Tested by Client</Label><Input value={lastTested} onChange={e => setLastTested(e.target.value)} placeholder="e.g. 2024-12-15 or N/A" /></div>
+            <DialogFooter><Button variant="outline" onClick={onClose}>Cancel</Button><Button onClick={submit}>Add</Button></DialogFooter>
+          </div>
+        ) : (
+          <div className="space-y-2">
+            <Input placeholder="Search controls..." value={search} onChange={e => setSearch(e.target.value)} className="h-8 text-sm" />
+            <div className="max-h-[300px] overflow-y-auto space-y-1">
+              {loading ? <p className="text-xs text-muted-foreground text-center py-4">Loading...</p> :
+                filtered.length === 0 ? <p className="text-xs text-muted-foreground text-center py-4">No controls found</p> :
+                filtered.map(c => (
+                  <div key={c.id} className="flex items-center justify-between p-2 rounded border hover:bg-muted/50 cursor-pointer group" onClick={() => selectExisting(c)}>
+                    <div className="flex-1 min-w-0">
+                      <p className="text-xs truncate font-medium">{c.name}</p>
+                      <p className="text-[10px] text-muted-foreground">Type: {c.type} · Effectiveness: {c.effectiveness}</p>
+                    </div>
+                    <Button size="sm" variant="ghost" className="h-6 text-[10px] opacity-0 group-hover:opacity-100 shrink-0">Select</Button>
+                  </div>
+                ))
+              }
+            </div>
+            <DialogFooter><Button variant="outline" onClick={onClose}>Cancel</Button></DialogFooter>
+          </div>
+        )}
       </DialogContent>
     </Dialog>
   );
 }
 
 function AddRegulationDialog({ processId, stepId, onClose, onRefresh }: { processId: string; stepId: string; onClose: () => void; onRefresh: () => void }) {
+  const [mode, setMode] = useState<'new' | 'existing'>('new');
   const [name, setName] = useState('');
   const [authority, setAuthority] = useState('');
   const [status, setStatus] = useState('partial');
+  const [allRegulations, setAllRegulations] = useState<Regulation[]>([]);
+  const [search, setSearch] = useState('');
+  const [loading, setLoading] = useState(false);
+
+  useEffect(() => {
+    if (mode === 'existing') {
+      setLoading(true);
+      fetchRegulations().then(r => { setAllRegulations(r); setLoading(false); });
+    }
+  }, [mode]);
+
   const submit = async () => {
     if (!name.trim()) return;
     await insertRegulation({ process_id: processId, step_id: stepId, name: name.trim(), authority: authority || null, compliance_status: status });
     toast({ title: 'Regulation added' }); onRefresh(); onClose();
   };
+
+  const selectExisting = async (reg: Regulation) => {
+    await insertRegulation({ process_id: processId, step_id: stepId, name: reg.name, authority: reg.authority || null, compliance_status: reg.compliance_status, description: reg.description || null });
+    toast({ title: 'Regulation added from existing' }); onRefresh(); onClose();
+  };
+
+  const filtered = allRegulations.filter(r => r.name.toLowerCase().includes(search.toLowerCase()));
+
   return (
     <Dialog open onOpenChange={onClose}>
       <DialogContent className="sm:max-w-md">
         <DialogHeader><DialogTitle>Add Regulation</DialogTitle></DialogHeader>
-        <div className="grid gap-3 py-2">
-          <div className="grid gap-1.5"><Label>Name *</Label><Input value={name} onChange={e => setName(e.target.value)} /></div>
-          <div className="grid gap-1.5"><Label>Authority</Label><Input value={authority} onChange={e => setAuthority(e.target.value)} /></div>
-          <div className="grid gap-1.5"><Label>Compliance Status</Label><Select value={status} onValueChange={setStatus}><SelectTrigger><SelectValue /></SelectTrigger>
-            <SelectContent><SelectItem value="compliant">Compliant</SelectItem><SelectItem value="partial">Partial</SelectItem><SelectItem value="non-compliant">Non-Compliant</SelectItem></SelectContent></Select></div>
+        <div className="flex gap-1 mb-2">
+          <Button size="sm" variant={mode === 'new' ? 'default' : 'outline'} className="h-7 text-xs" onClick={() => setMode('new')}>Create New</Button>
+          <Button size="sm" variant={mode === 'existing' ? 'default' : 'outline'} className="h-7 text-xs" onClick={() => setMode('existing')}>Select Existing</Button>
         </div>
-        <DialogFooter><Button variant="outline" onClick={onClose}>Cancel</Button><Button onClick={submit}>Add</Button></DialogFooter>
+        {mode === 'new' ? (
+          <div className="grid gap-3 py-2">
+            <div className="grid gap-1.5"><Label>Name *</Label><Input value={name} onChange={e => setName(e.target.value)} /></div>
+            <div className="grid gap-1.5"><Label>Authority</Label><Input value={authority} onChange={e => setAuthority(e.target.value)} /></div>
+            <div className="grid gap-1.5"><Label>Compliance Status</Label><Select value={status} onValueChange={setStatus}><SelectTrigger><SelectValue /></SelectTrigger>
+              <SelectContent><SelectItem value="compliant">Compliant</SelectItem><SelectItem value="partial">Partial</SelectItem><SelectItem value="non-compliant">Non-Compliant</SelectItem></SelectContent></Select></div>
+            <DialogFooter><Button variant="outline" onClick={onClose}>Cancel</Button><Button onClick={submit}>Add</Button></DialogFooter>
+          </div>
+        ) : (
+          <div className="space-y-2">
+            <Input placeholder="Search regulations..." value={search} onChange={e => setSearch(e.target.value)} className="h-8 text-sm" />
+            <div className="max-h-[300px] overflow-y-auto space-y-1">
+              {loading ? <p className="text-xs text-muted-foreground text-center py-4">Loading...</p> :
+                filtered.length === 0 ? <p className="text-xs text-muted-foreground text-center py-4">No regulations found</p> :
+                filtered.map(r => (
+                  <div key={r.id} className="flex items-center justify-between p-2 rounded border hover:bg-muted/50 cursor-pointer group" onClick={() => selectExisting(r)}>
+                    <div className="flex-1 min-w-0">
+                      <p className="text-xs truncate font-medium">{r.name}</p>
+                      <p className="text-[10px] text-muted-foreground">{r.authority || 'No authority'} · {r.compliance_status}</p>
+                    </div>
+                    <Button size="sm" variant="ghost" className="h-6 text-[10px] opacity-0 group-hover:opacity-100 shrink-0">Select</Button>
+                  </div>
+                ))
+              }
+            </div>
+            <DialogFooter><Button variant="outline" onClick={onClose}>Cancel</Button></DialogFooter>
+          </div>
+        )}
       </DialogContent>
     </Dialog>
   );
 }
 
 function AddIncidentDialog({ processId, stepId, onClose, onRefresh }: { processId: string; stepId: string; onClose: () => void; onRefresh: () => void }) {
+  const [mode, setMode] = useState<'new' | 'existing'>('new');
   const [title, setTitle] = useState('');
   const [severity, setSeverity] = useState('medium');
   const [desc, setDesc] = useState('');
@@ -1759,31 +1895,75 @@ function AddIncidentDialog({ processId, stepId, onClose, onRefresh }: { processI
   const [moneyLossAmount, setMoneyLossAmount] = useState('');
   const [lossThreshold, setLossThreshold] = useState('');
   const [rootCause, setRootCause] = useState('');
+  const [allIncidents, setAllIncidents] = useState<Incident[]>([]);
+  const [search, setSearch] = useState('');
+  const [loading, setLoading] = useState(false);
+
+  useEffect(() => {
+    if (mode === 'existing') {
+      setLoading(true);
+      fetchIncidents().then(i => { setAllIncidents(i); setLoading(false); });
+    }
+  }, [mode]);
+
   const submit = async () => {
     if (!title.trim()) return;
     await insertIncident({ process_id: processId, step_id: stepId, title: title.trim(), severity, description: desc || null, owner_department: ownerDepartment || null, money_loss_amount: moneyLossAmount || null, loss_threshold: lossThreshold || null, root_cause: rootCause || null } as any);
     toast({ title: 'Incident added' }); onRefresh(); onClose();
   };
+
+  const selectExisting = async (inc: Incident) => {
+    await insertIncident({ process_id: processId, step_id: stepId, title: inc.title, severity: inc.severity, description: inc.description || null, owner_department: (inc as any).owner_department || null, money_loss_amount: (inc as any).money_loss_amount || null, loss_threshold: (inc as any).loss_threshold || null, root_cause: (inc as any).root_cause || null } as any);
+    toast({ title: 'Incident added from existing' }); onRefresh(); onClose();
+  };
+
+  const filtered = allIncidents.filter(i => i.title.toLowerCase().includes(search.toLowerCase()));
+
   return (
     <Dialog open onOpenChange={onClose}>
       <DialogContent className="sm:max-w-lg">
         <DialogHeader><DialogTitle>Add Incident</DialogTitle></DialogHeader>
-        <div className="grid gap-3 py-2">
-          <div className="grid gap-1.5"><Label>Title *</Label><Input value={title} onChange={e => setTitle(e.target.value)} /></div>
-          <div className="grid grid-cols-2 gap-3">
-            <div className="grid gap-1.5"><Label>Severity</Label><Select value={severity} onValueChange={setSeverity}><SelectTrigger><SelectValue /></SelectTrigger>
-              <SelectContent><SelectItem value="low">Low</SelectItem><SelectItem value="medium">Medium</SelectItem><SelectItem value="high">High</SelectItem><SelectItem value="critical">Critical</SelectItem></SelectContent></Select></div>
-            <div className="grid gap-1.5"><Label>Owner (Department)</Label><Input value={ownerDepartment} onChange={e => setOwnerDepartment(e.target.value)} placeholder="e.g. Finance, IT" /></div>
-          </div>
-          <div className="grid gap-1.5"><Label>Description</Label><Textarea value={desc} onChange={e => setDesc(e.target.value)} /></div>
-          <div className="grid grid-cols-2 gap-3">
-            <div className="grid gap-1.5"><Label>Money Loss Amount</Label><Input value={moneyLossAmount} onChange={e => setMoneyLossAmount(e.target.value)} placeholder="e.g. $50,000" /></div>
-            <div className="grid gap-1.5"><Label>Loss Threshold (Client)</Label><Input value={lossThreshold} onChange={e => setLossThreshold(e.target.value)} placeholder="e.g. $100,000" /></div>
-          </div>
-          <div className="grid gap-1.5"><Label>Root Cause</Label><Select value={rootCause || '__none__'} onValueChange={v => setRootCause(v === '__none__' ? '' : v)}><SelectTrigger><SelectValue /></SelectTrigger>
-            <SelectContent><SelectItem value="__none__">— Select —</SelectItem><SelectItem value="people">People</SelectItem><SelectItem value="system">System</SelectItem><SelectItem value="market">Market</SelectItem><SelectItem value="regulations">Regulations</SelectItem></SelectContent></Select></div>
+        <div className="flex gap-1 mb-2">
+          <Button size="sm" variant={mode === 'new' ? 'default' : 'outline'} className="h-7 text-xs" onClick={() => setMode('new')}>Create New</Button>
+          <Button size="sm" variant={mode === 'existing' ? 'default' : 'outline'} className="h-7 text-xs" onClick={() => setMode('existing')}>Select Existing</Button>
         </div>
-        <DialogFooter><Button variant="outline" onClick={onClose}>Cancel</Button><Button onClick={submit}>Add</Button></DialogFooter>
+        {mode === 'new' ? (
+          <div className="grid gap-3 py-2">
+            <div className="grid gap-1.5"><Label>Title *</Label><Input value={title} onChange={e => setTitle(e.target.value)} /></div>
+            <div className="grid grid-cols-2 gap-3">
+              <div className="grid gap-1.5"><Label>Severity</Label><Select value={severity} onValueChange={setSeverity}><SelectTrigger><SelectValue /></SelectTrigger>
+                <SelectContent><SelectItem value="low">Low</SelectItem><SelectItem value="medium">Medium</SelectItem><SelectItem value="high">High</SelectItem><SelectItem value="critical">Critical</SelectItem></SelectContent></Select></div>
+              <div className="grid gap-1.5"><Label>Owner (Department)</Label><Input value={ownerDepartment} onChange={e => setOwnerDepartment(e.target.value)} placeholder="e.g. Finance, IT" /></div>
+            </div>
+            <div className="grid gap-1.5"><Label>Description</Label><Textarea value={desc} onChange={e => setDesc(e.target.value)} /></div>
+            <div className="grid grid-cols-2 gap-3">
+              <div className="grid gap-1.5"><Label>Money Loss Amount</Label><Input value={moneyLossAmount} onChange={e => setMoneyLossAmount(e.target.value)} placeholder="e.g. $50,000" /></div>
+              <div className="grid gap-1.5"><Label>Loss Threshold (Client)</Label><Input value={lossThreshold} onChange={e => setLossThreshold(e.target.value)} placeholder="e.g. $100,000" /></div>
+            </div>
+            <div className="grid gap-1.5"><Label>Root Cause</Label><Select value={rootCause || '__none__'} onValueChange={v => setRootCause(v === '__none__' ? '' : v)}><SelectTrigger><SelectValue /></SelectTrigger>
+              <SelectContent><SelectItem value="__none__">— Select —</SelectItem><SelectItem value="people">People</SelectItem><SelectItem value="system">System</SelectItem><SelectItem value="market">Market</SelectItem><SelectItem value="regulations">Regulations</SelectItem></SelectContent></Select></div>
+            <DialogFooter><Button variant="outline" onClick={onClose}>Cancel</Button><Button onClick={submit}>Add</Button></DialogFooter>
+          </div>
+        ) : (
+          <div className="space-y-2">
+            <Input placeholder="Search incidents..." value={search} onChange={e => setSearch(e.target.value)} className="h-8 text-sm" />
+            <div className="max-h-[300px] overflow-y-auto space-y-1">
+              {loading ? <p className="text-xs text-muted-foreground text-center py-4">Loading...</p> :
+                filtered.length === 0 ? <p className="text-xs text-muted-foreground text-center py-4">No incidents found</p> :
+                filtered.map(i => (
+                  <div key={i.id} className="flex items-center justify-between p-2 rounded border hover:bg-muted/50 cursor-pointer group" onClick={() => selectExisting(i)}>
+                    <div className="flex-1 min-w-0">
+                      <p className="text-xs truncate font-medium">{i.title}</p>
+                      <p className="text-[10px] text-muted-foreground">Severity: {i.severity} · Status: {i.status}</p>
+                    </div>
+                    <Button size="sm" variant="ghost" className="h-6 text-[10px] opacity-0 group-hover:opacity-100 shrink-0">Select</Button>
+                  </div>
+                ))
+              }
+            </div>
+            <DialogFooter><Button variant="outline" onClick={onClose}>Cancel</Button></DialogFooter>
+          </div>
+        )}
       </DialogContent>
     </Dialog>
   );
