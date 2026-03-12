@@ -17,10 +17,11 @@ import { Label } from '@/components/ui/label';
 import { toast } from '@/hooks/use-toast';
 import {
   LayoutGrid, Save, Undo2, Link2, Unlink, ZoomIn,
-  Users, Building2, Briefcase, Crown, ChevronRight,
+  Users, Building2, Briefcase, Crown, ChevronRight, Pencil,
 } from 'lucide-react';
 import type { ProcessRaci } from '@/lib/api-raci';
 import type { ProcessStep } from '@/lib/api';
+import EditRaciDialog from '@/components/EditRaciDialog';
 
 interface OrganigramProps {
   raciEntries: ProcessRaci[];
