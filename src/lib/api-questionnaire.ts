@@ -21,6 +21,7 @@ export interface QuestionnaireStepLink {
   question_id: string;
   step_id: string;
   is_relevant: boolean;
+  answer: string | null;
   created_at: string;
 }
 
@@ -75,7 +76,7 @@ export async function fetchStepLinks(processId: string) {
   return (data || []) as QuestionnaireStepLink[];
 }
 
-export async function upsertStepLink(link: { process_id: string; question_id: string; step_id: string; is_relevant: boolean }) {
+export async function upsertStepLink(link: { process_id: string; question_id: string; step_id: string; is_relevant: boolean; answer?: string | null }) {
   // Try update first, then insert
   const { data: existing } = await supabase
     .from('questionnaire_step_links')
@@ -86,15 +87,35 @@ export async function upsertStepLink(link: { process_id: string; question_id: st
     .maybeSingle();
 
   if (existing) {
+    const updateData: any = { is_relevant: link.is_relevant };
+    if (link.answer !== undefined) updateData.answer = link.answer;
     const { error } = await supabase
       .from('questionnaire_step_links')
-      .update({ is_relevant: link.is_relevant } as any)
+      .update(updateData)
       .eq('id', existing.id);
     if (error) throw error;
   } else {
     const { error } = await supabase
       .from('questionnaire_step_links')
       .insert(link as any);
+    if (error) throw error;
+  }
+}
+
+export async function updateStepLinkAnswer(processId: string, questionId: string, stepId: string, answer: string | null) {
+  const { data: existing } = await supabase
+    .from('questionnaire_step_links')
+    .select('id')
+    .eq('process_id', processId)
+    .eq('question_id', questionId)
+    .eq('step_id', stepId)
+    .maybeSingle();
+
+  if (existing) {
+    const { error } = await supabase
+      .from('questionnaire_step_links')
+      .update({ answer } as any)
+      .eq('id', existing.id);
     if (error) throw error;
   }
 }

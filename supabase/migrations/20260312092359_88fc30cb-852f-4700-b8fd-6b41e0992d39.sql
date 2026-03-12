@@ -1,0 +1,1 @@
+ALTER TABLE public.questionnaire_step_links ADD COLUMN answer text;

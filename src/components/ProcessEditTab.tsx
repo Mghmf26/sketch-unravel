@@ -42,7 +42,7 @@ import { fetchStepApplications, insertStepApplication, updateStepApplication, de
 import { fetchMainframeFlows, fetchMFFlowNodes, type MainframeFlow, type MFFlowNode, MF_NODE_TYPE_META } from '@/lib/api-mainframe-flows';
 import { StepTypeBadge, STEP_TYPE_OPTIONS } from '@/components/StepTypeBadge';
 import {
-  fetchActiveQuestions, fetchQuestions, fetchStepLinks, upsertStepLink, updateQuestion,
+  fetchActiveQuestions, fetchQuestions, fetchStepLinks, upsertStepLink, updateStepLinkAnswer, updateQuestion,
   type QuestionnaireQuestion, type QuestionnaireStepLink,
 } from '@/lib/api-questionnaire';
 import { exportRaciToExcel, parseRaciExcel, type ImportedRaciRow } from '@/lib/raci-excel';
@@ -213,6 +213,42 @@ function TypeBadge({ type }: { type: string }) {
     </span>
   );
 }
+// Debounced answer field for questionnaire
+function AnswerField({ value, onSave }: { value: string; onSave: (v: string) => void }) {
+  const [draft, setDraft] = useState(value);
+  const [dirty, setDirty] = useState(false);
+  const timerRef = useRef<ReturnType<typeof setTimeout>>();
+
+  useEffect(() => { setDraft(value); setDirty(false); }, [value]);
+
+  const handleChange = (v: string) => {
+    setDraft(v);
+    setDirty(true);
+    if (timerRef.current) clearTimeout(timerRef.current);
+    timerRef.current = setTimeout(() => { onSave(v); setDirty(false); }, 1200);
+  };
+
+  const handleBlur = () => {
+    if (dirty) {
+      if (timerRef.current) clearTimeout(timerRef.current);
+      onSave(draft);
+      setDirty(false);
+    }
+  };
+
+  return (
+    <div className="relative">
+      <Textarea
+        value={draft}
+        onChange={e => handleChange(e.target.value)}
+        onBlur={handleBlur}
+        placeholder="Type your answer here..."
+        className="text-[11px] min-h-[60px] resize-y"
+      />
+      {dirty && <span className="absolute top-1 right-2 text-[8px] text-amber-500">Saving...</span>}
+    </div>
+  );
+}
 
 export default function ProcessEditTab({ processId }: ProcessEditTabProps) {
   const { canAccessModule } = usePermissions();
@@ -346,7 +382,7 @@ export default function ProcessEditTab({ processId }: ProcessEditTabProps) {
       setQuestLinks(prev => {
         const existing = prev.find(l => l.question_id === questionId && l.step_id === stepId);
         if (existing) return prev.map(l => l.question_id === questionId && l.step_id === stepId ? { ...l, is_relevant: !current } : l);
-        return [...prev, { id: crypto.randomUUID(), process_id: processId, question_id: questionId, step_id: stepId, is_relevant: !current, created_at: new Date().toISOString() }];
+        return [...prev, { id: crypto.randomUUID(), process_id: processId, question_id: questionId, step_id: stepId, is_relevant: !current, answer: null, created_at: new Date().toISOString() }];
       });
     } catch (err: any) {
       toast({ title: 'Error saving', description: err.message, variant: 'destructive' });
@@ -361,6 +397,17 @@ export default function ProcessEditTab({ processId }: ProcessEditTabProps) {
       setQuestQuestions(prev => prev.map(q => q.id === questionId ? { ...q, ...updates } : q));
     } catch (err: any) {
       toast({ title: 'Error updating question', description: err.message, variant: 'destructive' });
+    }
+  };
+
+  const handleAnswerSave = async (questionId: string, stepId: string, answer: string) => {
+    try {
+      await updateStepLinkAnswer(processId, questionId, stepId, answer || null);
+      setQuestLinks(prev => prev.map(l =>
+        l.question_id === questionId && l.step_id === stepId ? { ...l, answer: answer || null } : l
+      ));
+    } catch (err: any) {
+      toast({ title: 'Error saving answer', description: err.message, variant: 'destructive' });
     }
   };
 
@@ -662,6 +709,15 @@ export default function ProcessEditTab({ processId }: ProcessEditTabProps) {
                                                                   <SelectItem value="3">L3 — Not Important</SelectItem>
                                                                 </SelectContent>
                                                               </Select>
+                                                            </div>
+
+                                                            {/* Answer */}
+                                                            <div className="border-t pt-2">
+                                                              <Label className="text-[10px] text-muted-foreground font-medium mb-1 block">Answer:</Label>
+                                                              <AnswerField
+                                                                value={questLinks.find(l => l.question_id === q.id && l.step_id === step.id)?.answer || ''}
+                                                                onSave={(answer) => handleAnswerSave(q.id, step.id, answer)}
+                                                              />
                                                             </div>
 
                                                             {/* Step relevance */}

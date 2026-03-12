@@ -99,6 +99,7 @@ export default function ProcessQuestionnaire({ processId }: Props) {
           question_id: questionId,
           step_id: stepId,
           is_relevant: !current,
+          answer: null,
           created_at: new Date().toISOString(),
         }];
       });

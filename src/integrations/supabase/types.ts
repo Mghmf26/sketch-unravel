@@ -960,6 +960,7 @@ export type Database = {
       }
       questionnaire_step_links: {
         Row: {
+          answer: string | null
           created_at: string
           id: string
           is_relevant: boolean
@@ -968,6 +969,7 @@ export type Database = {
           step_id: string
         }
         Insert: {
+          answer?: string | null
           created_at?: string
           id?: string
           is_relevant?: boolean
@@ -976,6 +978,7 @@ export type Database = {
           step_id: string
         }
         Update: {
+          answer?: string | null
           created_at?: string
           id?: string
           is_relevant?: boolean
