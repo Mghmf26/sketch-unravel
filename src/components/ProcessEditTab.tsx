@@ -251,6 +251,7 @@ function AnswerField({ value, onSave }: { value: string; onSave: (v: string) => 
 }
 
 export default function ProcessEditTab({ processId }: ProcessEditTabProps) {
+  const { canAccessModule } = usePermissions();
   const [steps, setSteps] = useState<ProcessStep[]>([]);
   const [connections, setConnections] = useState<StepConnection[]>([]);
   const [risks, setRisks] = useState<Risk[]>([]);
