@@ -40,6 +40,7 @@ import {
   fetchRaciStepLinks, insertRaciStepLink, deleteRaciStepLink,
   type ProcessRaci, type ProcessRaciStepLink,
 } from '@/lib/api-raci';
+import EditRaciDialog from '@/components/EditRaciDialog';
 import { fetchStepApplications, insertStepApplication, updateStepApplication, deleteStepApplication, type StepApplication } from '@/lib/api-applications';
 import { fetchMainframeFlows, fetchMFFlowNodes, type MainframeFlow, type MFFlowNode, MF_NODE_TYPE_META } from '@/lib/api-mainframe-flows';
 import { StepTypeBadge, STEP_TYPE_OPTIONS } from '@/components/StepTypeBadge';
