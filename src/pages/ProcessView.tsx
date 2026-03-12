@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate, useSearchParams } from 'react-router-dom';
-import { ArrowLeft, Image as ImageIcon, LayoutGrid, Share2, Upload, Grid3x3, Cpu, ClipboardList } from 'lucide-react';
+import { ArrowLeft, Image as ImageIcon, LayoutGrid, Share2, Upload, Grid3x3, Cpu, ClipboardList, Users } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
