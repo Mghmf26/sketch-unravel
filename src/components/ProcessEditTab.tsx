@@ -977,7 +977,7 @@ export default function ProcessEditTab({ processId }: ProcessEditTabProps) {
                           )}
 
                           {/* RACI (inherited from process level) */}
-                          {canAccessModule('raci') && (() => {
+                          {isSectionVisible('raci') && canAccessModule('raci') && (() => {
                             const stepLinks = getStepRaciLinks(step.id);
                             const linkedRacis = stepLinks.map(l => raciEntries.find(r => r.id === l.raci_id)).filter(Boolean) as ProcessRaci[];
                             return linkedRacis.length > 0 ? (
