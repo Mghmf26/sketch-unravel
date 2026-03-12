@@ -577,7 +577,9 @@ export default function RaciManagementTab({ processId, processName }: RaciManage
           <RaciOrganigramView
             raciEntries={filtered}
             steps={inScopeSteps}
+            processId={processId}
             onUpdateRaci={handleUpdate}
+            onRefresh={reload}
           />
         </TabsContent>
       </Tabs>

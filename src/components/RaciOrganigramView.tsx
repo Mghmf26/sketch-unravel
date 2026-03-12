@@ -445,6 +445,14 @@ export default function RaciOrganigramView({ raciEntries, steps, processId, onUp
           onLink={handleLink}
         />
       )}
+
+      <EditRaciDialog
+        open={editDialogOpen}
+        onClose={() => { setEditDialogOpen(false); setEditEntry(null); }}
+        onRefresh={() => onRefresh?.()}
+        entry={editEntry}
+        processId={processId}
+      />
     </div>
   );
 }
