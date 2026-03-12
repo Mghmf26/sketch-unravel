@@ -427,7 +427,7 @@ export default function Clients() {
                     </Select>
                   </div>
                   <div className="grid gap-1.5">
-                    <Label>Entity Type</Label>
+                    <Label>Entity Type *</Label>
                     <Select value={form.entity_type} onValueChange={(v) => setForm({ ...form, entity_type: v })}>
                       <SelectTrigger><SelectValue /></SelectTrigger>
                       <SelectContent>
