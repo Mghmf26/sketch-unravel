@@ -17,18 +17,6 @@ import { toast } from '@/hooks/use-toast';
 import { Plus, Pencil, Trash2, Search, Filter } from 'lucide-react';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 
-const STEP_TYPE_OPTIONS = [
-  { value: 'critical', label: 'Critical' },
-  { value: 'decisional', label: 'Decisional' },
-  { value: 'mechanical', label: 'Mechanical' },
-];
-
-const LEVEL_OPTIONS = [
-  { value: 1, label: 'Level 1 — Very Important', color: 'bg-destructive/10 text-destructive border-destructive/30' },
-  { value: 2, label: 'Level 2 — Important', color: 'bg-amber-500/10 text-amber-700 border-amber-300' },
-  { value: 3, label: 'Level 3 — Not Important', color: 'bg-muted text-muted-foreground border-border' },
-];
-
 const EMPTY_FORM = {
   section_number: 1,
   section_name: '',
