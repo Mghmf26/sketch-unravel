@@ -364,7 +364,17 @@ export default function ProcessEditTab({ processId }: ProcessEditTabProps) {
     }
   };
 
-  const toggleQuestVisible = (stepId: string) =>
+  const handleAnswerSave = async (questionId: string, stepId: string, answer: string) => {
+    try {
+      await updateStepLinkAnswer(processId, questionId, stepId, answer || null);
+      setQuestLinks(prev => prev.map(l =>
+        l.question_id === questionId && l.step_id === stepId ? { ...l, answer: answer || null } : l
+      ));
+    } catch (err: any) {
+      toast({ title: 'Error saving answer', description: err.message, variant: 'destructive' });
+    }
+  };
+
     setQuestVisible(prev => ({ ...prev, [stepId]: !prev[stepId] }));
 
   const toggleQuestSection = (key: string) =>
