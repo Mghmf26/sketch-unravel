@@ -8,6 +8,17 @@ export interface ProcessRaci {
   accountable: string | null;
   consulted: string | null;
   informed: string | null;
+  job_title: string | null;
+  job_description: string | null;
+  function_dept: string | null;
+  sub_function: string | null;
+  seniority: string | null;
+  tenure: string | null;
+  grade: string | null;
+  fte: number | null;
+  salary: number | null;
+  manager_status: string | null;
+  span_of_control: number | null;
   created_at: string;
 }
 
@@ -30,7 +41,7 @@ export async function insertProcessRaci(r: Partial<ProcessRaci>) {
 }
 
 export async function updateProcessRaci(id: string, r: Partial<ProcessRaci>) {
-  const { error } = await supabase.from('process_raci').update(r).eq('id', id);
+  const { error } = await supabase.from('process_raci').update(r as any).eq('id', id);
   if (error) throw error;
 }
 
@@ -40,7 +51,6 @@ export async function deleteProcessRaci(id: string) {
 }
 
 export async function fetchRaciStepLinks(processId: string) {
-  // Get all links for RACI entries belonging to this process
   const { data } = await supabase
     .from('process_raci_step_links')
     .select('*, process_raci!inner(process_id)')
