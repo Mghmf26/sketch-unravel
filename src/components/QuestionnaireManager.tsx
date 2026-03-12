@@ -116,31 +116,17 @@ export default function QuestionnaireManager() {
     }
   };
 
-  const toggleStepType = (type: string) => {
-    setForm(f => ({
-      ...f,
-      step_types: f.step_types.includes(type)
-        ? f.step_types.filter(t => t !== type)
-        : [...f.step_types, type],
-    }));
-  };
-
-  const levelBadge = (level: number) => {
-    const opt = LEVEL_OPTIONS.find(l => l.value === level);
-    return (
-      <Badge variant="outline" className={`text-[10px] ${opt?.color || ''}`}>
-        L{level}
-      </Badge>
-    );
-  };
-
   return (
     <Card className="border-0 shadow-sm">
       <CardHeader className="pb-4">
         <div className="flex items-center justify-between">
           <div>
             <CardTitle className="text-lg">Business Process Analysis Questionnaire</CardTitle>
-            <CardDescription>Manage questions used during step analysis. {questions.length} questions across {sectionNumbers.length} sections.</CardDescription>
+            <CardDescription>
+              Manage questions used during step analysis. {questions.length} questions across {sectionNumbers.length} sections.
+              <br />
+              <span className="text-[11px] text-muted-foreground">Step types, importance levels, and step linkage are configured by users from the Edit Data tab per process.</span>
+            </CardDescription>
           </div>
           <Button onClick={openAdd} size="sm" className="gap-2">
             <Plus className="h-4 w-4" /> Add Question
