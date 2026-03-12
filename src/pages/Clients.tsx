@@ -483,7 +483,7 @@ export default function Clients() {
               <div className="grid gap-4 pl-6 border-l-2 border-primary/20">
                 <div className="grid grid-cols-2 gap-4">
                   <div className="grid gap-1.5">
-                    <Label>Engagement Mode</Label>
+                    <Label>Engagement Mode *</Label>
                     <Select value={form.engagement_mode} onValueChange={(v) => setForm({ ...form, engagement_mode: v })}>
                       <SelectTrigger><SelectValue /></SelectTrigger>
                       <SelectContent>
