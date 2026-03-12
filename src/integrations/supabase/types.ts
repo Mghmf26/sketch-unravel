@@ -191,28 +191,37 @@ export type Database = {
       }
       controls: {
         Row: {
+          automation_level: string | null
           created_at: string
           description: string | null
           effectiveness: string | null
+          frequency: string | null
           id: string
+          last_tested: string | null
           name: string
           risk_id: string
           type: string | null
         }
         Insert: {
+          automation_level?: string | null
           created_at?: string
           description?: string | null
           effectiveness?: string | null
+          frequency?: string | null
           id?: string
+          last_tested?: string | null
           name: string
           risk_id: string
           type?: string | null
         }
         Update: {
+          automation_level?: string | null
           created_at?: string
           description?: string | null
           effectiveness?: string | null
+          frequency?: string | null
           id?: string
+          last_tested?: string | null
           name?: string
           risk_id?: string
           type?: string | null
@@ -330,7 +339,11 @@ export type Database = {
           erm_notes: string | null
           financial_impact: string | null
           id: string
+          loss_threshold: string | null
+          money_loss_amount: string | null
+          owner_department: string | null
           process_id: string
+          root_cause: string | null
           severity: string | null
           status: string | null
           step_id: string
@@ -344,7 +357,11 @@ export type Database = {
           erm_notes?: string | null
           financial_impact?: string | null
           id?: string
+          loss_threshold?: string | null
+          money_loss_amount?: string | null
+          owner_department?: string | null
           process_id: string
+          root_cause?: string | null
           severity?: string | null
           status?: string | null
           step_id: string
@@ -358,7 +375,11 @@ export type Database = {
           erm_notes?: string | null
           financial_impact?: string | null
           id?: string
+          loss_threshold?: string | null
+          money_loss_amount?: string | null
+          owner_department?: string | null
           process_id?: string
+          root_cause?: string | null
           severity?: string | null
           status?: string | null
           step_id?: string

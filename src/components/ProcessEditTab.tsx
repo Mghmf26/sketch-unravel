@@ -2,8 +2,9 @@ import { useState, useEffect, useCallback } from 'react';
 import {
   Plus, Trash2, ArrowRight, ShieldAlert, ShieldCheck, Scale,
   AlertCircle, Database, HelpCircle, ChevronDown, ChevronRight, Pencil, Users,
-  Check, X, Save, Monitor, Cpu, Link2
+  Check, X, Save, Monitor, Cpu, Link2, CircleHelp
 } from 'lucide-react';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { usePermissions } from '@/hooks/usePermissions';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -67,6 +68,18 @@ const typeLabel: Record<string, string> = {
   'storage': 'Storage',
   'delay': 'Delay',
   'document': 'Document',
+};
+
+const typeDescriptions: Record<string, string> = {
+  'in-scope': 'A core process step that is within the scope of the audit/review. Risks, controls, regulations, and incidents can be attached.',
+  'interface': 'A reference to another business process that connects to this flow. Used for cross-process linkage.',
+  'event': 'An event that triggers or results from a process activity (e.g., receiving an email, timer expiring).',
+  'xor': 'An exclusive gateway (XOR) where the flow splits into exactly one of multiple paths based on a condition.',
+  'decision': 'A decision point where a choice or judgment is made that affects the process flow.',
+  'start-end': 'Marks the beginning or end of the process flow.',
+  'storage': 'A data store or repository where information is saved or retrieved.',
+  'delay': 'A waiting period or delay in the process (e.g., approval pending, batch processing window).',
+  'document': 'A document or report that is produced, consumed, or referenced in the process.',
 };
 
 function getTypeStyle(type: string) {
@@ -369,6 +382,19 @@ export default function ProcessEditTab({ processId }: ProcessEditTabProps) {
                               options={Object.entries(typeLabel).map(([v, l]) => ({ value: v, label: l }))}
                               onSave={v => updateStep(step.id, { type: v }).then(reload)}
                             />
+                            <TooltipProvider>
+                              <Tooltip>
+                                <TooltipTrigger asChild>
+                                  <Button variant="ghost" size="icon" className="h-5 w-5 shrink-0">
+                                    <CircleHelp className="h-3.5 w-3.5 text-muted-foreground" />
+                                  </Button>
+                                </TooltipTrigger>
+                                <TooltipContent side="right" className="max-w-[300px]">
+                                  <p className="text-xs font-medium mb-1">{typeLabel[step.type] || step.type}</p>
+                                  <p className="text-xs text-muted-foreground">{typeDescriptions[step.type] || 'No description available.'}</p>
+                                </TooltipContent>
+                              </Tooltip>
+                            </TooltipProvider>
                           </div>
 
                           {/* Step Type (Critical/Mechanical/Decisional) - only for in-scope steps */}
@@ -427,19 +453,31 @@ export default function ProcessEditTab({ processId }: ProcessEditTabProps) {
                                     {ctrls.length > 0 && (
                                       <div className="ml-3 pl-3 border-l-2 border-blue-200 space-y-1">
                                         {ctrls.map(ctrl => (
-                                          <div key={ctrl.id} className="flex items-center gap-2 text-xs py-1 group/ctrl">
-                                            <ShieldCheck className="h-3 w-3 text-blue-400 shrink-0" />
-                                            <InlineEdit value={ctrl.name} onSave={v => updateControl(ctrl.id, { name: v }).then(reload)} className="font-medium" />
-                                            <InlineSelect value={ctrl.type || 'preventive'} options={[{ value: 'preventive', label: 'Preventive' }, { value: 'detective', label: 'Detective' }, { value: 'corrective', label: 'Corrective' }]}
-                                              onSave={v => updateControl(ctrl.id, { type: v }).then(reload)} />
-                                            <InlineSelect value={ctrl.effectiveness || 'effective'} options={[{ value: 'effective', label: 'Effective' }, { value: 'partially', label: 'Partial' }, { value: 'ineffective', label: 'Ineffective' }]}
-                                              onSave={v => updateControl(ctrl.id, { effectiveness: v }).then(reload)}
-                                              className={ctrl.effectiveness === 'effective' ? 'text-emerald-700' : ctrl.effectiveness === 'ineffective' ? 'text-red-700' : 'text-yellow-700'} />
-                                            <span className="flex-1" />
-                                            <Button variant="ghost" size="icon" className="h-5 w-5 opacity-0 group-hover/ctrl:opacity-100 text-muted-foreground hover:text-destructive"
-                                              onClick={() => deleteControl(ctrl.id).then(reload)}>
-                                              <Trash2 className="h-2.5 w-2.5" />
-                                            </Button>
+                                          <div key={ctrl.id} className="text-xs py-1 group/ctrl space-y-1">
+                                            <div className="flex items-center gap-2">
+                                              <ShieldCheck className="h-3 w-3 text-blue-400 shrink-0" />
+                                              <InlineEdit value={ctrl.name} onSave={v => updateControl(ctrl.id, { name: v }).then(reload)} className="font-medium" />
+                                              <InlineSelect value={ctrl.type || 'preventive'} options={[{ value: 'preventive', label: 'Preventive' }, { value: 'detective', label: 'Detective' }, { value: 'corrective', label: 'Corrective' }]}
+                                                onSave={v => updateControl(ctrl.id, { type: v }).then(reload)} />
+                                              <InlineSelect value={ctrl.effectiveness || 'effective'} options={[{ value: 'effective', label: 'Effective' }, { value: 'partially', label: 'Partial' }, { value: 'ineffective', label: 'Ineffective' }]}
+                                                onSave={v => updateControl(ctrl.id, { effectiveness: v }).then(reload)}
+                                                className={ctrl.effectiveness === 'effective' ? 'text-emerald-700' : ctrl.effectiveness === 'ineffective' ? 'text-red-700' : 'text-yellow-700'} />
+                                              <span className="flex-1" />
+                                              <Button variant="ghost" size="icon" className="h-5 w-5 opacity-0 group-hover/ctrl:opacity-100 text-muted-foreground hover:text-destructive"
+                                                onClick={() => deleteControl(ctrl.id).then(reload)}>
+                                                <Trash2 className="h-2.5 w-2.5" />
+                                              </Button>
+                                            </div>
+                                            <div className="flex items-center gap-2 ml-5">
+                                              <InlineSelect value={(ctrl as any).automation_level || '__none__'} 
+                                                options={[{ value: '__none__', label: '— Automation —' }, { value: 'automatic', label: 'Automatic' }, { value: 'semi-automatic', label: 'Semi-Automatic' }, { value: 'manual', label: 'Manual' }]}
+                                                onSave={v => updateControl(ctrl.id, { automation_level: v === '__none__' ? null : v } as any).then(reload)} />
+                                              <InlineSelect value={(ctrl as any).frequency || '__none__'} 
+                                                options={[{ value: '__none__', label: '— Frequency —' }, { value: 'multiple_daily', label: 'Multiple/Day' }, { value: 'daily', label: 'Daily' }, { value: 'weekly', label: 'Weekly' }, { value: 'monthly', label: 'Monthly' }, { value: 'quarterly', label: 'Quarterly' }, { value: 'yearly', label: 'Yearly' }]}
+                                                onSave={v => updateControl(ctrl.id, { frequency: v === '__none__' ? null : v } as any).then(reload)} />
+                                              <span className="text-[10px] text-muted-foreground">Last tested:</span>
+                                              <InlineEdit value={(ctrl as any).last_tested || ''} onSave={v => updateControl(ctrl.id, { last_tested: v } as any).then(reload)} className="text-[10px]" />
+                                            </div>
                                           </div>
                                         ))}
                                       </div>
@@ -495,20 +533,35 @@ export default function ProcessEditTab({ processId }: ProcessEditTabProps) {
                                 </Button>
                               </div>
                               {stepIncs.map(inc => (
-                                <div key={inc.id} className="ml-4 pl-3 border-l-2 border-red-200 flex items-center gap-2 group/inc py-1">
-                                  <InlineEdit value={inc.title} onSave={v => updateIncident(inc.id, { title: v }).then(reload)} className="text-sm font-medium" />
-                                  <InlineSelect value={inc.severity || 'medium'}
-                                    options={[{ value: 'low', label: 'Low' }, { value: 'medium', label: 'Medium' }, { value: 'high', label: 'High' }, { value: 'critical', label: 'Critical' }]}
-                                    onSave={v => updateIncident(inc.id, { severity: v }).then(reload)}
-                                    className={inc.severity === 'critical' ? 'text-red-700' : inc.severity === 'high' ? 'text-orange-700' : 'text-yellow-700'} />
-                                  <InlineSelect value={inc.status || 'open'}
-                                    options={[{ value: 'open', label: 'Open' }, { value: 'investigating', label: 'Investigating' }, { value: 'resolved', label: 'Resolved' }, { value: 'closed', label: 'Closed' }]}
-                                    onSave={v => updateIncident(inc.id, { status: v }).then(reload)} />
-                                  <span className="flex-1" />
-                                  <Button variant="ghost" size="icon" className="h-5 w-5 opacity-0 group-hover/inc:opacity-100 text-muted-foreground hover:text-destructive"
-                                    onClick={() => deleteIncident(inc.id).then(reload)}>
-                                    <Trash2 className="h-2.5 w-2.5" />
-                                  </Button>
+                                <div key={inc.id} className="ml-4 pl-3 border-l-2 border-red-200 group/inc py-1 space-y-1">
+                                  <div className="flex items-center gap-2">
+                                    <InlineEdit value={inc.title} onSave={v => updateIncident(inc.id, { title: v }).then(reload)} className="text-sm font-medium" />
+                                    <InlineSelect value={inc.severity || 'medium'}
+                                      options={[{ value: 'low', label: 'Low' }, { value: 'medium', label: 'Medium' }, { value: 'high', label: 'High' }, { value: 'critical', label: 'Critical' }]}
+                                      onSave={v => updateIncident(inc.id, { severity: v }).then(reload)}
+                                      className={inc.severity === 'critical' ? 'text-red-700' : inc.severity === 'high' ? 'text-orange-700' : 'text-yellow-700'} />
+                                    <InlineSelect value={inc.status || 'open'}
+                                      options={[{ value: 'open', label: 'Open' }, { value: 'investigating', label: 'Investigating' }, { value: 'resolved', label: 'Resolved' }, { value: 'closed', label: 'Closed' }]}
+                                      onSave={v => updateIncident(inc.id, { status: v }).then(reload)} />
+                                    <span className="flex-1" />
+                                    <Button variant="ghost" size="icon" className="h-5 w-5 opacity-0 group-hover/inc:opacity-100 text-muted-foreground hover:text-destructive"
+                                      onClick={() => deleteIncident(inc.id).then(reload)}>
+                                      <Trash2 className="h-2.5 w-2.5" />
+                                    </Button>
+                                  </div>
+                                  <div className="flex items-center gap-2 text-xs ml-1">
+                                    <span className="text-[10px] text-muted-foreground">Owner:</span>
+                                    <InlineEdit value={(inc as any).owner_department || ''} onSave={v => updateIncident(inc.id, { owner_department: v } as any).then(reload)} className="text-[10px]" />
+                                    <InlineSelect value={(inc as any).root_cause || '__none__'}
+                                      options={[{ value: '__none__', label: '— Root Cause —' }, { value: 'people', label: 'People' }, { value: 'system', label: 'System' }, { value: 'market', label: 'Market' }, { value: 'regulations', label: 'Regulations' }]}
+                                      onSave={v => updateIncident(inc.id, { root_cause: v === '__none__' ? null : v } as any).then(reload)} />
+                                  </div>
+                                  <div className="flex items-center gap-2 text-xs ml-1">
+                                    <span className="text-[10px] text-muted-foreground">Loss:</span>
+                                    <InlineEdit value={(inc as any).money_loss_amount || ''} onSave={v => updateIncident(inc.id, { money_loss_amount: v } as any).then(reload)} className="text-[10px]" />
+                                    <span className="text-[10px] text-muted-foreground">Threshold:</span>
+                                    <InlineEdit value={(inc as any).loss_threshold || ''} onSave={v => updateIncident(inc.id, { loss_threshold: v } as any).then(reload)} className="text-[10px]" />
+                                  </div>
                                 </div>
                               ))}
                               {stepIncs.length === 0 && <p className="text-[10px] text-muted-foreground italic ml-4">No incidents</p>}
@@ -970,7 +1023,21 @@ function AddStepDialog({ processId, onClose, onRefresh }: { processId: string; o
         <div className="grid gap-3 py-2">
           <div className="grid gap-1.5"><Label>Label *</Label><Input value={label} onChange={e => setLabel(e.target.value)} placeholder="e.g. Validate Payment" /></div>
           <div className="grid gap-1.5">
-            <Label>Type</Label>
+            <div className="flex items-center gap-2">
+              <Label>Type</Label>
+              <TooltipProvider>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <CircleHelp className="h-3.5 w-3.5 text-muted-foreground cursor-help" />
+                  </TooltipTrigger>
+                  <TooltipContent side="right" className="max-w-[320px] space-y-1.5">
+                    {Object.entries(typeDescriptions).map(([k, d]) => (
+                      <div key={k}><span className="font-semibold text-xs">{typeLabel[k]}:</span> <span className="text-xs text-muted-foreground">{d}</span></div>
+                    ))}
+                  </TooltipContent>
+                </Tooltip>
+              </TooltipProvider>
+            </div>
             <Select value={type} onValueChange={setType}>
               <SelectTrigger><SelectValue /></SelectTrigger>
               <SelectContent>
@@ -1085,9 +1152,12 @@ function AddControlDialog({ riskId, onClose, onRefresh }: { riskId: string; onCl
   const [name, setName] = useState('');
   const [type, setType] = useState('preventive');
   const [effectiveness, setEffectiveness] = useState('effective');
+  const [automationLevel, setAutomationLevel] = useState('');
+  const [frequency, setFrequency] = useState('');
+  const [lastTested, setLastTested] = useState('');
   const submit = async () => {
     if (!name.trim()) return;
-    await insertControl({ risk_id: riskId, name: name.trim(), type, effectiveness });
+    await insertControl({ risk_id: riskId, name: name.trim(), type, effectiveness, automation_level: automationLevel || null, frequency: frequency || null, last_tested: lastTested || null } as any);
     toast({ title: 'Control added' }); onRefresh(); onClose();
   };
   return (
@@ -1102,6 +1172,13 @@ function AddControlDialog({ riskId, onClose, onRefresh }: { riskId: string; onCl
             <div className="grid gap-1.5"><Label>Effectiveness</Label><Select value={effectiveness} onValueChange={setEffectiveness}><SelectTrigger><SelectValue /></SelectTrigger>
               <SelectContent><SelectItem value="effective">Effective</SelectItem><SelectItem value="partially">Partially</SelectItem><SelectItem value="ineffective">Ineffective</SelectItem></SelectContent></Select></div>
           </div>
+          <div className="grid grid-cols-2 gap-3">
+            <div className="grid gap-1.5"><Label>Automation Level</Label><Select value={automationLevel || '__none__'} onValueChange={v => setAutomationLevel(v === '__none__' ? '' : v)}><SelectTrigger><SelectValue /></SelectTrigger>
+              <SelectContent><SelectItem value="__none__">— Select —</SelectItem><SelectItem value="automatic">Automatic</SelectItem><SelectItem value="semi-automatic">Semi-Automatic</SelectItem><SelectItem value="manual">Manual</SelectItem></SelectContent></Select></div>
+            <div className="grid gap-1.5"><Label>Frequency</Label><Select value={frequency || '__none__'} onValueChange={v => setFrequency(v === '__none__' ? '' : v)}><SelectTrigger><SelectValue /></SelectTrigger>
+              <SelectContent><SelectItem value="__none__">— Select —</SelectItem><SelectItem value="multiple_daily">Multiple times/day</SelectItem><SelectItem value="daily">Daily</SelectItem><SelectItem value="weekly">Weekly</SelectItem><SelectItem value="monthly">Monthly</SelectItem><SelectItem value="quarterly">Quarterly</SelectItem><SelectItem value="yearly">Yearly</SelectItem></SelectContent></Select></div>
+          </div>
+          <div className="grid gap-1.5"><Label>Last Tested by Client</Label><Input value={lastTested} onChange={e => setLastTested(e.target.value)} placeholder="e.g. 2024-12-15 or N/A" /></div>
         </div>
         <DialogFooter><Button variant="outline" onClick={onClose}>Cancel</Button><Button onClick={submit}>Add</Button></DialogFooter>
       </DialogContent>
@@ -1138,20 +1215,33 @@ function AddIncidentDialog({ processId, stepId, onClose, onRefresh }: { processI
   const [title, setTitle] = useState('');
   const [severity, setSeverity] = useState('medium');
   const [desc, setDesc] = useState('');
+  const [ownerDepartment, setOwnerDepartment] = useState('');
+  const [moneyLossAmount, setMoneyLossAmount] = useState('');
+  const [lossThreshold, setLossThreshold] = useState('');
+  const [rootCause, setRootCause] = useState('');
   const submit = async () => {
     if (!title.trim()) return;
-    await insertIncident({ process_id: processId, step_id: stepId, title: title.trim(), severity, description: desc || null });
+    await insertIncident({ process_id: processId, step_id: stepId, title: title.trim(), severity, description: desc || null, owner_department: ownerDepartment || null, money_loss_amount: moneyLossAmount || null, loss_threshold: lossThreshold || null, root_cause: rootCause || null } as any);
     toast({ title: 'Incident added' }); onRefresh(); onClose();
   };
   return (
     <Dialog open onOpenChange={onClose}>
-      <DialogContent className="sm:max-w-md">
+      <DialogContent className="sm:max-w-lg">
         <DialogHeader><DialogTitle>Add Incident</DialogTitle></DialogHeader>
         <div className="grid gap-3 py-2">
           <div className="grid gap-1.5"><Label>Title *</Label><Input value={title} onChange={e => setTitle(e.target.value)} /></div>
-          <div className="grid gap-1.5"><Label>Severity</Label><Select value={severity} onValueChange={setSeverity}><SelectTrigger><SelectValue /></SelectTrigger>
-            <SelectContent><SelectItem value="low">Low</SelectItem><SelectItem value="medium">Medium</SelectItem><SelectItem value="high">High</SelectItem><SelectItem value="critical">Critical</SelectItem></SelectContent></Select></div>
+          <div className="grid grid-cols-2 gap-3">
+            <div className="grid gap-1.5"><Label>Severity</Label><Select value={severity} onValueChange={setSeverity}><SelectTrigger><SelectValue /></SelectTrigger>
+              <SelectContent><SelectItem value="low">Low</SelectItem><SelectItem value="medium">Medium</SelectItem><SelectItem value="high">High</SelectItem><SelectItem value="critical">Critical</SelectItem></SelectContent></Select></div>
+            <div className="grid gap-1.5"><Label>Owner (Department)</Label><Input value={ownerDepartment} onChange={e => setOwnerDepartment(e.target.value)} placeholder="e.g. Finance, IT" /></div>
+          </div>
           <div className="grid gap-1.5"><Label>Description</Label><Textarea value={desc} onChange={e => setDesc(e.target.value)} /></div>
+          <div className="grid grid-cols-2 gap-3">
+            <div className="grid gap-1.5"><Label>Money Loss Amount</Label><Input value={moneyLossAmount} onChange={e => setMoneyLossAmount(e.target.value)} placeholder="e.g. $50,000" /></div>
+            <div className="grid gap-1.5"><Label>Loss Threshold (Client)</Label><Input value={lossThreshold} onChange={e => setLossThreshold(e.target.value)} placeholder="e.g. $100,000" /></div>
+          </div>
+          <div className="grid gap-1.5"><Label>Root Cause</Label><Select value={rootCause || '__none__'} onValueChange={v => setRootCause(v === '__none__' ? '' : v)}><SelectTrigger><SelectValue /></SelectTrigger>
+            <SelectContent><SelectItem value="__none__">— Select —</SelectItem><SelectItem value="people">People</SelectItem><SelectItem value="system">System</SelectItem><SelectItem value="market">Market</SelectItem><SelectItem value="regulations">Regulations</SelectItem></SelectContent></Select></div>
         </div>
         <DialogFooter><Button variant="outline" onClick={onClose}>Cancel</Button><Button onClick={submit}>Add</Button></DialogFooter>
       </DialogContent>

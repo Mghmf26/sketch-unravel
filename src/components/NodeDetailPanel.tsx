@@ -279,9 +279,9 @@ export default function NodeDetailPanel({ node, risks, controls, regulations, in
 
   // Forms
   const [riskForm, setRiskForm] = useState({ description: '', likelihood: 'medium', impact: 'medium' });
-  const [controlForm, setControlForm] = useState({ name: '', description: '', type: 'preventive', effectiveness: 'effective' });
+  const [controlForm, setControlForm] = useState({ name: '', description: '', type: 'preventive', effectiveness: 'effective', automation_level: '', frequency: '', last_tested: '' });
   const [regulationForm, setRegulationForm] = useState({ name: '', description: '', authority: '', compliance_status: 'partial' });
-  const [incidentForm, setIncidentForm] = useState({ title: '', description: '', severity: 'medium', status: 'open' });
+  const [incidentForm, setIncidentForm] = useState({ title: '', description: '', severity: 'medium', status: 'open', owner_department: '', money_loss_amount: '', loss_threshold: '', root_cause: '' });
   const [appForm, setAppForm] = useState({ name: '', description: '', app_type: 'application', parent_id: '', application_owner: '', business_analyst_business: '', business_analyst_it: '', platform: '' });
 
   const derivedProcessId = processId || stepRisks[0]?.process_id || stepRegulations[0]?.process_id || stepIncidents[0]?.process_id || '';
@@ -310,8 +310,8 @@ export default function NodeDetailPanel({ node, risks, controls, regulations, in
     if (!controlForm.name.trim() || !contextRiskId) return;
     setSaving(true);
     try {
-      await insertControl({ risk_id: contextRiskId, name: controlForm.name.trim(), description: controlForm.description || null, type: controlForm.type, effectiveness: controlForm.effectiveness });
-      toast({ title: 'Control added' }); setAddDialog(null); setControlForm({ name: '', description: '', type: 'preventive', effectiveness: 'effective' }); onDataChanged?.();
+      await insertControl({ risk_id: contextRiskId, name: controlForm.name.trim(), description: controlForm.description || null, type: controlForm.type, effectiveness: controlForm.effectiveness, automation_level: controlForm.automation_level || null, frequency: controlForm.frequency || null, last_tested: controlForm.last_tested || null } as any);
+      toast({ title: 'Control added' }); setAddDialog(null); setControlForm({ name: '', description: '', type: 'preventive', effectiveness: 'effective', automation_level: '', frequency: '', last_tested: '' }); onDataChanged?.();
     } catch { toast({ title: 'Failed to add control', variant: 'destructive' }); }
     setSaving(false);
   };
@@ -330,8 +330,8 @@ export default function NodeDetailPanel({ node, risks, controls, regulations, in
     if (!incidentForm.title.trim() || !derivedProcessId) return;
     setSaving(true);
     try {
-      await insertIncident({ step_id: node.id, process_id: derivedProcessId, title: incidentForm.title.trim(), description: incidentForm.description || null, severity: incidentForm.severity, status: incidentForm.status });
-      toast({ title: 'Incident added' }); setAddDialog(null); setIncidentForm({ title: '', description: '', severity: 'medium', status: 'open' }); onDataChanged?.();
+      await insertIncident({ step_id: node.id, process_id: derivedProcessId, title: incidentForm.title.trim(), description: incidentForm.description || null, severity: incidentForm.severity, status: incidentForm.status, owner_department: incidentForm.owner_department || null, money_loss_amount: incidentForm.money_loss_amount || null, loss_threshold: incidentForm.loss_threshold || null, root_cause: incidentForm.root_cause || null } as any);
+      toast({ title: 'Incident added' }); setAddDialog(null); setIncidentForm({ title: '', description: '', severity: 'medium', status: 'open', owner_department: '', money_loss_amount: '', loss_threshold: '', root_cause: '' }); onDataChanged?.();
     } catch { toast({ title: 'Failed to add incident', variant: 'destructive' }); }
     setSaving(false);
   };
@@ -520,7 +520,7 @@ export default function NodeDetailPanel({ node, risks, controls, regulations, in
                       ))}
                     </div>
                   )}
-                  <Button size="sm" variant="ghost" className="h-5 text-[10px] text-blue-600 gap-1 px-1" onClick={() => { setContextRiskId(risk.id); setControlForm({ name: '', description: '', type: 'preventive', effectiveness: 'effective' }); setAddDialog('control'); }}>
+                  <Button size="sm" variant="ghost" className="h-5 text-[10px] text-blue-600 gap-1 px-1" onClick={() => { setContextRiskId(risk.id); setControlForm({ name: '', description: '', type: 'preventive', effectiveness: 'effective', automation_level: '', frequency: '', last_tested: '' }); setAddDialog('control'); }}>
                     <Plus className="h-2.5 w-2.5" /> Add Control
                   </Button>
                   {derivedProcessId && <EntityNotesSection entityType="risk" entityId={risk.id} processId={derivedProcessId} />}
@@ -549,6 +549,14 @@ export default function NodeDetailPanel({ node, risks, controls, regulations, in
                   <EditableSelect label="Effectiveness" value={ctrl.effectiveness || 'effective'} options={['effective', 'partially', 'ineffective']}
                     onSave={val => saveField(() => updateControl(ctrl.id, { effectiveness: val }), 'Effectiveness updated')} />
                 </div>
+                <div className="flex gap-3">
+                  <EditableSelect label="Automation" value={(ctrl as any).automation_level || '__none__'} options={['__none__', 'automatic', 'semi-automatic', 'manual']}
+                    onSave={val => saveField(() => updateControl(ctrl.id, { automation_level: val === '__none__' ? null : val } as any), 'Automation updated')} />
+                  <EditableSelect label="Frequency" value={(ctrl as any).frequency || '__none__'} options={['__none__', 'multiple_daily', 'daily', 'weekly', 'monthly', 'quarterly', 'yearly']}
+                    onSave={val => saveField(() => updateControl(ctrl.id, { frequency: val === '__none__' ? null : val } as any), 'Frequency updated')} />
+                </div>
+                <EditableField label="Last Tested by Client" value={(ctrl as any).last_tested || ''}
+                  onSave={val => saveField(() => updateControl(ctrl.id, { last_tested: val } as any), 'Last tested updated')} />
                 {derivedProcessId && <EntityNotesSection entityType="control" entityId={ctrl.id} processId={derivedProcessId} />}
               </div>
             ))}
@@ -588,7 +596,7 @@ export default function NodeDetailPanel({ node, risks, controls, regulations, in
           <TabsContent value="incidents" className="mt-0 space-y-2">
             <div className="flex items-center justify-between mb-1">
               <span className="text-xs font-semibold text-muted-foreground">{stepIncidents.length} Incident{stepIncidents.length !== 1 ? 's' : ''}</span>
-              <Button size="sm" variant="ghost" className="h-6 text-xs gap-1" onClick={() => { setIncidentForm({ title: '', description: '', severity: 'medium', status: 'open' }); setAddDialog('incident'); }}>
+              <Button size="sm" variant="ghost" className="h-6 text-xs gap-1" onClick={() => { setIncidentForm({ title: '', description: '', severity: 'medium', status: 'open', owner_department: '', money_loss_amount: '', loss_threshold: '', root_cause: '' }); setAddDialog('incident'); }}>
                 <Plus className="h-3 w-3" /> Add Incident
               </Button>
             </div>
@@ -611,6 +619,18 @@ export default function NodeDetailPanel({ node, risks, controls, regulations, in
                     onSave={val => saveField(() => updateIncident(inc.id, { severity: val }), 'Severity updated')} />
                   <EditableSelect label="Status" value={inc.status || 'open'} options={['open', 'investigating', 'resolved', 'closed']}
                     onSave={val => saveField(() => updateIncident(inc.id, { status: val }), 'Status updated')} />
+                </div>
+                <div className="flex gap-3">
+                  <EditableField label="Owner (Dept)" value={(inc as any).owner_department || ''}
+                    onSave={val => saveField(() => updateIncident(inc.id, { owner_department: val } as any), 'Owner updated')} />
+                  <EditableSelect label="Root Cause" value={(inc as any).root_cause || '__none__'} options={['__none__', 'people', 'system', 'market', 'regulations']}
+                    onSave={val => saveField(() => updateIncident(inc.id, { root_cause: val === '__none__' ? null : val } as any), 'Root cause updated')} />
+                </div>
+                <div className="flex gap-3">
+                  <EditableField label="Money Loss" value={(inc as any).money_loss_amount || ''}
+                    onSave={val => saveField(() => updateIncident(inc.id, { money_loss_amount: val } as any), 'Loss updated')} />
+                  <EditableField label="Loss Threshold" value={(inc as any).loss_threshold || ''}
+                    onSave={val => saveField(() => updateIncident(inc.id, { loss_threshold: val } as any), 'Threshold updated')} />
                 </div>
                 {derivedProcessId && <EntityNotesSection entityType="incident" entityId={inc.id} processId={derivedProcessId} />}
               </div>
@@ -779,6 +799,39 @@ export default function NodeDetailPanel({ node, risks, controls, regulations, in
               </Select>
             </div>
           </div>
+          <div className="grid grid-cols-2 gap-3">
+            <div className="grid gap-1.5">
+              <Label>Automation Level</Label>
+              <Select value={controlForm.automation_level || '__none__'} onValueChange={v => setControlForm(f => ({ ...f, automation_level: v === '__none__' ? '' : v }))}>
+                <SelectTrigger><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="__none__">— Select —</SelectItem>
+                  <SelectItem value="automatic">Automatic</SelectItem>
+                  <SelectItem value="semi-automatic">Semi-Automatic</SelectItem>
+                  <SelectItem value="manual">Manual</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="grid gap-1.5">
+              <Label>Frequency</Label>
+              <Select value={controlForm.frequency || '__none__'} onValueChange={v => setControlForm(f => ({ ...f, frequency: v === '__none__' ? '' : v }))}>
+                <SelectTrigger><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="__none__">— Select —</SelectItem>
+                  <SelectItem value="multiple_daily">Multiple times/day</SelectItem>
+                  <SelectItem value="daily">Daily</SelectItem>
+                  <SelectItem value="weekly">Weekly</SelectItem>
+                  <SelectItem value="monthly">Monthly</SelectItem>
+                  <SelectItem value="quarterly">Quarterly</SelectItem>
+                  <SelectItem value="yearly">Yearly</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+          <div className="grid gap-1.5">
+            <Label>Last Tested by Client</Label>
+            <Input value={controlForm.last_tested} onChange={e => setControlForm(f => ({ ...f, last_tested: e.target.value }))} placeholder="e.g. 2024-12-15 or N/A" />
+          </div>
         </div>
         <DialogFooter>
           <Button variant="outline" onClick={() => setAddDialog(null)}>Cancel</Button>
@@ -832,7 +885,7 @@ export default function NodeDetailPanel({ node, risks, controls, regulations, in
 
     {/* Add Incident Dialog */}
     <Dialog open={addDialog === 'incident'} onOpenChange={v => !v && setAddDialog(null)}>
-      <DialogContent className="sm:max-w-md">
+      <DialogContent className="sm:max-w-lg">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2"><AlertCircle className="h-5 w-5 text-red-500" /> Add Incident</DialogTitle>
           <DialogDescription>Report a new incident for this step.</DialogDescription>
@@ -864,6 +917,35 @@ export default function NodeDetailPanel({ node, risks, controls, regulations, in
                   {['open', 'investigating', 'resolved', 'closed'].map(o => <SelectItem key={o} value={o} className="capitalize">{o}</SelectItem>)}
                 </SelectContent>
               </Select>
+            </div>
+          </div>
+          <div className="grid grid-cols-2 gap-3">
+            <div className="grid gap-1.5">
+              <Label>Owner (Department)</Label>
+              <Input value={incidentForm.owner_department} onChange={e => setIncidentForm(f => ({ ...f, owner_department: e.target.value }))} placeholder="e.g. Finance, IT" />
+            </div>
+            <div className="grid gap-1.5">
+              <Label>Root Cause</Label>
+              <Select value={incidentForm.root_cause || '__none__'} onValueChange={v => setIncidentForm(f => ({ ...f, root_cause: v === '__none__' ? '' : v }))}>
+                <SelectTrigger><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="__none__">— Select —</SelectItem>
+                  <SelectItem value="people">People</SelectItem>
+                  <SelectItem value="system">System</SelectItem>
+                  <SelectItem value="market">Market</SelectItem>
+                  <SelectItem value="regulations">Regulations</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+          <div className="grid grid-cols-2 gap-3">
+            <div className="grid gap-1.5">
+              <Label>Money Loss Amount</Label>
+              <Input value={incidentForm.money_loss_amount} onChange={e => setIncidentForm(f => ({ ...f, money_loss_amount: e.target.value }))} placeholder="e.g. $50,000" />
+            </div>
+            <div className="grid gap-1.5">
+              <Label>Loss Threshold (Client)</Label>
+              <Input value={incidentForm.loss_threshold} onChange={e => setIncidentForm(f => ({ ...f, loss_threshold: e.target.value }))} placeholder="e.g. $100,000" />
             </div>
           </div>
         </div>
