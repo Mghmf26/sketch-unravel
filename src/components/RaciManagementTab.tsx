@@ -27,6 +27,7 @@ import { exportRaciToExcel, parseRaciExcel } from '@/lib/raci-excel';
 import { useColumnSettings, type ColumnDef } from '@/hooks/useColumnSettings';
 import { ColumnSettingsDropdown } from '@/components/ColumnSettingsDropdown';
 import RaciOrganigramView from '@/components/RaciOrganigramView';
+import EditRaciDialog from '@/components/EditRaciDialog';
 
 interface RaciManagementTabProps {
   processId: string;
