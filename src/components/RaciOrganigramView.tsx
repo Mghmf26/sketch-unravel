@@ -258,7 +258,7 @@ function LinkNodesDialog({
 }
 
 // ── Main Component ──
-export default function RaciOrganigramView({ raciEntries, steps, onUpdateRaci }: OrganigramProps) {
+export default function RaciOrganigramView({ raciEntries, steps, processId, onUpdateRaci, onRefresh }: OrganigramProps) {
   const [nodes, setNodes, onNodesChange] = useNodesState([]);
   const [edges, setEdges, onEdgesChange] = useEdgesState([]);
   const [history, setHistory] = useState<{ nodes: Node[]; edges: Edge[] }[]>([]);
