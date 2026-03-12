@@ -258,6 +258,40 @@ export default function ProcessEditTab({ processId }: ProcessEditTabProps) {
     </div>
   );
 
+  // Questionnaire helpers
+  const questLinkMap = useMemo(() => {
+    const m: Record<string, boolean> = {};
+    questLinks.forEach(l => { if (l.is_relevant) m[`${l.question_id}:${l.step_id}`] = true; });
+    return m;
+  }, [questLinks]);
+
+  const getStepQuestions = (stepId: string) => {
+    const step = steps.find(s => s.id === stepId);
+    if (!step) return [];
+    return questQuestions.filter(q => {
+      if (q.step_types.length === 0) return true;
+      if (!step.step_type) return true;
+      return q.step_types.includes(step.step_type);
+    });
+  };
+
+  const handleQuestToggle = async (questionId: string, stepId: string, current: boolean) => {
+    const key = `${questionId}:${stepId}`;
+    setSavingQuestLink(key);
+    try {
+      await upsertStepLink({ process_id: processId, question_id: questionId, step_id: stepId, is_relevant: !current });
+      setQuestLinks(prev => {
+        const existing = prev.find(l => l.question_id === questionId && l.step_id === stepId);
+        if (existing) return prev.map(l => l.question_id === questionId && l.step_id === stepId ? { ...l, is_relevant: !current } : l);
+        return [...prev, { id: crypto.randomUUID(), process_id: processId, question_id: questionId, step_id: stepId, is_relevant: !current, created_at: new Date().toISOString() }];
+      });
+    } catch (err: any) {
+      toast({ title: 'Error saving', description: err.message, variant: 'destructive' });
+    } finally {
+      setSavingQuestLink(null);
+    }
+  };
+
   // Get step-related data
   const getStepRisks = (stepId: string) => risks.filter(r => r.step_id === stepId);
   const getStepRegulations = (stepId: string) => regulations.filter(r => r.step_id === stepId);
