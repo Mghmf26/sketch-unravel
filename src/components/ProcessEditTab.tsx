@@ -1,8 +1,8 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useMemo } from 'react';
 import {
   Plus, Trash2, ArrowRight, ShieldAlert, ShieldCheck, Scale,
   AlertCircle, Database, HelpCircle, ChevronDown, ChevronRight, Pencil, Users,
-  Check, X, Save, Monitor, Cpu, Link2, CircleHelp
+  Check, X, Save, Monitor, Cpu, Link2, CircleHelp, ClipboardList
 } from 'lucide-react';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { usePermissions } from '@/hooks/usePermissions';
@@ -13,6 +13,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Checkbox } from '@/components/ui/checkbox';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import { Separator } from '@/components/ui/separator';
@@ -40,6 +41,10 @@ import {
 import { fetchStepApplications, insertStepApplication, updateStepApplication, deleteStepApplication, type StepApplication } from '@/lib/api-applications';
 import { fetchMainframeFlows, fetchMFFlowNodes, type MainframeFlow, type MFFlowNode, MF_NODE_TYPE_META } from '@/lib/api-mainframe-flows';
 import { StepTypeBadge, STEP_TYPE_OPTIONS } from '@/components/StepTypeBadge';
+import {
+  fetchActiveQuestions, fetchStepLinks, upsertStepLink,
+  type QuestionnaireQuestion, type QuestionnaireStepLink,
+} from '@/lib/api-questionnaire';
 
 interface ProcessEditTabProps {
   processId: string;
@@ -168,6 +173,9 @@ export default function ProcessEditTab({ processId }: ProcessEditTabProps) {
   const [raciStepLinks, setRaciStepLinks] = useState<ProcessRaciStepLink[]>([]);
   const [mfFlows, setMfFlows] = useState<MainframeFlow[]>([]);
   const [mfFlowNodes, setMfFlowNodes] = useState<MFFlowNode[]>([]);
+  const [questQuestions, setQuestQuestions] = useState<QuestionnaireQuestion[]>([]);
+  const [questLinks, setQuestLinks] = useState<QuestionnaireStepLink[]>([]);
+  const [savingQuestLink, setSavingQuestLink] = useState<string | null>(null);
   const [addDialog, setAddDialog] = useState<AddDialog>(null);
   const [contextStepId, setContextStepId] = useState<string | null>(null);
   const [contextRiskId, setContextRiskId] = useState<string | null>(null);
@@ -194,7 +202,7 @@ export default function ProcessEditTab({ processId }: ProcessEditTabProps) {
   const collapseAllSteps = () => setExpandedSteps(new Set());
 
   const reload = useCallback(async () => {
-    const [s, c, r, ctrl, reg, inc, imp, mfq, raci, raciLinks, apps, flows] = await Promise.all([
+    const [s, c, r, ctrl, reg, inc, imp, mfq, raci, raciLinks, apps, flows, qq, ql] = await Promise.all([
       fetchSteps(processId), fetchStepConnections(processId),
       fetchRisks(processId), fetchAllControls(),
       fetchRegulations(processId), fetchIncidents(processId),
@@ -202,6 +210,8 @@ export default function ProcessEditTab({ processId }: ProcessEditTabProps) {
       fetchProcessRaci(processId), fetchRaciStepLinks(processId),
       fetchStepApplications(processId),
       fetchMainframeFlows(processId),
+      fetchActiveQuestions(),
+      fetchStepLinks(processId),
     ]);
     setSteps(s);
     setConnections(c);
@@ -216,6 +226,8 @@ export default function ProcessEditTab({ processId }: ProcessEditTabProps) {
     setRaciStepLinks(raciLinks);
     setApplications(apps);
     setMfFlows(flows);
+    setQuestQuestions(qq.filter(q => q.importance_level !== 3));
+    setQuestLinks(ql);
     // Fetch all flow nodes
     const allNodes = await Promise.all(flows.map(f => fetchMFFlowNodes(f.id)));
     setMfFlowNodes(allNodes.flat());
@@ -246,6 +258,40 @@ export default function ProcessEditTab({ processId }: ProcessEditTabProps) {
       </div>
     </div>
   );
+
+  // Questionnaire helpers
+  const questLinkMap = useMemo(() => {
+    const m: Record<string, boolean> = {};
+    questLinks.forEach(l => { if (l.is_relevant) m[`${l.question_id}:${l.step_id}`] = true; });
+    return m;
+  }, [questLinks]);
+
+  const getStepQuestions = (stepId: string) => {
+    const step = steps.find(s => s.id === stepId);
+    if (!step) return [];
+    return questQuestions.filter(q => {
+      if (q.step_types.length === 0) return true;
+      if (!step.step_type) return true;
+      return q.step_types.includes(step.step_type);
+    });
+  };
+
+  const handleQuestToggle = async (questionId: string, stepId: string, current: boolean) => {
+    const key = `${questionId}:${stepId}`;
+    setSavingQuestLink(key);
+    try {
+      await upsertStepLink({ process_id: processId, question_id: questionId, step_id: stepId, is_relevant: !current });
+      setQuestLinks(prev => {
+        const existing = prev.find(l => l.question_id === questionId && l.step_id === stepId);
+        if (existing) return prev.map(l => l.question_id === questionId && l.step_id === stepId ? { ...l, is_relevant: !current } : l);
+        return [...prev, { id: crypto.randomUUID(), process_id: processId, question_id: questionId, step_id: stepId, is_relevant: !current, created_at: new Date().toISOString() }];
+      });
+    } catch (err: any) {
+      toast({ title: 'Error saving', description: err.message, variant: 'destructive' });
+    } finally {
+      setSavingQuestLink(null);
+    }
+  };
 
   // Get step-related data
   const getStepRisks = (stepId: string) => risks.filter(r => r.step_id === stepId);
@@ -657,6 +703,82 @@ export default function ProcessEditTab({ processId }: ProcessEditTabProps) {
                             ))}
                             {stepApps.length === 0 && <p className="text-[10px] text-muted-foreground italic ml-4">No applications</p>}
                           </div>
+
+                          {/* Questionnaire */}
+                          {step.type === 'in-scope' && (() => {
+                            const stepQs = getStepQuestions(step.id);
+                            const relevantCount = stepQs.filter(q => questLinkMap[`${q.id}:${step.id}`]).length;
+                            const sectionNums = [...new Set(stepQs.map(q => q.section_number))].sort();
+                            return (
+                              <div className="space-y-2">
+                                <div className="flex items-center gap-1.5 justify-between">
+                                  <div className="flex items-center gap-1.5">
+                                    <ClipboardList className="h-3 w-3 text-indigo-500" />
+                                    <span className="text-[11px] font-semibold text-indigo-700">Questionnaire</span>
+                                    {relevantCount > 0 && (
+                                      <Badge variant="outline" className="text-[9px] border-indigo-300 text-indigo-600">{relevantCount} relevant</Badge>
+                                    )}
+                                  </div>
+                                  <span className="text-[10px] text-muted-foreground">{stepQs.length} questions</span>
+                                </div>
+                                {stepQs.length === 0 ? (
+                                  <p className="text-[10px] text-muted-foreground italic ml-4">No questions match this step type. Set a step type above or check admin settings.</p>
+                                ) : (
+                                  <div className="ml-4 pl-3 border-l-2 border-indigo-200 space-y-2">
+                                    {sectionNums.map(sn => {
+                                      const sectionQs = stepQs.filter(q => q.section_number === sn);
+                                      const sectionName = sectionQs[0]?.section_name || '';
+                                      return (
+                                        <div key={sn}>
+                                          <p className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider mb-1">
+                                            S{sn}: {sectionName}
+                                          </p>
+                                          <div className="space-y-1">
+                                            {sectionQs.map(q => {
+                                              const key = `${q.id}:${step.id}`;
+                                              const isChecked = !!questLinkMap[key];
+                                              const isSaving = savingQuestLink === key;
+                                              return (
+                                                <label
+                                                  key={q.id}
+                                                  className={`flex items-start gap-2 text-xs px-2 py-1.5 rounded-md border cursor-pointer transition-colors ${
+                                                    isChecked
+                                                      ? 'bg-indigo-50 border-indigo-200'
+                                                      : 'bg-muted/20 border-border hover:bg-muted/40'
+                                                  } ${isSaving ? 'opacity-50' : ''}`}
+                                                >
+                                                  <Checkbox
+                                                    checked={isChecked}
+                                                    onCheckedChange={() => handleQuestToggle(q.id, step.id, isChecked)}
+                                                    disabled={isSaving}
+                                                    className="mt-0.5"
+                                                  />
+                                                  <div className="flex-1 min-w-0">
+                                                    <span className="text-[11px] leading-relaxed">
+                                                      <span className="font-mono text-muted-foreground mr-1">Q{q.question_number}.</span>
+                                                      {q.question_text}
+                                                    </span>
+                                                  </div>
+                                                  <div className="flex items-center gap-1 shrink-0">
+                                                    {q.step_types.map(t => (
+                                                      <Badge key={t} variant="outline" className="text-[8px] capitalize px-1 py-0">{t.charAt(0).toUpperCase()}</Badge>
+                                                    ))}
+                                                    <Badge variant="outline" className={`text-[8px] px-1 py-0 ${q.importance_level === 1 ? 'border-destructive/30 text-destructive' : 'border-amber-300 text-amber-700'}`}>
+                                                      L{q.importance_level}
+                                                    </Badge>
+                                                  </div>
+                                                </label>
+                                              );
+                                            })}
+                                          </div>
+                                        </div>
+                                      );
+                                    })}
+                                  </div>
+                                )}
+                              </div>
+                            );
+                          })()}
                         </div>
                       )}
                     </div>
