@@ -1022,6 +1022,9 @@ export default function ProcessEditTab({ processId }: ProcessEditTabProps) {
                                     <Button variant="ghost" size="sm" className="h-5 text-[10px] text-muted-foreground" onClick={() => toggleStepSection(step.id, 'raci')}>
                                       {isStepSectionVisible(step.id, 'raci') ? 'Hide' : 'Show'}
                                     </Button>
+                                    <Button variant="ghost" size="sm" className="h-5 text-[10px] text-cyan-600" onClick={() => { setAddRaciFromStep(true); setEditRaciEntry(null); setEditRaciDialogOpen(true); }}>
+                                      <Plus className="h-3 w-3 mr-0.5" /> Add Role
+                                    </Button>
                                     {allPeopleFromRaci.length > 0 && (
                                       <Button variant="ghost" size="sm" className="h-5 text-[10px] text-cyan-600" onClick={() => { setContextStepId(step.id); setAddDialog('step-raci'); }}>
                                         <Plus className="h-3 w-3 mr-0.5" /> Assign
@@ -1036,8 +1039,12 @@ export default function ProcessEditTab({ processId }: ProcessEditTabProps) {
                                       <div className="space-y-1">
                                         <span className="text-[9px] uppercase tracking-wider text-muted-foreground font-semibold ml-4">Inherited from Process</span>
                                         {linkedRacis.map(raci => (
-                                          <div key={raci.id} className="ml-4 pl-3 border-l-2 border-cyan-200 py-1">
-                                            <span className="text-sm font-medium">{raci.role_name}</span>
+                                          <div key={raci.id} className="ml-4 pl-3 border-l-2 border-cyan-200 py-1 group/raci cursor-pointer hover:bg-cyan-50/50 rounded-r transition-colors"
+                                            onClick={() => { setEditRaciEntry(raci); setAddRaciFromStep(false); setEditRaciDialogOpen(true); }}>
+                                            <div className="flex items-center gap-2">
+                                              <span className="text-sm font-medium">{raci.role_name}</span>
+                                              <Pencil className="h-2.5 w-2.5 text-muted-foreground opacity-0 group-hover/raci:opacity-100 transition-opacity" />
+                                            </div>
                                             <div className="flex gap-3 mt-1 flex-wrap text-[10px]">
                                               {raci.responsible && <Badge className="border-0 bg-emerald-100 text-emerald-700 text-[9px]">R: {raci.responsible}</Badge>}
                                               {raci.accountable && <Badge className="border-0 bg-blue-100 text-blue-700 text-[9px]">A: {raci.accountable}</Badge>}
