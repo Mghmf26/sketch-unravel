@@ -375,6 +375,7 @@ export default function ProcessEditTab({ processId }: ProcessEditTabProps) {
     }
   };
 
+  const toggleQuestVisible = (stepId: string) =>
     setQuestVisible(prev => ({ ...prev, [stepId]: !prev[stepId] }));
 
   const toggleQuestSection = (key: string) =>
