@@ -279,9 +279,9 @@ export default function NodeDetailPanel({ node, risks, controls, regulations, in
 
   // Forms
   const [riskForm, setRiskForm] = useState({ description: '', likelihood: 'medium', impact: 'medium' });
-  const [controlForm, setControlForm] = useState({ name: '', description: '', type: 'preventive', effectiveness: 'effective' });
+  const [controlForm, setControlForm] = useState({ name: '', description: '', type: 'preventive', effectiveness: 'effective', automation_level: '', frequency: '', last_tested: '' });
   const [regulationForm, setRegulationForm] = useState({ name: '', description: '', authority: '', compliance_status: 'partial' });
-  const [incidentForm, setIncidentForm] = useState({ title: '', description: '', severity: 'medium', status: 'open' });
+  const [incidentForm, setIncidentForm] = useState({ title: '', description: '', severity: 'medium', status: 'open', owner_department: '', money_loss_amount: '', loss_threshold: '', root_cause: '' });
   const [appForm, setAppForm] = useState({ name: '', description: '', app_type: 'application', parent_id: '', application_owner: '', business_analyst_business: '', business_analyst_it: '', platform: '' });
 
   const derivedProcessId = processId || stepRisks[0]?.process_id || stepRegulations[0]?.process_id || stepIncidents[0]?.process_id || '';
