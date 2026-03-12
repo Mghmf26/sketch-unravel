@@ -845,7 +845,6 @@ export default function ProcessEditTab({ processId }: ProcessEditTabProps) {
                                         </Button>
                                       </div>
                                     </div>
-                                    {/* Controls under risk */}
                                     {ctrls.length > 0 && (
                                       <div className="ml-3 pl-3 border-l-2 border-blue-200 space-y-1">
                                         {ctrls.map(ctrl => (
@@ -882,21 +881,29 @@ export default function ProcessEditTab({ processId }: ProcessEditTabProps) {
                                 );
                               })}
                               {stepRisks.length === 0 && <p className="text-[10px] text-muted-foreground italic ml-4">No risks</p>}
+                              </>)}
                             </div>
                           )}
 
                           {/* Regulations */}
-                          {isSectionVisible('regulations') && canAccessModule('regulations') && (
+                          {canAccessModule('regulations') && (
                             <div className="space-y-2">
                               <div className="flex items-center gap-1.5 justify-between">
-                                <div className="flex items-center gap-1.5">
+                                <div className="flex items-center gap-1.5 cursor-pointer" onClick={() => toggleStepSection(step.id, 'regulations')}>
+                                  {isStepSectionVisible(step.id, 'regulations') ? <ChevronDown className="h-3 w-3 text-purple-500" /> : <ChevronRight className="h-3 w-3 text-purple-500" />}
                                   <Scale className="h-3 w-3 text-purple-500" />
                                   <span className="text-[11px] font-semibold text-purple-700">Regulations ({stepRegs.length})</span>
                                 </div>
-                                <Button variant="ghost" size="sm" className="h-5 text-[10px] text-purple-600" onClick={() => { setContextStepId(step.id); setAddDialog('regulation'); }}>
-                                  <Plus className="h-3 w-3 mr-0.5" /> Add
-                                </Button>
+                                <div className="flex items-center gap-1">
+                                  <Button variant="ghost" size="sm" className="h-5 text-[10px] text-muted-foreground" onClick={() => toggleStepSection(step.id, 'regulations')}>
+                                    {isStepSectionVisible(step.id, 'regulations') ? 'Hide' : 'Show'}
+                                  </Button>
+                                  <Button variant="ghost" size="sm" className="h-5 text-[10px] text-purple-600" onClick={() => { setContextStepId(step.id); setAddDialog('regulation'); }}>
+                                    <Plus className="h-3 w-3 mr-0.5" /> Add
+                                  </Button>
+                                </div>
                               </div>
+                              {isStepSectionVisible(step.id, 'regulations') && (<>
                               {stepRegs.map(reg => (
                                 <div key={reg.id} className="ml-4 pl-3 border-l-2 border-purple-200 flex items-center gap-2 group/reg py-1">
                                   <InlineEdit value={reg.name} onSave={v => updateRegulation(reg.id, { name: v }).then(reload)} className="text-sm font-medium" />
@@ -913,21 +920,29 @@ export default function ProcessEditTab({ processId }: ProcessEditTabProps) {
                                 </div>
                               ))}
                               {stepRegs.length === 0 && <p className="text-[10px] text-muted-foreground italic ml-4">No regulations</p>}
+                              </>)}
                             </div>
                           )}
 
                           {/* Incidents */}
-                          {isSectionVisible('incidents') && canAccessModule('incidents') && (
+                          {canAccessModule('incidents') && (
                             <div className="space-y-2">
                               <div className="flex items-center gap-1.5 justify-between">
-                                <div className="flex items-center gap-1.5">
+                                <div className="flex items-center gap-1.5 cursor-pointer" onClick={() => toggleStepSection(step.id, 'incidents')}>
+                                  {isStepSectionVisible(step.id, 'incidents') ? <ChevronDown className="h-3 w-3 text-red-500" /> : <ChevronRight className="h-3 w-3 text-red-500" />}
                                   <AlertCircle className="h-3 w-3 text-red-500" />
                                   <span className="text-[11px] font-semibold text-red-700">Incidents ({stepIncs.length})</span>
                                 </div>
-                                <Button variant="ghost" size="sm" className="h-5 text-[10px] text-red-600" onClick={() => { setContextStepId(step.id); setAddDialog('incident'); }}>
-                                  <Plus className="h-3 w-3 mr-0.5" /> Add
-                                </Button>
+                                <div className="flex items-center gap-1">
+                                  <Button variant="ghost" size="sm" className="h-5 text-[10px] text-muted-foreground" onClick={() => toggleStepSection(step.id, 'incidents')}>
+                                    {isStepSectionVisible(step.id, 'incidents') ? 'Hide' : 'Show'}
+                                  </Button>
+                                  <Button variant="ghost" size="sm" className="h-5 text-[10px] text-red-600" onClick={() => { setContextStepId(step.id); setAddDialog('incident'); }}>
+                                    <Plus className="h-3 w-3 mr-0.5" /> Add
+                                  </Button>
+                                </div>
                               </div>
+                              {isStepSectionVisible(step.id, 'incidents') && (<>
                               {stepIncs.map(inc => (
                                 <div key={inc.id} className="ml-4 pl-3 border-l-2 border-red-200 group/inc py-1 space-y-1">
                                   <div className="flex items-center gap-2">
@@ -961,9 +976,115 @@ export default function ProcessEditTab({ processId }: ProcessEditTabProps) {
                                 </div>
                               ))}
                               {stepIncs.length === 0 && <p className="text-[10px] text-muted-foreground italic ml-4">No incidents</p>}
+                              </>)}
                             </div>
                           )}
 
+                          {/* RACI (inherited from process level) */}
+                          {canAccessModule('raci') && (() => {
+                            const stepLinks = getStepRaciLinks(step.id);
+                            const linkedRacis = stepLinks.map(l => raciEntries.find(r => r.id === l.raci_id)).filter(Boolean) as ProcessRaci[];
+                            return linkedRacis.length > 0 ? (
+                              <div className="space-y-2">
+                                <div className="flex items-center gap-1.5 justify-between">
+                                  <div className="flex items-center gap-1.5 cursor-pointer" onClick={() => toggleStepSection(step.id, 'raci')}>
+                                    {isStepSectionVisible(step.id, 'raci') ? <ChevronDown className="h-3 w-3 text-cyan-500" /> : <ChevronRight className="h-3 w-3 text-cyan-500" />}
+                                    <Users className="h-3 w-3 text-cyan-500" />
+                                    <span className="text-[11px] font-semibold text-cyan-700">RACI ({linkedRacis.length} linked)</span>
+                                  </div>
+                                  <Button variant="ghost" size="sm" className="h-5 text-[10px] text-muted-foreground" onClick={() => toggleStepSection(step.id, 'raci')}>
+                                    {isStepSectionVisible(step.id, 'raci') ? 'Hide' : 'Show'}
+                                  </Button>
+                                </div>
+                                {isStepSectionVisible(step.id, 'raci') && (
+                                  <>
+                                {linkedRacis.map(raci => (
+                                  <div key={raci.id} className="ml-4 pl-3 border-l-2 border-cyan-200 py-1">
+                                    <span className="text-sm font-medium">{raci.role_name}</span>
+                                    <div className="flex gap-3 mt-1 flex-wrap text-[10px]">
+                                      {raci.responsible && <Badge className="border-0 bg-emerald-100 text-emerald-700 text-[9px]">R: {raci.responsible}</Badge>}
+                                      {raci.accountable && <Badge className="border-0 bg-blue-100 text-blue-700 text-[9px]">A: {raci.accountable}</Badge>}
+                                      {raci.consulted && <Badge className="border-0 bg-amber-100 text-amber-700 text-[9px]">C: {raci.consulted}</Badge>}
+                                      {raci.informed && <Badge className="border-0 bg-purple-100 text-purple-700 text-[9px]">I: {raci.informed}</Badge>}
+                                    </div>
+                                  </div>
+                                ))}
+                                  </>
+                                )}
+                              </div>
+                            ) : null;
+                          })()}
+
+                          {/* Applications */}
+                          <div className="space-y-2">
+                            <div className="flex items-center gap-1.5 justify-between">
+                              <div className="flex items-center gap-1.5 cursor-pointer" onClick={() => toggleStepSection(step.id, 'applications')}>
+                                {isStepSectionVisible(step.id, 'applications') ? <ChevronDown className="h-3 w-3 text-sky-500" /> : <ChevronRight className="h-3 w-3 text-sky-500" />}
+                                <Monitor className="h-3 w-3 text-sky-500" />
+                                <span className="text-[11px] font-semibold text-sky-700">Screens / Applications ({stepApps.length})</span>
+                              </div>
+                              <div className="flex items-center gap-1">
+                                <Button variant="ghost" size="sm" className="h-5 text-[10px] text-muted-foreground" onClick={() => toggleStepSection(step.id, 'applications')}>
+                                  {isStepSectionVisible(step.id, 'applications') ? 'Hide' : 'Show'}
+                                </Button>
+                                <Button variant="ghost" size="sm" className="h-5 text-[10px] text-sky-600" onClick={() => { setContextStepId(step.id); setAddDialog('application'); }}>
+                                  <Plus className="h-3 w-3 mr-0.5" /> Add
+                                </Button>
+                              </div>
+                            </div>
+                            {isStepSectionVisible(step.id, 'applications') && (<>
+                            {stepApps.filter(a => a.app_type === 'screen' && !a.parent_id).map(screen => {
+                              const childApps = stepApps.filter(a => a.parent_id === screen.id);
+                              return (
+                                <div key={screen.id} className="ml-4 pl-3 border-l-2 border-sky-200 space-y-1">
+                                  <div className="flex items-center gap-2 group/app py-1">
+                                    <Monitor className="h-3 w-3 text-sky-400 shrink-0" />
+                                    <InlineEdit value={screen.name} onSave={v => updateStepApplication(screen.id, { name: v }).then(reload)} className="text-sm font-medium" />
+                                    <Badge className="border-0 bg-sky-100 text-sky-700 text-[9px]">Screen</Badge>
+                                    <span className="flex-1" />
+                                    <Button variant="ghost" size="sm" className="h-5 text-[10px] text-sky-600 opacity-0 group-hover/app:opacity-100"
+                                      onClick={() => { setContextStepId(step.id); setContextScreenId(screen.id); setAddDialog('application'); }}>
+                                      <Plus className="h-2.5 w-2.5 mr-0.5" /> App
+                                    </Button>
+                                    <Button variant="ghost" size="icon" className="h-5 w-5 opacity-0 group-hover/app:opacity-100 text-muted-foreground hover:text-destructive"
+                                      onClick={() => deleteStepApplication(screen.id).then(reload)}>
+                                      <Trash2 className="h-2.5 w-2.5" />
+                                    </Button>
+                                  </div>
+                                  {childApps.length > 0 && (
+                                    <div className="ml-4 pl-3 border-l-2 border-sky-100 space-y-1">
+                                      {childApps.map(app => (
+                                        <div key={app.id} className="flex items-center gap-2 group/child py-0.5">
+                                          <Monitor className="h-2.5 w-2.5 text-sky-300 shrink-0" />
+                                          <InlineEdit value={app.name} onSave={v => updateStepApplication(app.id, { name: v }).then(reload)} className="text-xs" />
+                                          <Badge variant="outline" className="text-[8px]">App</Badge>
+                                          <span className="flex-1" />
+                                          <Button variant="ghost" size="icon" className="h-4 w-4 opacity-0 group-hover/child:opacity-100 text-muted-foreground hover:text-destructive"
+                                            onClick={() => deleteStepApplication(app.id).then(reload)}>
+                                            <Trash2 className="h-2 w-2" />
+                                          </Button>
+                                        </div>
+                                      ))}
+                                    </div>
+                                  )}
+                                </div>
+                              );
+                            })}
+                            {stepApps.filter(a => a.app_type !== 'screen' && !a.parent_id).map(app => (
+                              <div key={app.id} className="ml-4 pl-3 border-l-2 border-sky-200 flex items-center gap-2 group/app py-1">
+                                <Monitor className="h-3 w-3 text-sky-400 shrink-0" />
+                                <InlineEdit value={app.name} onSave={v => updateStepApplication(app.id, { name: v }).then(reload)} className="text-sm font-medium" />
+                                <Badge variant="outline" className="text-[9px] capitalize">{app.app_type}</Badge>
+                                <span className="flex-1" />
+                                <Button variant="ghost" size="icon" className="h-5 w-5 opacity-0 group-hover/app:opacity-100 text-muted-foreground hover:text-destructive"
+                                  onClick={() => deleteStepApplication(app.id).then(reload)}>
+                                  <Trash2 className="h-2.5 w-2.5" />
+                                </Button>
+                              </div>
+                            ))}
+                            {stepApps.length === 0 && <p className="text-[10px] text-muted-foreground italic ml-4">No applications</p>}
+                            </>)}
+                          </div>
                           {/* RACI (inherited from process level) */}
                           {isSectionVisible('raci') && canAccessModule('raci') && (() => {
                             const stepLinks = getStepRaciLinks(step.id);
