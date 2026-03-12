@@ -588,7 +588,7 @@ export default function NodeDetailPanel({ node, risks, controls, regulations, in
           <TabsContent value="incidents" className="mt-0 space-y-2">
             <div className="flex items-center justify-between mb-1">
               <span className="text-xs font-semibold text-muted-foreground">{stepIncidents.length} Incident{stepIncidents.length !== 1 ? 's' : ''}</span>
-              <Button size="sm" variant="ghost" className="h-6 text-xs gap-1" onClick={() => { setIncidentForm({ title: '', description: '', severity: 'medium', status: 'open' }); setAddDialog('incident'); }}>
+              <Button size="sm" variant="ghost" className="h-6 text-xs gap-1" onClick={() => { setIncidentForm({ title: '', description: '', severity: 'medium', status: 'open', owner_department: '', money_loss_amount: '', loss_threshold: '', root_cause: '' }); setAddDialog('incident'); }}>
                 <Plus className="h-3 w-3" /> Add Incident
               </Button>
             </div>
