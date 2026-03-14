@@ -25,6 +25,11 @@ import {
   type EntityComment, type EntityAttachment,
 } from '@/lib/api-comments';
 import type { EPCNode, NodeType } from '@/types/epc';
+import {
+  fetchProcessRaci, fetchRaciStepLinks, insertRaciStepLink, deleteRaciStepLink,
+  type ProcessRaci, type ProcessRaciStepLink,
+} from '@/lib/api-raci';
+import EditRaciDialog from '@/components/EditRaciDialog';
 
 interface NodeDetailPanelProps {
   node: EPCNode;
