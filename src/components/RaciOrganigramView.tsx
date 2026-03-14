@@ -27,6 +27,7 @@ interface OrganigramProps {
   raciEntries: ProcessRaci[];
   steps: ProcessStep[];
   processId: string;
+  raciStepLinks?: { raci_id: string; step_id: string }[];
   onUpdateRaci?: (id: string, field: string, value: any) => Promise<void>;
   onRefresh?: () => void;
 }
