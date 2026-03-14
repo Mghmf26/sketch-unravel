@@ -1009,8 +1009,7 @@ export default function ProcessEditTab({ processId }: ProcessEditTabProps) {
                               return Array.from(peopleSet).sort();
                             })();
                             const stepRaciData = stepRaciList.filter(sr => sr.step_id === step.id);
-                            const hasData = linkedRacis.length > 0 || stepRaciData.length > 0 || raciEntries.length > 0;
-                            return hasData ? (
+                            return (
                               <div className="space-y-2">
                                 <div className="flex items-center gap-1.5 justify-between">
                                   <div className="flex items-center gap-1.5 cursor-pointer" onClick={() => toggleStepSection(step.id, 'raci')}>
