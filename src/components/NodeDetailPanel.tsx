@@ -289,7 +289,33 @@ export default function NodeDetailPanel({ node, risks, controls, regulations, in
   const [incidentForm, setIncidentForm] = useState({ title: '', description: '', severity: 'medium', status: 'open', owner_department: '', money_loss_amount: '', loss_threshold: '', root_cause: '' });
   const [appForm, setAppForm] = useState({ name: '', description: '', app_type: 'application', parent_id: '', application_owner: '', business_analyst_business: '', business_analyst_it: '', platform: '' });
 
+  // RACI state
+  const [raciEntries, setRaciEntries] = useState<ProcessRaci[]>([]);
+  const [raciStepLinks, setRaciStepLinks] = useState<ProcessRaciStepLink[]>([]);
+  const [editRaciEntry, setEditRaciEntry] = useState<ProcessRaci | null>(null);
+  const [editRaciDialogOpen, setEditRaciDialogOpen] = useState(false);
+
   const derivedProcessId = processId || stepRisks[0]?.process_id || stepRegulations[0]?.process_id || stepIncidents[0]?.process_id || '';
+
+  // Load RACI data for the current process
+  const loadRaci = useCallback(async () => {
+    if (!derivedProcessId) return;
+    const [entries, links] = await Promise.all([
+      fetchProcessRaci(derivedProcessId),
+      fetchRaciStepLinks(derivedProcessId),
+    ]);
+    setRaciEntries(entries);
+    setRaciStepLinks(links);
+  }, [derivedProcessId]);
+
+  useEffect(() => { loadRaci(); }, [loadRaci]);
+
+  const linkedRacis = raciStepLinks
+    .filter(l => l.step_id === node.id)
+    .map(l => raciEntries.find(r => r.id === l.raci_id))
+    .filter(Boolean) as ProcessRaci[];
+
+  const unlinkedRacis = raciEntries.filter(r => !raciStepLinks.some(l => l.raci_id === r.id && l.step_id === node.id));
 
   const saveField = useCallback(async (fn: () => Promise<void>, msg: string) => {
     try {
