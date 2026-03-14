@@ -500,6 +500,10 @@ export default function NodeDetailPanel({ node, risks, controls, regulations, in
                     <div className="flex items-center gap-1 mb-0.5"><Monitor className="h-3 w-3 text-sky-500" /><span className="text-[10px] font-semibold text-sky-700">Scr./App.</span></div>
                     <span className="text-lg font-bold text-sky-700">{stepApps.length}</span>
                   </div>
+                  <div className="p-2 rounded-lg border bg-cyan-50">
+                    <div className="flex items-center gap-1 mb-0.5"><Users className="h-3 w-3 text-cyan-500" /><span className="text-[10px] font-semibold text-cyan-700">RACI</span></div>
+                    <span className="text-lg font-bold text-cyan-700">{linkedRacis.length}</span>
+                  </div>
                 </div>
               </>
             )}
