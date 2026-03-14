@@ -1133,6 +1133,13 @@ export default function NodeDetailPanel({ node, risks, controls, regulations, in
       onConfirm={executeDelete}
       onCancel={() => setPendingDelete(null)}
     />
+    <EditRaciDialog
+      open={editRaciDialogOpen}
+      onClose={() => { setEditRaciDialogOpen(false); setEditRaciEntry(null); }}
+      onRefresh={() => { loadRaci(); onDataChanged?.(); }}
+      entry={editRaciEntry}
+      processId={derivedProcessId}
+    />
     </>
   );
 }
