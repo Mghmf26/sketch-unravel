@@ -27,6 +27,7 @@ interface OrganigramProps {
   raciEntries: ProcessRaci[];
   steps: ProcessStep[];
   processId: string;
+  raciStepLinks?: { raci_id: string; step_id: string }[];
   onUpdateRaci?: (id: string, field: string, value: any) => Promise<void>;
   onRefresh?: () => void;
 }
@@ -258,7 +259,7 @@ function LinkNodesDialog({
 }
 
 // ── Main Component ──
-export default function RaciOrganigramView({ raciEntries, steps, processId, onUpdateRaci, onRefresh }: OrganigramProps) {
+export default function RaciOrganigramView({ raciEntries, steps, processId, raciStepLinks = [], onUpdateRaci, onRefresh }: OrganigramProps) {
   const [nodes, setNodes, onNodesChange] = useNodesState([]);
   const [edges, setEdges, onEdgesChange] = useEdgesState([]);
   const [history, setHistory] = useState<{ nodes: Node[]; edges: Edge[] }[]>([]);
@@ -277,9 +278,12 @@ export default function RaciOrganigramView({ raciEntries, steps, processId, onUp
   }, [raciEntries]);
   // Build linked step counts
   const linkedStepCounts = useMemo(() => {
-    // This is a lightweight map; step links are managed at RACI tab level
-    return new Map<string, number>();
-  }, []);
+    const counts = new Map<string, number>();
+    raciStepLinks.forEach(l => {
+      counts.set(l.raci_id, (counts.get(l.raci_id) || 0) + 1);
+    });
+    return counts;
+  }, [raciStepLinks]);
 
   // Initialize
   useEffect(() => {

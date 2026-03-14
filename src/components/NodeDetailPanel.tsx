@@ -1,5 +1,5 @@
-import { useState, useCallback, useRef } from 'react';
-import { X, ShieldAlert, ShieldCheck, Scale, AlertCircle, Info, Pencil, Check, Plus, Trash2, Loader2, Monitor, MessageSquare, Paperclip, FileText } from 'lucide-react';
+import { useState, useCallback, useRef, useEffect } from 'react';
+import { X, ShieldAlert, ShieldCheck, Scale, AlertCircle, Info, Pencil, Check, Plus, Trash2, Loader2, Monitor, MessageSquare, Paperclip, FileText, Users } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
@@ -25,6 +25,11 @@ import {
   type EntityComment, type EntityAttachment,
 } from '@/lib/api-comments';
 import type { EPCNode, NodeType } from '@/types/epc';
+import {
+  fetchProcessRaci, fetchRaciStepLinks, insertRaciStepLink, deleteRaciStepLink,
+  type ProcessRaci, type ProcessRaciStepLink,
+} from '@/lib/api-raci';
+import EditRaciDialog from '@/components/EditRaciDialog';
 
 interface NodeDetailPanelProps {
   node: EPCNode;
@@ -284,7 +289,33 @@ export default function NodeDetailPanel({ node, risks, controls, regulations, in
   const [incidentForm, setIncidentForm] = useState({ title: '', description: '', severity: 'medium', status: 'open', owner_department: '', money_loss_amount: '', loss_threshold: '', root_cause: '' });
   const [appForm, setAppForm] = useState({ name: '', description: '', app_type: 'application', parent_id: '', application_owner: '', business_analyst_business: '', business_analyst_it: '', platform: '' });
 
+  // RACI state
+  const [raciEntries, setRaciEntries] = useState<ProcessRaci[]>([]);
+  const [raciStepLinks, setRaciStepLinks] = useState<ProcessRaciStepLink[]>([]);
+  const [editRaciEntry, setEditRaciEntry] = useState<ProcessRaci | null>(null);
+  const [editRaciDialogOpen, setEditRaciDialogOpen] = useState(false);
+
   const derivedProcessId = processId || stepRisks[0]?.process_id || stepRegulations[0]?.process_id || stepIncidents[0]?.process_id || '';
+
+  // Load RACI data for the current process
+  const loadRaci = useCallback(async () => {
+    if (!derivedProcessId) return;
+    const [entries, links] = await Promise.all([
+      fetchProcessRaci(derivedProcessId),
+      fetchRaciStepLinks(derivedProcessId),
+    ]);
+    setRaciEntries(entries);
+    setRaciStepLinks(links);
+  }, [derivedProcessId]);
+
+  useEffect(() => { loadRaci(); }, [loadRaci]);
+
+  const linkedRacis = raciStepLinks
+    .filter(l => l.step_id === node.id)
+    .map(l => raciEntries.find(r => r.id === l.raci_id))
+    .filter(Boolean) as ProcessRaci[];
+
+  const unlinkedRacis = raciEntries.filter(r => !raciStepLinks.some(l => l.raci_id === r.id && l.step_id === node.id));
 
   const saveField = useCallback(async (fn: () => Promise<void>, msg: string) => {
     try {
@@ -427,6 +458,10 @@ export default function NodeDetailPanel({ node, risks, controls, regulations, in
                 <Monitor className="h-3 w-3 mr-1" />
                 {stepApps.length > 0 && <Badge variant="secondary" className="ml-0.5 h-4 text-[8px] px-1">{stepApps.length}</Badge>}
               </TabsTrigger>
+              <TabsTrigger value="raci" className="text-[10px] h-6 px-2">
+                <Users className="h-3 w-3 mr-1" />
+                {linkedRacis.length > 0 && <Badge variant="secondary" className="ml-0.5 h-4 text-[8px] px-1">{linkedRacis.length}</Badge>}
+              </TabsTrigger>
             </>
           )}
         </TabsList>
@@ -464,6 +499,10 @@ export default function NodeDetailPanel({ node, risks, controls, regulations, in
                   <div className="p-2 rounded-lg border bg-sky-50">
                     <div className="flex items-center gap-1 mb-0.5"><Monitor className="h-3 w-3 text-sky-500" /><span className="text-[10px] font-semibold text-sky-700">Scr./App.</span></div>
                     <span className="text-lg font-bold text-sky-700">{stepApps.length}</span>
+                  </div>
+                  <div className="p-2 rounded-lg border bg-cyan-50">
+                    <div className="flex items-center gap-1 mb-0.5"><Users className="h-3 w-3 text-cyan-500" /><span className="text-[10px] font-semibold text-cyan-700">RACI</span></div>
+                    <span className="text-lg font-bold text-cyan-700">{linkedRacis.length}</span>
                   </div>
                 </div>
               </>
@@ -715,6 +754,69 @@ export default function NodeDetailPanel({ node, risks, controls, regulations, in
                   </div>
                 ))}
               </>
+            )}
+          </TabsContent>
+
+          {/* RACI Tab */}
+          <TabsContent value="raci" className="mt-0 space-y-2">
+            <div className="flex items-center justify-between mb-1">
+              <span className="text-xs font-semibold text-muted-foreground">{linkedRacis.length} linked role{linkedRacis.length !== 1 ? 's' : ''}</span>
+              <Button size="sm" variant="ghost" className="h-6 text-xs gap-1" onClick={() => { setEditRaciEntry(null); setEditRaciDialogOpen(true); }}>
+                <Plus className="h-3 w-3" /> Add Role
+              </Button>
+            </div>
+
+            {/* Linked roles */}
+            {linkedRacis.length === 0 ? (
+              <p className="text-xs text-muted-foreground text-center py-8">No RACI roles linked to this step</p>
+            ) : linkedRacis.map(raci => (
+              <div key={raci.id} className="p-3 rounded-lg border bg-cyan-50/50 space-y-2 group">
+                <div className="flex items-start justify-between">
+                  <div className="min-w-0">
+                    <p className="text-sm font-semibold">{raci.role_name}</p>
+                    {raci.job_title && <p className="text-[10px] text-muted-foreground">{raci.job_title}</p>}
+                    {raci.function_dept && <p className="text-[10px] text-muted-foreground">{raci.function_dept}{raci.sub_function ? ` / ${raci.sub_function}` : ''}</p>}
+                  </div>
+                  <div className="flex gap-0.5">
+                    <Button variant="ghost" size="icon" className="h-5 w-5 opacity-0 group-hover:opacity-100" onClick={() => { setEditRaciEntry(raci); setEditRaciDialogOpen(true); }}>
+                      <Pencil className="h-3 w-3" />
+                    </Button>
+                    <Button variant="ghost" size="icon" className="h-5 w-5 opacity-0 group-hover:opacity-100 text-destructive"
+                      onClick={async () => {
+                        const link = raciStepLinks.find(l => l.raci_id === raci.id && l.step_id === node.id);
+                        if (link) { await deleteRaciStepLink(link.id); loadRaci(); onDataChanged?.(); }
+                      }}>
+                      <Trash2 className="h-3 w-3" />
+                    </Button>
+                  </div>
+                </div>
+                <div className="flex gap-1 flex-wrap">
+                  {raci.responsible && <Badge className="border-0 bg-emerald-100 text-emerald-700 text-[9px]">R: {raci.responsible}</Badge>}
+                  {raci.accountable && <Badge className="border-0 bg-blue-100 text-blue-700 text-[9px]">A: {raci.accountable}</Badge>}
+                  {raci.consulted && <Badge className="border-0 bg-amber-100 text-amber-700 text-[9px]">C: {raci.consulted}</Badge>}
+                  {raci.informed && <Badge className="border-0 bg-purple-100 text-purple-700 text-[9px]">I: {raci.informed}</Badge>}
+                </div>
+                {raci.seniority && <p className="text-[10px] text-muted-foreground">Seniority: {raci.seniority}{raci.fte ? ` • ${raci.fte} FTE` : ''}</p>}
+              </div>
+            ))}
+
+            {/* Link existing role */}
+            {unlinkedRacis.length > 0 && (
+              <div className="pt-2 border-t">
+                <span className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider">Link existing role</span>
+                <Select onValueChange={async (v) => { await insertRaciStepLink(v, node.id); loadRaci(); onDataChanged?.(); }}>
+                  <SelectTrigger className="h-7 text-xs mt-1 border-dashed">
+                    <SelectValue placeholder="+ Link a role..." />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {unlinkedRacis.map(r => (
+                      <SelectItem key={r.id} value={r.id} className="text-xs">
+                        {r.role_name}{r.function_dept ? ` (${r.function_dept})` : ''}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
             )}
           </TabsContent>
         </ScrollArea>
@@ -1030,6 +1132,13 @@ export default function NodeDetailPanel({ node, risks, controls, regulations, in
       confirmLabel="Delete"
       onConfirm={executeDelete}
       onCancel={() => setPendingDelete(null)}
+    />
+    <EditRaciDialog
+      open={editRaciDialogOpen}
+      onClose={() => { setEditRaciDialogOpen(false); setEditRaciEntry(null); }}
+      onRefresh={() => { loadRaci(); onDataChanged?.(); }}
+      entry={editRaciEntry}
+      processId={derivedProcessId}
     />
     </>
   );

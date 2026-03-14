@@ -85,8 +85,8 @@ export default function ProcessView() {
       const { error: uploadError } = await supabase.storage.from('process-images').upload(filePath, file);
       if (uploadError) throw uploadError;
       const { data: { publicUrl } } = supabase.storage.from('process-images').getPublicUrl(filePath);
-      await updateProcess(id, { image_url: publicUrl } as any);
-      setProcess({ ...process, image_url: publicUrl } as any);
+      await updateProcess(id, { image_url: publicUrl });
+      setProcess({ ...process, image_url: publicUrl });
       toast({ title: 'Image updated' });
     } catch (err) {
       console.error(err);
@@ -152,9 +152,9 @@ export default function ProcessView() {
         <TabsContent value="image" className="mt-0">
           <Card className="overflow-hidden border-2 border-dashed border-muted">
             <CardContent className="p-0 min-h-[400px] flex flex-col items-center justify-center bg-muted/10">
-              {(process as any).image_url ? (
+              {process.image_url ? (
                 <div className="relative group w-full h-full">
-                  <img src={(process as any).image_url} alt="Process Diagram" className="w-full h-auto max-h-[70vh] object-contain shadow-sm" />
+                  <img src={process.image_url} alt="Process Diagram" className="w-full h-auto max-h-[70vh] object-contain shadow-sm" />
                   <div className="absolute top-4 right-4 opacity-0 group-hover:opacity-100 transition-opacity">
                     <label className="cursor-pointer">
                       <Button variant="secondary" size="sm" asChild><span><Upload className="h-4 w-4 mr-2" /> Replace</span></Button>
