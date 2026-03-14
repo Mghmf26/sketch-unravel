@@ -1,5 +1,5 @@
-import { useState, useCallback, useRef } from 'react';
-import { X, ShieldAlert, ShieldCheck, Scale, AlertCircle, Info, Pencil, Check, Plus, Trash2, Loader2, Monitor, MessageSquare, Paperclip, FileText } from 'lucide-react';
+import { useState, useCallback, useRef, useEffect } from 'react';
+import { X, ShieldAlert, ShieldCheck, Scale, AlertCircle, Info, Pencil, Check, Plus, Trash2, Loader2, Monitor, MessageSquare, Paperclip, FileText, Users } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
