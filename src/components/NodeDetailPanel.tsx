@@ -756,6 +756,69 @@ export default function NodeDetailPanel({ node, risks, controls, regulations, in
               </>
             )}
           </TabsContent>
+
+          {/* RACI Tab */}
+          <TabsContent value="raci" className="mt-0 space-y-2">
+            <div className="flex items-center justify-between mb-1">
+              <span className="text-xs font-semibold text-muted-foreground">{linkedRacis.length} linked role{linkedRacis.length !== 1 ? 's' : ''}</span>
+              <Button size="sm" variant="ghost" className="h-6 text-xs gap-1" onClick={() => { setEditRaciEntry(null); setEditRaciDialogOpen(true); }}>
+                <Plus className="h-3 w-3" /> Add Role
+              </Button>
+            </div>
+
+            {/* Linked roles */}
+            {linkedRacis.length === 0 ? (
+              <p className="text-xs text-muted-foreground text-center py-8">No RACI roles linked to this step</p>
+            ) : linkedRacis.map(raci => (
+              <div key={raci.id} className="p-3 rounded-lg border bg-cyan-50/50 space-y-2 group">
+                <div className="flex items-start justify-between">
+                  <div className="min-w-0">
+                    <p className="text-sm font-semibold">{raci.role_name}</p>
+                    {raci.job_title && <p className="text-[10px] text-muted-foreground">{raci.job_title}</p>}
+                    {raci.function_dept && <p className="text-[10px] text-muted-foreground">{raci.function_dept}{raci.sub_function ? ` / ${raci.sub_function}` : ''}</p>}
+                  </div>
+                  <div className="flex gap-0.5">
+                    <Button variant="ghost" size="icon" className="h-5 w-5 opacity-0 group-hover:opacity-100" onClick={() => { setEditRaciEntry(raci); setEditRaciDialogOpen(true); }}>
+                      <Pencil className="h-3 w-3" />
+                    </Button>
+                    <Button variant="ghost" size="icon" className="h-5 w-5 opacity-0 group-hover:opacity-100 text-destructive"
+                      onClick={async () => {
+                        const link = raciStepLinks.find(l => l.raci_id === raci.id && l.step_id === node.id);
+                        if (link) { await deleteRaciStepLink(link.id); loadRaci(); onDataChanged?.(); }
+                      }}>
+                      <Trash2 className="h-3 w-3" />
+                    </Button>
+                  </div>
+                </div>
+                <div className="flex gap-1 flex-wrap">
+                  {raci.responsible && <Badge className="border-0 bg-emerald-100 text-emerald-700 text-[9px]">R: {raci.responsible}</Badge>}
+                  {raci.accountable && <Badge className="border-0 bg-blue-100 text-blue-700 text-[9px]">A: {raci.accountable}</Badge>}
+                  {raci.consulted && <Badge className="border-0 bg-amber-100 text-amber-700 text-[9px]">C: {raci.consulted}</Badge>}
+                  {raci.informed && <Badge className="border-0 bg-purple-100 text-purple-700 text-[9px]">I: {raci.informed}</Badge>}
+                </div>
+                {raci.seniority && <p className="text-[10px] text-muted-foreground">Seniority: {raci.seniority}{raci.fte ? ` • ${raci.fte} FTE` : ''}</p>}
+              </div>
+            ))}
+
+            {/* Link existing role */}
+            {unlinkedRacis.length > 0 && (
+              <div className="pt-2 border-t">
+                <span className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider">Link existing role</span>
+                <Select onValueChange={async (v) => { await insertRaciStepLink(v, node.id); loadRaci(); onDataChanged?.(); }}>
+                  <SelectTrigger className="h-7 text-xs mt-1 border-dashed">
+                    <SelectValue placeholder="+ Link a role..." />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {unlinkedRacis.map(r => (
+                      <SelectItem key={r.id} value={r.id} className="text-xs">
+                        {r.role_name}{r.function_dept ? ` (${r.function_dept})` : ''}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            )}
+          </TabsContent>
         </ScrollArea>
       </Tabs>
     </div>
