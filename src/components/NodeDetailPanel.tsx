@@ -458,6 +458,10 @@ export default function NodeDetailPanel({ node, risks, controls, regulations, in
                 <Monitor className="h-3 w-3 mr-1" />
                 {stepApps.length > 0 && <Badge variant="secondary" className="ml-0.5 h-4 text-[8px] px-1">{stepApps.length}</Badge>}
               </TabsTrigger>
+              <TabsTrigger value="raci" className="text-[10px] h-6 px-2">
+                <Users className="h-3 w-3 mr-1" />
+                {linkedRacis.length > 0 && <Badge variant="secondary" className="ml-0.5 h-4 text-[8px] px-1">{linkedRacis.length}</Badge>}
+              </TabsTrigger>
             </>
           )}
         </TabsList>
