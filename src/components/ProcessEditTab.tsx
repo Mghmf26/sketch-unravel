@@ -1080,7 +1080,7 @@ export default function ProcessEditTab({ processId }: ProcessEditTabProps) {
                                   </>
                                 )}
                               </div>
-                            ) : null;
+                            );
                           })()}
 
                           {/* Applications */}

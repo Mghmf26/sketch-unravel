@@ -578,6 +578,7 @@ export default function RaciManagementTab({ processId, processName }: RaciManage
             raciEntries={filtered}
             steps={inScopeSteps}
             processId={processId}
+            raciStepLinks={raciStepLinks}
             onUpdateRaci={handleUpdate}
             onRefresh={reload}
           />

@@ -278,9 +278,12 @@ export default function RaciOrganigramView({ raciEntries, steps, processId, raci
   }, [raciEntries]);
   // Build linked step counts
   const linkedStepCounts = useMemo(() => {
-    // This is a lightweight map; step links are managed at RACI tab level
-    return new Map<string, number>();
-  }, []);
+    const counts = new Map<string, number>();
+    raciStepLinks.forEach(l => {
+      counts.set(l.raci_id, (counts.get(l.raci_id) || 0) + 1);
+    });
+    return counts;
+  }, [raciStepLinks]);
 
   // Initialize
   useEffect(() => {

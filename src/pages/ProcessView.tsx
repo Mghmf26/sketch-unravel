@@ -85,8 +85,8 @@ export default function ProcessView() {
       const { error: uploadError } = await supabase.storage.from('process-images').upload(filePath, file);
       if (uploadError) throw uploadError;
       const { data: { publicUrl } } = supabase.storage.from('process-images').getPublicUrl(filePath);
-      await updateProcess(id, { image_url: publicUrl } as any);
-      setProcess({ ...process, image_url: publicUrl } as any);
+      await updateProcess(id, { image_url: publicUrl });
+      setProcess({ ...process, image_url: publicUrl });
       toast({ title: 'Image updated' });
     } catch (err) {
       console.error(err);

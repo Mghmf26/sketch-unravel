@@ -9,6 +9,8 @@ export interface BusinessProcess {
   owner: string | null;
   department: string | null;
   description: string | null;
+  image_url: string | null;
+  mf_ai_potential: string | null;
   created_at: string;
   updated_at: string;
 }
